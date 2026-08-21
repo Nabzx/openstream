@@ -1,0 +1,24 @@
+# Node / Electron
+node_modules/
+dist/
+dist-electron/
+release/
+.vite/
+
+# Native helper build output (Swift/Obj-C binaries, compiled via native build scripts)
+build/
+*.xcuserstate
+DerivedData/
+
+# macOS
+.DS_Store
+
+# Downloaded binaries and models (fetched by download scripts, not checked in)
+resources/bin/
+*.gguf
+*.bin
+*.mlmodelc
+
+# Environment / secrets
+.env
+.env.local
