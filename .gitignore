@@ -19,6 +19,9 @@ resources/bin/
 *.bin
 *.mlmodelc
 
+# Vendored source cloned by build scripts (e.g. whisper.cpp), not checked in
+vendor/
+
 # Environment / secrets
 .env
 .env.local
