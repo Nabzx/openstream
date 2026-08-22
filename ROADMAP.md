@@ -17,7 +17,7 @@ Pick who owns which track in Phase 2 based on interest, not this doc — the spl
 Get to "clone and build" for both of you before splitting up.
 
 - [ ] Electron + React + TypeScript (Vite) scaffold, menu bar tray app shell (no functionality yet)
-- [ ] whisper.cpp integrated: download script for the prebuilt binary + a model, subprocess wrapper, one hardcoded hotkey triggers record → transcribe → print to console
+- [ ] whisper.cpp integrated: download script for the prebuilt binary + a model, **resident `whisper-server` started at app launch and supervised for the life of the app** (not a per-dictation subprocess - see #29), one hardcoded hotkey triggers record → transcribe → print to console
 - [ ] GitHub Actions workflow: build check on every PR
 - [ ] Branch protection on `main`: PRs required, one review required
 
@@ -62,7 +62,7 @@ Owns: context awareness, local LLM cleanup.
 Same tracks, harder problems — this is where it gets genuinely complex.
 
 - **Track A:** codebase vocabulary scanner — extract identifiers/terms from the open git repo or editor buffer, feed them into whisper.cpp as an initial prompt / bias list
-- **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to `llama-server` to rewrite the selection in place
+- **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. That server starts lazily on the first voice-edit command and is released after 5 minutes idle (see #29); it is never resident during ordinary dictation
 
 **Definition of done:** dictation that's measurably more accurate on your own codebase's vocabulary, plus voice-editing of existing text. Tag `v0.3`.
 
