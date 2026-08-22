@@ -17,6 +17,17 @@ put `llama-server` in the dictation hot path.** Reserve the LLM for the
 explicitly-invoked voice-editing feature (Phase 3), where the user has asked for
 a rewrite and expects to wait.
 
+**Why "just gate the LLM by length" does not rescue it.** That is the obvious
+counter-proposal, and the data kills it: gating by length routes the LLM to
+precisely the paragraph bucket where it costs 4.58s, and skips it on the short
+bucket where it is affordable. Value and cost rise together. There is no length
+band where the LLM pass is both fast enough and worth having, so this is a
+forced move rather than a judgement call.
+
+One design the data does *not* rule out, and which was not measured: inject
+rules-cleaned text immediately, then swap in LLM output asynchronously a few
+seconds later. Flagged so #12-#17 do not rediscover it; out of scope here.
+
 ## 1. Warm per-dictation latency (whisper base.en, seconds)
 
 | Bucket | Transcribe | + rules | + Llama 1B | + Llama 3B |
@@ -27,7 +38,7 @@ a rewrite and expects to wait.
 
 Rules cleanup costs 0.1-1.0 **milliseconds**. It is free.
 
-Whisper small.en roughly triples transcribe time (0.34 / 0.51 / 1.51s) for
+Whisper small.en roughly triples transcribe time (0.32 / 0.51 / 1.51s) for
 noticeably better transcripts - a real speed/accuracy knob, independent of this
 decision.
 
@@ -80,12 +91,22 @@ cleanup pass to do. On the 130-word paragraph it does *not* self-clean: `"the
 the"`, `"it it"`, `"is is"` all survive and punctuation is sparse. So cleanup
 value is concentrated exactly in the bucket where the LLM is too slow.
 
-**Both LLMs damage meaning on short input.** On `cmd-1`, 1B returned `"I can run
-the test suite again."` (changed who is doing what) and 3B returned `"Run the
-test suite again."` (dropped the question). Rules returned
-`"How can you just run the test suite again?"` - faithful. 1B also wrapped one
-output in quotation marks and left whisper's line wrapping intact. Temperature
-was 0 with an explicit "do not rephrase" instruction; these are
+**Both LLMs damage meaning on short input.** The clean-input case is `cmd-3`,
+where whisper produced coherent text (`"Okay so I think we should probably you
+know bump the time out to 30 seconds."`). Both models still dropped the hedge
+`"I think"` - 3B gave `"We should probably bump the time out to 30 seconds."`,
+1B gave `"Okay, so we should bump the time out to 30 seconds."` *wrapped in
+quotation marks*, and left whisper's line wrapping intact. Rules gave
+`"I think we should probably bump the time out to 30 seconds."` - faithful.
+Dropping a hedge changes what the speaker committed to; that is a meaning edit,
+not a cleanup.
+
+A second example, `cmd-1`, is more dramatic - 1B turned `"can you run"` into
+`"I can run"` and 3B dropped the question entirely - but discount it: whisper
+had already garbled that input into `"How can you..."`, so the models were
+reacting to corrupted text. `cmd-3` is the one that survives the TTS caveat.
+
+Temperature was 0 with an explicit "do not rephrase" instruction; these are
 instruction-following failures, not sampling noise.
 
 **On paragraphs, 3B is clearly the best output.** It produced the closest match
@@ -113,6 +134,16 @@ what STT got wrong. Caveat: this particular class of error is inflated by TTS
   it. So filler-removal difficulty here is pessimistic, and the
   mis-transcription rate is inflated. **The finding that whisper self-cleans
   short clips would only get stronger with real speech.**
+- **LLM timings understate prefill.** Requests were sent with
+  `cache_prompt: true` and each sample was repeated 3 times, so the median run
+  is a KV-cache hit on text a real user would never have sent before. In
+  production only the system prompt is cacheable. The true cost is somewhat
+  higher, most on the paragraph bucket. This biases *in favour* of the LLM, so
+  it strengthens rather than threatens the conclusion.
+- **The paragraph bucket was not run under sustained load.** The 12-minute run
+  cycles only short and sentence samples. Applying the measured +14.5% to the
+  4.58s paragraph figure puts it near 5.2s under sustained use - an
+  extrapolation, not a measurement.
 - 8 samples, one machine, one session. Directional, not statistical.
 - Prompt was not tuned. A better cleanup prompt might fix the 3B meaning-drift
   on short input; it would not change the latency curve, which is what decides

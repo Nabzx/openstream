@@ -79,7 +79,7 @@
 <tr><td><strong>mean</strong></td><td></td><td></td><td></td><td class='n warn'><strong>+14.5%</strong></td></tr>
 </table></div>
 <h2>4. Output quality, side by side</h2>
-<p class="sub">Judge these yourself - this is the half no timer can answer. "Whisper raw" is what the STT actually produced; each cleanup path runs on that same text.</p>
+<p class="sub">Judge these yourself - this is the half no timer can answer. "Whisper raw" is what the STT actually produced; each cleanup path runs on that same text. The ragged line breaks in the raw panels are real - <code>whisper-server</code> hard-wraps its output, so normalising that is itself a job for the cleanup layer. Rules strip it; Llama 1B often does not.</p>
 <h3><code>cmd-1</code> &middot; short &middot; 12 words</h3>
 <div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">How can you just run the test suite again period?</div></div>
 <div class="grid">

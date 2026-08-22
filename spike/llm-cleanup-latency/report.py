@@ -193,7 +193,9 @@ def main():
     p.append("<h2>4. Output quality, side by side</h2>")
     p.append('<p class="sub">Judge these yourself - this is the half no timer can answer. '
              '"Whisper raw" is what the STT actually produced; each cleanup path runs on '
-             'that same text.</p>')
+             'that same text. The ragged line breaks in the raw panels are real - '
+             '<code>whisper-server</code> hard-wraps its output, so normalising that is '
+             'itself a job for the cleanup layer. Rules strip it; Llama 1B often does not.</p>')
     for sid, d in samples:
         p.append(f'<h3><code>{esc(sid)}</code> &middot; {esc(d["bucket"])} '
                  f'&middot; {d["words"]} words</h3>')
