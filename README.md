@@ -12,7 +12,7 @@ What's still missing: **dictation that knows what you're looking at.** Every exi
 
 ## What OpenStream does differently
 
-1. **Context-aware formatting** — detects the frontmost app/field via the macOS Accessibility API and adapts: no auto-capitalization or punctuation in a terminal, proper comment/docstring formatting in an editor, normal prose everywhere else.
+1. **Context-aware dictation** - detects the frontmost app via the macOS Accessibility API. Text is cleaned the same way everywhere; what changes by app is where it is *safe* to insert a line break, because in a terminal or a chat window Enter submits and a stray break would send half a sentence. In apps where breaks are safe, a small local model decides where paragraphs belong in long dictation. (Earlier drafts promised terminal-specific and editor-specific formatting. That was dropped in #45: dictation into a terminal is dictation into tools like Claude Code, which want ordinary prose.)
 2. **Codebase-aware vocabulary** — reads identifiers, library names, and project-specific terms from the current git repo / open buffer and biases transcription toward them, so technical jargon and your own function/variable names actually transcribe correctly.
 3. **Voice-driven editing, not just dictation** — select existing text anywhere and speak an edit command ("make this a bullet list", "snake_case that", "shorter") to rewrite it in place.
 4. **Build it once, then nothing to set up** — there is no installer and no bundled model. You build from source, and the build compiles whisper.cpp and fetches its model for you. After that: no Ollama, no LM Studio, no manual model downloads, no first-run downloader, no config screens.
