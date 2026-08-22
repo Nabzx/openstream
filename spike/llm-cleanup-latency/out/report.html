@@ -1,0 +1,202 @@
+<!doctype html><meta charset="utf-8">
+<title>openstream #24 - LLM cleanup latency spike</title>
+<style>
+ :root{--bg:#fff;--fg:#16181d;--mut:#5c6370;--line:#e3e6ea;--card:#f7f8fa;
+       --good:#0a7d3f;--bad:#b3261e;--warn:#8a6100;--acc:#2f4bd8}
+ @media(prefers-color-scheme:dark){:root{--bg:#14161a;--fg:#e7e9ee;--mut:#9aa3b2;
+   --line:#2a2e36;--card:#1b1e24;--good:#4ade80;--bad:#f87171;--warn:#fbbf24;--acc:#8ab0ff}}
+ *{box-sizing:border-box}
+ body{margin:0;padding:2rem 1.25rem 5rem;background:var(--bg);color:var(--fg);
+   font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+   max-width:1180px;margin-inline:auto}
+ h1{font-size:1.55rem;margin:0 0 .2rem} h2{font-size:1.15rem;margin:2.5rem 0 .6rem;
+   padding-bottom:.3rem;border-bottom:1px solid var(--line)}
+ h3{font-size:.95rem;margin:1.4rem 0 .4rem}
+ .sub{color:var(--mut);margin:0 0 1.5rem;font-size:.9rem}
+ .banner{background:var(--card);border-left:3px solid var(--warn);padding:.8rem 1rem;
+   border-radius:6px;margin:0 0 1.5rem;font-size:.9rem}
+ table{border-collapse:collapse;width:100%;font-size:.87rem;margin:.5rem 0 1rem}
+ th,td{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line);
+   vertical-align:top}
+ th{color:var(--mut);font-weight:600;font-size:.78rem;text-transform:uppercase;
+   letter-spacing:.03em}
+ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+ .good{color:var(--good)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+ .wrap{overflow-x:auto}
+ .q{background:var(--card);border-radius:8px;padding:.9rem 1.1rem;margin:.9rem 0}
+ .q .lab{font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;
+   color:var(--mut);margin-bottom:.2rem}
+ .q .txt{font-size:.88rem;white-space:pre-wrap}
+ .grid{display:grid;gap:.6rem}
+ @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+ .bar{height:9px;border-radius:5px;background:var(--acc);display:inline-block;
+   vertical-align:middle}
+ .bar2{height:9px;border-radius:5px;background:var(--mut);display:inline-block;
+   vertical-align:middle;opacity:.55}
+ code{background:var(--card);padding:.1rem .3rem;border-radius:4px;font-size:.85em}
+ .foot{color:var(--mut);font-size:.82rem;margin-top:2.5rem;border-top:1px solid var(--line);
+   padding-top:1rem}
+</style>
+<h1>Does the local LLM cleanup pass earn its latency?</h1>
+<p class="sub">openstream issue #24 &middot; throwaway measurement spike &middot; Apple M3, 16 GB, macOS 15.6.1 &middot; 2026-08-22 13:09:12 &middot; median of 3 runs</p>
+<div class="banner"><strong>Read the assumptions first.</strong> Measured on an M3 MacBook Air, 16 GB - fanless, but above the 8 GB floor. These numbers are <em>not</em> worst-case for memory and not representative of a fully heat-soaked machine. Dictation audio is <code>say</code> TTS at 150 wpm, so it is cleaner than real speech: real disfluencies are non-lexical and whisper drops them more readily than the crisp "um" TTS produces. Both models are held resident and warmed; model load is reported separately.</div>
+<h2>1. Warm per-dictation latency</h2>
+<p class="sub">End of speech &rarr; text ready. Cleanup is the cost the LLM adds on top of transcription.</p>
+<div class="wrap"><table><tr><th>Sample</th><th>Bucket</th><th class="n">Audio</th><th class="n">Words</th><th class="n">Transcribe<br>base.en</th><th class="n">Transcribe<br>small.en</th><th class="n">Rules</th><th class="n">Cleanup 3B</th><th class="n">Cleanup 1B</th><th class="n">Total<br>base+3B</th><th class="n">Total<br>base+rules</th></tr>
+<tr><td><code>cmd-1</code></td><td>short</td><td class='n'>3.17s</td><td class='n'>12</td><td class='n'>0.11s</td><td class='n'>0.30s</td><td class='n good'>0.10ms</td><td class='n'>0.20s</td><td class='n'>0.10s</td><td class='n good'><strong>0.32s</strong></td><td class='n good'><strong>0.11s</strong></td></tr>
+<tr><td><code>cmd-2</code></td><td>short</td><td class='n'>3.99s</td><td class='n'>13</td><td class='n'>0.12s</td><td class='n'>0.32s</td><td class='n good'>0.12ms</td><td class='n'>0.33s</td><td class='n'>0.18s</td><td class='n good'><strong>0.44s</strong></td><td class='n good'><strong>0.12s</strong></td></tr>
+<tr><td><code>cmd-3</code></td><td>short</td><td class='n'>4.89s</td><td class='n'>15</td><td class='n'>0.12s</td><td class='n'>0.34s</td><td class='n good'>0.13ms</td><td class='n'>0.42s</td><td class='n'>0.20s</td><td class='n good'><strong>0.54s</strong></td><td class='n good'><strong>0.13s</strong></td></tr>
+<tr><td><code>sent-1</code></td><td>sentence</td><td class='n'>11.59s</td><td class='n'>36</td><td class='n'>0.18s</td><td class='n'>0.52s</td><td class='n good'>0.30ms</td><td class='n'>1.18s</td><td class='n'>0.66s</td><td class='n warn'><strong>1.35s</strong></td><td class='n good'><strong>0.18s</strong></td></tr>
+<tr><td><code>sent-2</code></td><td>sentence</td><td class='n'>12.94s</td><td class='n'>43</td><td class='n'>0.18s</td><td class='n'>0.55s</td><td class='n good'>0.31ms</td><td class='n'>1.39s</td><td class='n'>0.98s</td><td class='n warn'><strong>1.57s</strong></td><td class='n good'><strong>0.19s</strong></td></tr>
+<tr><td><code>sent-3</code></td><td>sentence</td><td class='n'>11.39s</td><td class='n'>33</td><td class='n'>0.17s</td><td class='n'>0.45s</td><td class='n good'>0.29ms</td><td class='n'>1.14s</td><td class='n'>0.65s</td><td class='n warn'><strong>1.31s</strong></td><td class='n good'><strong>0.17s</strong></td></tr>
+<tr><td><code>para-1</code></td><td>paragraph</td><td class='n'>37.94s</td><td class='n'>131</td><td class='n'>0.60s</td><td class='n'>1.57s</td><td class='n good'>1.01ms</td><td class='n'>4.30s</td><td class='n'>2.89s</td><td class='n bad'><strong>4.90s</strong></td><td class='n good'><strong>0.60s</strong></td></tr>
+<tr><td><code>para-2</code></td><td>paragraph</td><td class='n'>41.75s</td><td class='n'>126</td><td class='n'>0.61s</td><td class='n'>1.44s</td><td class='n good'>1.07ms</td><td class='n'>3.65s</td><td class='n'>1.80s</td><td class='n bad'><strong>4.27s</strong></td><td class='n good'><strong>0.62s</strong></td></tr>
+</table></div>
+<h3>By length bucket (mean total, whisper base.en)</h3>
+<div class="wrap"><table><tr><th>Bucket</th><th class="n">Transcribe</th><th class="n">+ rules</th><th class="n">+ 1B</th><th class="n">+ 3B</th><th>3B total</th></tr>
+<tr><td>short</td><td class='n'>0.12s</td><td class='n good'>0.12s</td><td class='n'>0.28s</td><td class='n good'>0.43s</td><td><span class='bar2' style='width:6px'></span><span class='bar' style='width:18px'></span></td></tr>
+<tr><td>sentence</td><td class='n'>0.18s</td><td class='n good'>0.18s</td><td class='n'>0.94s</td><td class='n warn'>1.41s</td><td><span class='bar2' style='width:10px'></span><span class='bar' style='width:70px'></span></td></tr>
+<tr><td>paragraph</td><td class='n'>0.61s</td><td class='n good'>0.61s</td><td class='n'>2.95s</td><td class='n bad'>4.58s</td><td><span class='bar2' style='width:34px'></span><span class='bar' style='width:226px'></span></td></tr>
+</table></div>
+<p class="sub">Grey = transcribe, blue = 3B cleanup on top.</p>
+<h2>2. Startup cost (paid once per app launch, not per dictation)</h2>
+<div class="wrap"><table><tr><th>Process</th><th class="n">Spawn &rarr; first result</th></tr>
+<tr><td><code>whisper:base.en</code></td><td class='n'>0.38s</td></tr>
+<tr><td><code>whisper:small.en</code></td><td class='n'>0.81s</td></tr>
+<tr><td><code>llm:llama-3.2-3b</code></td><td class='n'>2.27s</td></tr>
+<tr><td><code>llm:llama-3.2-1b</code></td><td class='n'>1.64s</td></tr>
+</table></div>
+<p class="sub">If <code>llama-server</code> is started lazily on the first dictation instead of at app launch, that first dictation pays this on top.</p>
+<h2>3. Sustained use on a fanless machine</h2>
+<p class="sub">527 back-to-back dictations over 12 minutes, whisper base.en + llama-3.2-3b. Wall-clock drift is a sudo-free proxy for thermal behaviour - no power or temperature sensors were read. The run cycles through samples of different lengths, so drift is computed <strong>per sample against itself</strong> - comparing the first and last iterations outright would just measure which clip happened to land there.</p>
+<div class="wrap"><table><tr><th>Sample</th><th class="n">n</th><th class="n">First third</th><th class="n">Last third</th><th class="n">Drift</th></tr>
+<tr><td><code>cmd-1</code></td><td class='n'>88</td><td class='n'>0.49s</td><td class='n'>0.55s</td><td class='n warn'>+13.0%</td></tr>
+<tr><td><code>cmd-2</code></td><td class='n'>88</td><td class='n'>0.62s</td><td class='n'>0.73s</td><td class='n warn'>+16.6%</td></tr>
+<tr><td><code>cmd-3</code></td><td class='n'>88</td><td class='n'>0.65s</td><td class='n'>0.74s</td><td class='n warn'>+14.1%</td></tr>
+<tr><td><code>sent-1</code></td><td class='n'>88</td><td class='n'>1.85s</td><td class='n'>2.14s</td><td class='n warn'>+15.5%</td></tr>
+<tr><td><code>sent-2</code></td><td class='n'>88</td><td class='n'>2.16s</td><td class='n'>2.49s</td><td class='n warn'>+15.3%</td></tr>
+<tr><td><code>sent-3</code></td><td class='n'>87</td><td class='n'>1.63s</td><td class='n'>1.84s</td><td class='n warn'>+12.5%</td></tr>
+<tr><td><strong>mean</strong></td><td></td><td></td><td></td><td class='n warn'><strong>+14.5%</strong></td></tr>
+</table></div>
+<h2>4. Output quality, side by side</h2>
+<p class="sub">Judge these yourself - this is the half no timer can answer. "Whisper raw" is what the STT actually produced; each cleanup path runs on that same text.</p>
+<h3><code>cmd-1</code> &middot; short &middot; 12 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">How can you just run the test suite again period?</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">How can you just run the test suite again?</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">I can run the test suite again.</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">Run the test suite again.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">Can you just run the test suite again?</div></div>
+</div>
+<h3><code>cmd-2</code> &middot; short &middot; 13 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">so like we should probably just revert that commit and
+ start over.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">We should probably just revert that commit and start over.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">&quot;so like we should probably just revert that commit and start over.&quot;</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">We should probably just revert that commit and start over.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">We should probably just revert that commit and start over.</div></div>
+</div>
+<h3><code>cmd-3</code> &middot; short &middot; 15 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">Okay so I think we should probably you know bump the time
+ out to 30 seconds.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">I think we should probably bump the time out to 30 seconds.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">&quot;Okay, so we should bump the time out to 30 seconds.&quot;</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">We should probably bump the time out to 30 seconds.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">I think we should bump the timeout to thirty seconds.</div></div>
+</div>
+<h3><code>sent-1</code> &middot; sentence &middot; 36 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">I&#x27;m so that the problem is that when the user hits the hot
+ key are we start recording
+ immediately but we don&#x27;t actually check whether the
+ microphone permission has been granted
+ yet so it just fails silently.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">I&#x27;m so that the problem is that when the user hits the hotkey are we start recording immediately. But we don&#x27;t actually check whether the microphone permission has been granted yet so it just fails silently.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">I&#x27;m so that the problem is that when the user hits the hot key, are we start recording immediately but we don&#x27;t actually check whether the microphone permission has been granted yet so it just fails silently.</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">I&#x27;m so that the problem is that when the user hits the hot key are we start recording immediately but we don&#x27;t actually check whether the microphone permission has been granted yet so it just fails silently.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">The problem is that when the user hits the hotkey we start recording immediately, but we don&#x27;t actually check whether the microphone permission has been granted yet, so it just fails silently.</div></div>
+</div>
+<h3><code>sent-2</code> &middot; sentence &middot; 43 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">I mean basically what I want is for the tray icon to show a
+ different state while we&#x27;re
+ transcribing you know so the user knows something is
+ actually happening rather than just staring
+ at a static icon wondering if it worked.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">What I want is for the tray icon to show a different state while we&#x27;re transcribing. So the user knows something is actually happening rather than just staring at a static icon wondering if it worked.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">I - tray icon - will - show - a - different - state - while - we&#x27;re - transcribing - you - know - so - the - user - knows - something - is - actually - happening - rather - than - just - staring - at - a - static - icon - wondering - if - it - worked.</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">I mean basically what I want is for the tray icon to show a different state while we&#x27;re transcribing, you know, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">What I want is for the tray icon to show a different state while we&#x27;re transcribing, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.</div></div>
+</div>
+<h3><code>sent-3</code> &middot; sentence &middot; 33 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">Let&#x27;s let&#x27;s hold off on the auto update stuff until after
+ we&#x27;ve actually shipped a build that people can install
+ because right now we&#x27;re we&#x27;re optimizing something that
+ literally nobody uses yet</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">Let&#x27;s hold off on the auto-update stuff until after we&#x27;ve actually shipped a build that people can install. Because right now we&#x27;re optimizing something that literally nobody uses yet.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">Let&#x27;s hold off on the auto update stuff until after
+ we&#x27;ve actually shipped a build that people can install
+ because right now we&#x27;re optimizing something that
+ literally nobody uses yet</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">Let&#x27;s hold off on the auto update stuff until after we&#x27;ve actually shipped a build that people can install. Because right now we&#x27;re optimizing something that literally nobody uses yet.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">Let&#x27;s hold off on the auto-update stuff until after we&#x27;ve actually shipped a build that people can install, because right now we&#x27;re optimizing something that literally nobody uses yet.</div></div>
+</div>
+<h3><code>para-1</code> &middot; paragraph &middot; 131 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">Okay so I&#x27;m here&#x27;s where I&#x27;ve landed on the architecture
+ question the the main thing is that we&#x27;ve got two sub-
+processes to supervise and that&#x27;s already kind of a lot for
+ a menu bar app.
+ Our whisper is unavoidable obviously we need it but the the
+ llama server is the one I keep going back and forth on
+ because it it holds two gigs of ram resident the whole time
+ the app is running and I&#x27;m not sure that&#x27;s a trade people
+ want to make just for slightly nicer punctuation you know
+ so what I&#x27;d like to do
+ is is measure it properly before we commit and if the rules
+ based thing gets us like 80% of the way there then honestly
+ we should just ship that and revisit later.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">I&#x27;m here&#x27;s where I&#x27;ve landed on the architecture question the main thing is that we&#x27;ve got two sub-processes to supervise. And that&#x27;s already kind of a lot for a menu bar app. Our whisper is unavoidable obviously we need it but the llama-server is the one I keep going back. And forth on because it holds two gigs of RAM resident the whole time the app is running. And I&#x27;m not sure that&#x27;s a trade people want to make just for slightly nicer punctuation. So what I&#x27;d like to do is measure it properly before we commit. And if the rules-based thing gets us like 80% of the way there then honestly we should just ship that and revisit later.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">Okay so I&#x27;m here&#x27;s where I&#x27;ve landed on the architecture
+ question the main thing is that we&#x27;ve got two sub-processes to supervise and that&#x27;s already kind of a lot for
+ a menu bar app.
+ Our whisper is unavoidable obviously we need it but the
+ llama server is the one I keep going back and forth on
+ because it holds two gigs of ram resident the whole time
+ the app is running and I&#x27;m not sure that&#x27;s a trade people
+ want to make just for slightly nicer punctuation you know
+ so what I&#x27;d like to do
+ is measure it properly before we commit and if the rules
+ based thing gets us like 80% of the way there then honestly
+ we should just ship that and revisit later.</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">Here&#x27;s where I&#x27;ve landed on the architecture. The main thing is that we&#x27;ve got two sub-processes to supervise and that&#x27;s already kind of a lot for a menu bar app. Our whisper is unavoidable, obviously, we need it. The llama server is the one I keep going back and forth on because it holds two gigs of RAM resident the whole time the app is running, and I&#x27;m not sure that&#x27;s a trade-off people want to make just for slightly nicer punctuation, you know. So, what I&#x27;d like to do is measure it properly before we commit. If the rules-based thing gets us like 80% of the way there, then honestly, we should just ship that and revisit later.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">Here&#x27;s where I&#x27;ve landed on the architecture question. The main thing is that we&#x27;ve got two subprocesses to supervise, and that&#x27;s already kind of a lot for a menu bar app. Whisper is unavoidable, obviously we need it, but the llama-server is the one I keep going back and forth on, because it holds two gigs of RAM resident the whole time the app is running, and I&#x27;m not sure that&#x27;s a trade people want to make just for slightly nicer punctuation. So what I&#x27;d like to do is measure it properly before we commit, and if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later.</div></div>
+</div>
+<h3><code>para-2</code> &middot; paragraph &middot; 126 words</h3>
+<div class="q"><div class="lab">Whisper base.en raw</div><div class="txt">So that the onboarding flow needs to handle three separate
+ permission prompts and they
+ they all behave differently which is annoying.
+ Our microphone access is the standard one that pops a
+ system dialogue immediately.
+ Accessibility is the one where Mac OS just silently denies
+ you until the user goes into
+ system settings and flips the toggle manually and then
+ input monitoring is is the one nobody
+ remembers exists until the global hotkey doesn&#x27;t fire what
+ I think we should do is is detect
+ all three up front on first launch show a single checklist
+ screen with with a green
+ tick next to each one as it gets granted and just pull
+ every second or so to update
+ it because there&#x27;s no callback for the accessibility one
+ anyway.</div></div>
+<div class="grid">
+<div class="q"><div class="lab">Rules only</div><div class="txt">That the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings. And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn&#x27;t fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted. And just pull every second or so to update it because there&#x27;s no callback for the accessibility one anyway.</div></div>
+<div class="q"><div class="lab">Llama 3.2 1B</div><div class="txt">So that the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn&#x27;t fire. I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted and just pull every second or so to update. Anyway.</div></div>
+<div class="q"><div class="lab">Llama 3.2 3B</div><div class="txt">So that the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn&#x27;t fire. What I think we should do is detect all three up front on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just pull every second or so to update it because there&#x27;s no callback for the accessibility one anyway.</div></div>
+<div class="q"><div class="lab">Human reference</div><div class="txt">The onboarding flow needs to handle three separate permission prompts, and they all behave differently, which is annoying. Microphone access is the standard one that pops a system dialog immediately. Accessibility is the one where macOS just silently denies you until the user goes into System Settings and flips the toggle manually. And then Input Monitoring is the one nobody remembers exists until the global hotkey doesn&#x27;t fire. What I think we should do is detect all three up front on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just poll every second or so to update it, because there&#x27;s no callback for the accessibility one anyway.</div></div>
+</div>
+<p class="foot">Throwaway spike for openstream issue #24. Not production code - no tests, no error handling, no persistence. Regenerate with <code>python3 bench.py latency &amp;&amp; python3 bench.py sustained &amp;&amp; python3 report.py</code>.</p>
