@@ -1,0 +1,123 @@
+<!doctype html>
+<!-- PROTOTYPE - throwaway spike for issue #46. -->
+<meta charset="utf-8" />
+<title>TCCProbe</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0; padding: 16px 20px; }
+  h1 { font-size: 15px; margin: 0 0 2px; }
+  .sub { opacity: .65; margin: 0 0 14px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  button { font: inherit; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 220px 1fr; gap: 10px; padding: 3px 0; border-bottom: 1px solid rgba(128,128,128,.18); }
+  .k { opacity: .6; }
+  .v { overflow-wrap: anywhere; }
+  .yes { color: #1a7f37; font-weight: 600; }
+  .no  { color: #cf222e; font-weight: 600; }
+  .card { border: 1px solid rgba(128,128,128,.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .card h2 { font-size: 13px; margin: 0 0 8px; }
+  pre { white-space: pre-wrap; margin: 8px 0 0; opacity: .8; }
+  .hint { opacity: .6; margin: 14px 0 0; }
+</style>
+
+<h1>TCC attribution probe - PROTOTYPE, issue #46</h1>
+<p class="sub">
+  Which binary holds the grant: the Electron bundle, or each spawned helper?
+  JS build tag <b>JS_BUILD_TAG_PLACEHOLDER</b>.
+  Every click re-reads the full state and appends a card below.
+</p>
+
+<div class="bar">
+  <button data-act="host">Read host state</button>
+  <button data-act="ax">Spawn axhelper (check only)</button>
+  <button data-act="ax-prompt">Spawn axhelper (--prompt)</button>
+  <button data-act="hk">Spawn hotkeyhelper (check only)</button>
+  <button data-act="hk-prompt">Spawn hotkeyhelper (--prompt)</button>
+  <button data-act="host-prompt">Host prompts for Accessibility</button>
+  <button data-act="all">Read everything</button>
+  <button data-act="copy">Copy report to clipboard</button>
+  <button data-act="clear">Clear</button>
+</div>
+
+<div id="out"></div>
+<p class="hint">
+  After each rebuild: quit the app fully (Cmd-Q), relaunch it, then click
+  &ldquo;Read everything&rdquo;. Compare the CDHash lines with logs/state.log.
+</p>
+
+<script>
+  const { ipcRenderer, clipboard } = require('electron');
+  const out = document.getElementById('out');
+  const collected = [];
+
+  const BOOLEAN_KEYS = new Set([
+    'reportedTrusted', 'functionallyTrusted', 'promptedTrusted',
+    'reportedGranted', 'functionallyGranted', 'promptedGranted',
+    'adhocSigned', 'prompted',
+  ]);
+
+  function flatten(obj, prefix = '') {
+    const rows = [];
+    for (const [k, v] of Object.entries(obj || {})) {
+      const key = prefix ? `${prefix}.${k}` : k;
+      if (v && typeof v === 'object' && !Array.isArray(v)) rows.push(...flatten(v, key));
+      else rows.push([key, v]);
+    }
+    return rows;
+  }
+
+  function render(payload) {
+    collected.push(payload);
+    const card = document.createElement('div');
+    card.className = 'card';
+    const title = document.createElement('h2');
+    title.textContent = `${payload.subject}  @ ${new Date().toLocaleTimeString()}`;
+    card.appendChild(title);
+    for (const [k, v] of flatten(payload)) {
+      if (k === 'subject') continue;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const kd = document.createElement('div'); kd.className = 'k'; kd.textContent = k;
+      const vd = document.createElement('div'); vd.className = 'v';
+      const leaf = k.split('.').pop();
+      if (typeof v === 'boolean' && BOOLEAN_KEYS.has(leaf)) {
+        vd.innerHTML = `<span class="${v ? 'yes' : 'no'}">${v ? 'YES' : 'NO'}</span>`;
+      } else {
+        vd.textContent = v === null ? 'null' : String(v);
+      }
+      row.append(kd, vd);
+      card.appendChild(row);
+    }
+    out.prepend(card);
+  }
+
+  const actions = {
+    host: () => ipcRenderer.invoke('host-state'),
+    ax: () => ipcRenderer.invoke('run-helper', 'axhelper', []),
+    'ax-prompt': () => ipcRenderer.invoke('run-helper', 'axhelper', ['--prompt']),
+    hk: () => ipcRenderer.invoke('run-helper', 'hotkeyhelper', []),
+    'hk-prompt': () => ipcRenderer.invoke('run-helper', 'hotkeyhelper', ['--prompt']),
+    'host-prompt': () => ipcRenderer.invoke('host-prompt-accessibility'),
+  };
+
+  document.querySelector('.bar').addEventListener('click', async (e) => {
+    const act = e.target.dataset.act;
+    if (!act) return;
+    if (act === 'clear') { out.innerHTML = ''; collected.length = 0; return; }
+    if (act === 'copy') {
+      clipboard.writeText(JSON.stringify(collected, null, 2));
+      e.target.textContent = 'Copied';
+      setTimeout(() => { e.target.textContent = 'Copy report to clipboard'; }, 1200);
+      return;
+    }
+    if (act === 'all') {
+      for (const k of ['host', 'ax', 'hk']) render(await actions[k]());
+      return;
+    }
+    render(await actions[act]());
+  });
+
+  // Surface the state on launch without a click, so a relaunch after a rebuild
+  // is self-documenting.
+  (async () => { for (const k of ['host', 'ax', 'hk']) render(await actions[k]()); })();
+</script>
