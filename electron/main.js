@@ -77,6 +77,8 @@ async function transcribeAndPrint(int16Samples) {
     console.log(`[dictation] ${(body.text || "").trim() || "(no speech detected)"}`);
   } catch (err) {
     console.error("[dictation] transcription failed:", err);
+  } finally {
+    setTrayState("idle");
   }
 }
 
@@ -84,6 +86,7 @@ function startRecording() {
   if (!captureWin || isRecording) return;
   isRecording = true;
   captureWin.webContents.send("start-recording");
+  setTrayState("recording");
   console.log("[dictation] recording - release the hotkey to stop");
 }
 
@@ -91,6 +94,7 @@ function stopRecording() {
   if (!captureWin || !isRecording) return;
   isRecording = false;
   captureWin.webContents.send("stop-recording");
+  setTrayState("transcribing");
 }
 
 function loadTrayIcons() {
@@ -141,6 +145,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
   const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
   if (samples.length === 0) {
     console.log("[dictation] no audio captured, skipping");
+    setTrayState("idle");
     return;
   }
   transcribeAndPrint(samples);
@@ -149,6 +154,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
 ipcMain.on("recording-error", (event, message) => {
   console.error("[dictation] capture failed:", message);
   isRecording = false;
+  setTrayState("idle");
 });
 
 app.whenReady().then(() => {
