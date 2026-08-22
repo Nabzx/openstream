@@ -1,4 +1,4 @@
-const { app, Tray, Menu, BrowserWindow, ipcMain } = require("electron");
+const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const whisperServer = require("./whisperServer");
 const hotkeyHelper = require("./hotkeyHelper");
@@ -6,8 +6,16 @@ const { encodeWav } = require("./wav");
 
 const isDev = process.env.NODE_ENV === "development";
 
+const TRAY_ICON_FILES = {
+  idle: "iconTemplate.png",
+  recording: "icon-recording.png",
+  transcribing: "icon-transcribing.png",
+};
+
 let tray = null;
 let win = null;
+let trayIcons = null;
+let trayState = "idle";
 let captureWin = null;
 let isRecording = false;
 
@@ -69,6 +77,8 @@ async function transcribeAndPrint(int16Samples) {
     console.log(`[dictation] ${(body.text || "").trim() || "(no speech detected)"}`);
   } catch (err) {
     console.error("[dictation] transcription failed:", err);
+  } finally {
+    setTrayState("idle");
   }
 }
 
@@ -76,6 +86,7 @@ function startRecording() {
   if (!captureWin || isRecording) return;
   isRecording = true;
   captureWin.webContents.send("start-recording");
+  setTrayState("recording");
   console.log("[dictation] recording - release the hotkey to stop");
 }
 
@@ -83,19 +94,50 @@ function stopRecording() {
   if (!captureWin || !isRecording) return;
   isRecording = false;
   captureWin.webContents.send("stop-recording");
+  setTrayState("transcribing");
+}
+
+function loadTrayIcons() {
+  trayIcons = {};
+  for (const [state, file] of Object.entries(TRAY_ICON_FILES)) {
+    trayIcons[state] = nativeImage.createFromPath(path.join(__dirname, "icons", file));
+  }
+}
+
+function setTrayState(state) {
+  if (!trayIcons[state]) {
+    throw new Error(`Unknown tray state: ${state}`);
+  }
+  trayState = state;
+  tray.setImage(trayIcons[state]);
+  tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
 }
 
 function createTray() {
-  const iconPath = path.join(__dirname, "icons", "iconTemplate.png");
-  tray = new Tray(iconPath);
-  tray.setToolTip("OpenStream");
+  loadTrayIcons();
+  tray = new Tray(trayIcons.idle);
+  setTrayState("idle");
 
-  const menu = Menu.buildFromTemplate([
+  const menuTemplate = [
     { label: "Open Window", click: createWindow },
     { type: "separator" },
-    { label: "Quit OpenStream", click: () => app.quit() },
-  ]);
-  tray.setContextMenu(menu);
+  ];
+
+  if (isDev) {
+    menuTemplate.push(
+      {
+        label: "Debug: tray state",
+        submenu: Object.keys(TRAY_ICON_FILES).map((state) => ({
+          label: state,
+          click: () => setTrayState(state),
+        })),
+      },
+      { type: "separator" }
+    );
+  }
+
+  menuTemplate.push({ label: "Quit OpenStream", click: () => app.quit() });
+  tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
 }
 
 ipcMain.on("recording-data", (event, arrayBuffer) => {
@@ -103,6 +145,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
   const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
   if (samples.length === 0) {
     console.log("[dictation] no audio captured, skipping");
+    setTrayState("idle");
     return;
   }
   transcribeAndPrint(samples);
@@ -111,6 +154,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
 ipcMain.on("recording-error", (event, message) => {
   console.error("[dictation] capture failed:", message);
   isRecording = false;
+  setTrayState("idle");
 });
 
 app.whenReady().then(() => {
