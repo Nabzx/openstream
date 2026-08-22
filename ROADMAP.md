@@ -70,7 +70,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
-- [ ] Onboarding flow — mic + Accessibility permission walkthrough
+- [ ] Permission state check - build script warns when a helper hash changes, app tests all three grants at launch and blocks on Accessibility / Input Monitoring (#47)
 - [ ] Settings UI complete (hotkey remapping, model choice, mode rules)
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
 - [ ] README demo GIF, short landing page
