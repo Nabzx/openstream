@@ -1,0 +1,4 @@
+# PROTOTYPE - throwaway spike for issue #46.
+# The built bundle and the Electron runtime are both reproducible from build.sh.
+build/
+vendor/
