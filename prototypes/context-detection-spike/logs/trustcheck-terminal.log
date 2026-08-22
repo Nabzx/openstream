@@ -1,0 +1,20 @@
+OpenStream context-detection spike (issue #28) - PROTOTYPE, throwaway
+AXIsProcessTrusted() = false
+NOT TRUSTED: every focused-element read below will fail with kAXErrorAPIDisabled.
+Grant Accessibility to the app running this process, then re-run.
+poke AXManualAccessibility = false   interval = 0.4s
+Switch apps and click into text fields. Records print only when something changes.
+Ctrl-C to stop.
+---------------------------------------------------------------
+[1:13:41 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : NO
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorAPIDisabled>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorAPIDisabled>
+            focused subrole   : <kAXErrorAPIDisabled>
+            role description  : <kAXErrorAPIDisabled>
+            focused title     : <kAXErrorAPIDisabled>
+            AXValue readable  : <kAXErrorAPIDisabled>
+            AXSelectedText    : <kAXErrorAPIDisabled>
