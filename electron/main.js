@@ -1,10 +1,18 @@
-const { app, Tray, Menu, BrowserWindow } = require("electron");
+const { app, Tray, Menu, BrowserWindow, globalShortcut, ipcMain } = require("electron");
 const path = require("path");
+const whisperServer = require("./whisperServer");
+const { encodeWav } = require("./wav");
 
 const isDev = process.env.NODE_ENV === "development";
 
+// Phase 0 hardcoded hotkey - proof that record -> transcribe -> console
+// works before any UI is built around it. Real push-to-talk config is #5.
+const DICTATE_HOTKEY = "CommandOrControl+Shift+D";
+
 let tray = null;
 let win = null;
+let captureWin = null;
+let isRecording = false;
 
 function createWindow() {
   if (win) {
@@ -39,6 +47,41 @@ function createWindow() {
   });
 }
 
+function createCaptureWindow() {
+  captureWin = new BrowserWindow({
+    show: false,
+    webPreferences: {
+      preload: path.join(__dirname, "capture", "capturePreload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
+}
+
+async function transcribeAndPrint(int16Samples) {
+  const wavBuffer = encodeWav(int16Samples);
+  const formData = new FormData();
+  formData.append("file", new Blob([wavBuffer], { type: "audio/wav" }), "dictation.wav");
+  formData.append("response_format", "json");
+
+  try {
+    const res = await fetch(whisperServer.inferenceUrl(), { method: "POST", body: formData });
+    if (!res.ok) throw new Error(`whisper-server returned ${res.status}`);
+    const { text } = await res.json();
+    console.log(`[dictation] ${text.trim()}`);
+  } catch (err) {
+    console.error("[dictation] transcription failed:", err);
+  }
+}
+
+function toggleDictation() {
+  if (!captureWin) return;
+  isRecording = !isRecording;
+  captureWin.webContents.send(isRecording ? "start-recording" : "stop-recording");
+  if (isRecording) console.log("[dictation] recording - press the hotkey again to stop");
+}
+
 function createTray() {
   const iconPath = path.join(__dirname, "icons", "iconTemplate.png");
   tray = new Tray(iconPath);
@@ -52,11 +95,30 @@ function createTray() {
   tray.setContextMenu(menu);
 }
 
+ipcMain.on("recording-data", (event, arrayBuffer) => {
+  const buffer = Buffer.from(arrayBuffer);
+  const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
+  transcribeAndPrint(samples);
+});
+
+ipcMain.on("recording-error", (event, message) => {
+  console.error("[dictation] capture failed:", message);
+  isRecording = false;
+});
+
 app.whenReady().then(() => {
   if (process.platform === "darwin") {
     app.dock.hide();
   }
   createTray();
+  createCaptureWindow();
+  whisperServer.start();
+  globalShortcut.register(DICTATE_HOTKEY, toggleDictation);
+});
+
+app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
+  whisperServer.stop();
 });
 
 // Menu bar app: stay alive with no windows open, quit only from the tray menu.
