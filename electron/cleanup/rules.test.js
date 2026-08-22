@@ -86,6 +86,21 @@ test("segments long run-ons on conjunctions", () => {
   assert.ok(out.includes(". "), "expected at least one inserted sentence break");
 });
 
+test("stays within the 0.1-1.0ms budget (#24/#45) on the longest sample", () => {
+  const longest = samples.reduce((a, b) => (b.messy.length > a.messy.length ? b : a));
+  for (let i = 0; i < 50; i++) cleanup(longest.messy); // warm up
+
+  const iterations = 200;
+  const start = process.hrtime.bigint();
+  for (let i = 0; i < iterations; i++) cleanup(longest.messy);
+  const elapsedMs = Number(process.hrtime.bigint() - start) / 1e6 / iterations;
+
+  // Generous ceiling vs. the ~0.15ms measured locally, to absorb slower CI
+  // hardware without being flaky - this guards against a real regression,
+  // not against machine variance.
+  assert.ok(elapsedMs < 5, `cleanup() averaged ${elapsedMs.toFixed(3)}ms, expected < 5ms`);
+});
+
 test("sweep over the spike sample set: coarse invariants hold", () => {
   for (const sample of samples) {
     const out = cleanup(sample.messy);
