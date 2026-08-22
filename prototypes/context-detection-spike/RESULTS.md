@@ -86,12 +86,16 @@ the Accessibility grant. "Knob" is whether `AXManualAccessibility` was needed.
 | Finder | `AXGroup` | no (`kAXErrorNoValue`) | no | unsupported | works, not a text surface |
 
 Safari, Notes and WhatsApp are marked inconclusive rather than failing for a
-concrete reason: during the focus passes a person was actively using Chrome on
-the same machine, and each of those three apps held focus for roughly one second
-before Chrome reclaimed it. In those samples the window title was also
-`kAXErrorNoValue`, meaning the app had no focused window at that instant. That
-is a test artifact, not an app verdict. Re-run `focus-retry.sh` on a quiet
-machine to settle them.
+concrete reason: during the focus-retry pass (1:22:44 to 1:23:04) a person was
+actively using Chrome on the same machine, reviewing GitHub pull request pages
+for this branch, and Chrome reclaimed focus within about a second each time. In
+those samples the window title was also `kAXErrorNoValue`, meaning the app had
+no focused window at that instant. That is a test artifact, not an app verdict.
+Re-run `focus-retry.sh` on a quiet machine to settle them.
+
+The dwell-time asymmetry in the controlled A/B below has a *different* cause:
+there the app reclaiming focus was VS Code, which hosts the session driving the
+probe. Worth keeping the two straight when reading the logs.
 
 ### The four findings that matter most
 
