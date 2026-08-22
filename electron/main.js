@@ -68,8 +68,8 @@ async function transcribeAndPrint(int16Samples) {
   try {
     const res = await fetch(whisperServer.inferenceUrl(), { method: "POST", body: formData });
     if (!res.ok) throw new Error(`whisper-server returned ${res.status}`);
-    const { text } = await res.json();
-    console.log(`[dictation] ${text.trim()}`);
+    const body = await res.json();
+    console.log(`[dictation] ${(body.text || "").trim() || "(no speech detected)"}`);
   } catch (err) {
     console.error("[dictation] transcription failed:", err);
   }
@@ -98,6 +98,10 @@ function createTray() {
 ipcMain.on("recording-data", (event, arrayBuffer) => {
   const buffer = Buffer.from(arrayBuffer);
   const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
+  if (samples.length === 0) {
+    console.log("[dictation] no audio captured, skipping");
+    return;
+  }
   transcribeAndPrint(samples);
 });
 
