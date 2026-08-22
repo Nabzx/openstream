@@ -124,6 +124,65 @@ function stripLeadingFillers(text) {
   return out.join("");
 }
 
+const RUN_ON_CONNECTIVES = new Set(["so", "and", "but", "because"]);
+
+function segmentSentences(text) {
+  // Whisper punctuates short clips well but leaves long dictation as one
+  // unbroken run-on, so a conjunction-based split is the highest-value rule
+  // for the paragraph bucket. Known weakness (see #45): this can land a
+  // boundary mid-clause on long paragraphs.
+  if (text.split(/\s+/).filter(Boolean).length < 25) return text;
+
+  const out = [];
+  for (const sentence of text.split(SENT_END)) {
+    const words = sentence.split(/\s+/).filter(Boolean);
+    if (words.length < 30) {
+      out.push(sentence);
+      continue;
+    }
+    const rebuilt = [];
+    let run = [];
+    for (let i = 0; i < words.length; i++) {
+      const word = words[i];
+      const bare = word.replace(/,$/, "").toLowerCase();
+      const remainder = words.length - i;
+      // Split only when both the run so far AND the remainder are long
+      // enough to stand alone, so we never strand a fragment.
+      if (RUN_ON_CONNECTIVES.has(bare) && run.length >= 12 && remainder >= 8) {
+        rebuilt.push(run.join(" ").replace(/,$/, "") + ".");
+        run = [word.replace(/,$/, "")];
+      } else {
+        run.push(word);
+      }
+    }
+    if (run.length) rebuilt.push(run.join(" "));
+    out.push(rebuilt.join(" "));
+  }
+  return out.join(" ");
+}
+
+function applyVocab(text) {
+  for (const [pattern, replacement] of VOCAB) {
+    text = text.replace(pattern, replacement);
+  }
+  return text;
+}
+
+function capitalise(text) {
+  text = text.replace(/\bi\b/g, "I");
+  text = text.replace(/\bi'(m|ve|ll|d)\b/g, (_match, suffix) => "I'" + suffix);
+  const parts = text.split(SENT_BOUNDARY_SPLIT);
+  return parts.map((part) => (part && /[a-zA-Z]/.test(part[0]) ? part[0].toUpperCase() + part.slice(1) : part)).join("");
+}
+
+function terminalPunct(text) {
+  text = text.replace(/\s+$/, "");
+  if (text && !".!?:".includes(text[text.length - 1])) {
+    text += ".";
+  }
+  return text;
+}
+
 module.exports = {
   STANDALONE_FILLERS,
   PHRASE_FILLERS,
@@ -136,4 +195,8 @@ module.exports = {
   collapseRepeats,
   applySpokenPunct,
   stripLeadingFillers,
+  segmentSentences,
+  applyVocab,
+  capitalise,
+  terminalPunct,
 };
