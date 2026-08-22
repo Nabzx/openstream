@@ -12,7 +12,8 @@ What's still missing: **dictation that knows what you're looking at.** Every exi
 
 ## What OpenStream does differently
 
-1. **Context-aware formatting** — detects the frontmost app/field via the macOS Accessibility API and adapts: no auto-capitalization or punctuation in a terminal, proper comment/docstring formatting in an editor, normal prose everywhere else.
+1. **Context-aware formatting** - detects the frontmost app/field via the macOS Accessibility API and adapts: no auto-capitalization or punctuation in a terminal, proper comment/docstring formatting in an editor, normal prose everywhere else.
+   **Not in v0.x.** [Issue #44](https://github.com/Nabzx/openstream/issues/44) deferred per-app modes: v0.x formats everything as prose. Detection is reliable ([#28](https://github.com/Nabzx/openstream/issues/28) measured the frontmost app correct 10 of 10), but getting the text reliably into the field you are pointing at is the load-bearing problem and comes first. This remains the thesis, not the v0.x behaviour.
 2. **Codebase-aware vocabulary** — reads identifiers, library names, and project-specific terms from the current git repo / open buffer and biases transcription toward them, so technical jargon and your own function/variable names actually transcribe correctly.
 3. **Voice-driven editing, not just dictation** — select existing text anywhere and speak an edit command ("make this a bullet list", "snake_case that", "shorter") to rewrite it in place.
 4. **Actually zero setup** — STT model and a small local LLM cleanup model ship bundled with the installer. No Ollama, no LM Studio, no manual model downloads, no config screens.
