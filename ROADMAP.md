@@ -46,10 +46,13 @@ Owns: audio capture, STT, text delivery, packaging.
 - [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update
 
 ### Track B — Intelligence
-Owns: context awareness, local LLM cleanup.
+Owns: reliable injection, prose cleanup.
 
-- [ ] Accessibility API: native helper detects frontmost app + focused field type, define discrete "modes" (terminal / code editor / prose)
-- [ ] Formatting rules engine per mode (no auto-caps/punctuation in terminal, proper comment formatting in editors)
+**Re-scoped by [#44](https://github.com/Nabzx/openstream/issues/44):** per-app modes are deferred. v0.x formats everything as prose, and the load-bearing problem is getting the text into the field the user is pointing at.
+
+- [ ] Accessibility API: native helper resolves the focused element so text can be put into it ([#12](https://github.com/Nabzx/openstream/issues/12)). No mode reporting
+- [ ] Decide and build the injection mechanism, its guard against a stale target, and what the user sees when it fails ([#62](https://github.com/Nabzx/openstream/issues/62))
+- [ ] Prose cleanup rules engine: filler removal, stutter collapse, spoken punctuation, capitalisation, run-on segmentation ([#13](https://github.com/Nabzx/openstream/issues/13)). One path, no per-mode dispatch
 - [ ] llama.cpp integration: download `llama-server` + Llama 3.2 3B Instruct (quantized GGUF), get a basic cleanup pass running (filler removal, punctuation) over local HTTP. Offer Llama 3.2 1B as a lighter fallback for lower-RAM Macs
 - [ ] Prompt design + a small eval set to judge cleanup quality before/after changes
 
@@ -71,7 +74,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
 - [ ] Onboarding flow — mic + Accessibility permission walkthrough
-- [ ] Settings UI complete (hotkey remapping, model choice, mode rules)
+- [ ] Settings UI complete (hotkey remapping, model choice, cleanup rules)
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
 - [ ] README demo GIF, short landing page
 - [ ] Public launch (Show HN, r/macapps, etc.)
