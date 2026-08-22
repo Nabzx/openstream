@@ -1,0 +1,58 @@
+[
+  {
+    "id": "cmd-1",
+    "bucket": "short",
+    "spoken": "um can you just uh run the the test suite again period",
+    "messy": "um can you just uh run the the test suite again period",
+    "reference": "Can you just run the test suite again?"
+  },
+  {
+    "id": "cmd-2",
+    "bucket": "short",
+    "spoken": "so like we should probably just revert that commit and and start over",
+    "messy": "so like we should probably just revert that commit and and start over",
+    "reference": "We should probably just revert that commit and start over."
+  },
+  {
+    "id": "cmd-3",
+    "bucket": "short",
+    "spoken": "okay so I think we should probably you know bump the timeout to thirty seconds",
+    "messy": "okay so I think we should probably you know bump the timeout to thirty seconds",
+    "reference": "I think we should bump the timeout to thirty seconds."
+  },
+  {
+    "id": "sent-1",
+    "bucket": "sentence",
+    "spoken": "um so the the problem is that when the user hits the hotkey uh we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently",
+    "messy": "um so the the problem is that when the user hits the hotkey uh we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently",
+    "reference": "The problem is that when the user hits the hotkey we start recording immediately, but we don't actually check whether the microphone permission has been granted yet, so it just fails silently."
+  },
+  {
+    "id": "sent-2",
+    "bucket": "sentence",
+    "spoken": "I mean basically what I want is for the tray icon to to show a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a a static icon wondering if it worked",
+    "messy": "I mean basically what I want is for the tray icon to to show a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a a static icon wondering if it worked",
+    "reference": "What I want is for the tray icon to show a different state while we're transcribing, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked."
+  },
+  {
+    "id": "sent-3",
+    "bucket": "sentence",
+    "spoken": "uh let's let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're we're optimizing something that literally nobody uses yet",
+    "messy": "uh let's let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're we're optimizing something that literally nobody uses yet",
+    "reference": "Let's hold off on the auto-update stuff until after we've actually shipped a build that people can install, because right now we're optimizing something that literally nobody uses yet."
+  },
+  {
+    "id": "para-1",
+    "bucket": "paragraph",
+    "spoken": "okay so um here's where I've landed on the architecture question the the main thing is that we've got two subprocesses to supervise and that's already kind of a lot for a menu bar app uh whisper is unavoidable obviously we need it but the the llama server is the one I keep going back and forth on because it it holds two gigs of ram resident the whole time the app is running and I'm not sure that's a trade people want to make just for slightly nicer punctuation you know so what I'd like to do is is measure it properly before we commit and if the rules based thing gets us like eighty percent of the way there then honestly we should just ship that and revisit later",
+    "messy": "okay so um here's where I've landed on the architecture question the the main thing is that we've got two subprocesses to supervise and that's already kind of a lot for a menu bar app uh whisper is unavoidable obviously we need it but the the llama server is the one I keep going back and forth on because it it holds two gigs of ram resident the whole time the app is running and I'm not sure that's a trade people want to make just for slightly nicer punctuation you know so what I'd like to do is is measure it properly before we commit and if the rules based thing gets us like eighty percent of the way there then honestly we should just ship that and revisit later",
+    "reference": "Here's where I've landed on the architecture question. The main thing is that we've got two subprocesses to supervise, and that's already kind of a lot for a menu bar app. Whisper is unavoidable, obviously we need it, but the llama-server is the one I keep going back and forth on, because it holds two gigs of RAM resident the whole time the app is running, and I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit, and if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later."
+  },
+  {
+    "id": "para-2",
+    "bucket": "paragraph",
+    "spoken": "so the the onboarding flow needs to handle three separate permission prompts and they they all behave differently which is annoying uh microphone access is the standard one that pops a system dialog immediately accessibility is the one where macos just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is is detect all three up front on first launch show a single checklist screen with with a green tick next to each one as it gets granted and just poll every second or so to update it because there's no callback for the accessibility one anyway",
+    "messy": "so the the onboarding flow needs to handle three separate permission prompts and they they all behave differently which is annoying uh microphone access is the standard one that pops a system dialog immediately accessibility is the one where macos just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is is detect all three up front on first launch show a single checklist screen with with a green tick next to each one as it gets granted and just poll every second or so to update it because there's no callback for the accessibility one anyway",
+    "reference": "The onboarding flow needs to handle three separate permission prompts, and they all behave differently, which is annoying. Microphone access is the standard one that pops a system dialog immediately. Accessibility is the one where macOS just silently denies you until the user goes into System Settings and flips the toggle manually. And then Input Monitoring is the one nobody remembers exists until the global hotkey doesn't fire. What I think we should do is detect all three up front on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just poll every second or so to update it, because there's no callback for the accessibility one anyway."
+  }
+]
