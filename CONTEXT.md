@@ -27,7 +27,7 @@ The process that turns captured audio into text. Fills the role currently held b
 _Avoid_: whisper, STT engine, the transcriber
 
 **Rewrite model server**:
-The process that rewrites existing text on request, serving voice edits only. Fills the role currently held by `llama-server`, though the model in that role is not settled.
+The process that rewrites existing text on request. It serves voice edits, and it decides break placement during ordinary dictation. Fills the role currently held by `llama-server`, though the model in that role is not settled.
 _Avoid_: llama-server, the LLM, cleanup model
 
 **Model supervisor**:
@@ -45,5 +45,13 @@ _Avoid_: Eviction, unloading, timeout kill
 ### Cleanup
 
 **Rules cleanup**:
-Deterministic, non-model text tidying applied to every dictation. Costs under a millisecond, and is the only cleanup on the dictation path.
+Deterministic, non-model text tidying applied to every dictation. Costs under a millisecond. It does all cleanup except break placement, which it asks the rewrite model server to decide.
 _Avoid_: Post-processing, formatting pass
+
+**Break-safe application**:
+An application where inserting a line break does not submit or send. The app inserts a paragraph break only in these. Every application is treated as unsafe until it is listed.
+_Avoid_: Allow-listed app, multi-line app, safe app
+
+**Break placement**:
+The choice of where paragraph breaks belong in one dictation. The rewrite model server decides it, and answers with sentence numbers rather than with text.
+_Avoid_: Paragraph inference, auto-formatting, LLM cleanup
