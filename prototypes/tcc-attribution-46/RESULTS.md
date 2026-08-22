@@ -86,12 +86,22 @@ identity. Helpers still pass → it is not.
 
 ## Step 7 - `tccutil reset`
 
-Not measured yet.
+**Half measured.** Both commands were run against a clean checkout with *no
+grant in place*, so they establish only that the host bundle id is a valid
+target. What they clear once a real grant exists is still open.
 
 | Command | Exit status | What it actually cleared |
 | --- | --- | --- |
-| `tccutil reset Accessibility dev.openstream.prototype.tccprobe` | - | - |
-| `tccutil reset ListenEvent dev.openstream.prototype.tccprobe` | - | - |
+| `tccutil reset Accessibility dev.openstream.prototype.tccprobe` | 0, `Successfully reset Accessibility approval status` | Unknown - no grant existed yet. |
+| `tccutil reset ListenEvent dev.openstream.prototype.tccprobe` | 0, `Successfully reset ListenEvent approval status` | Unknown - no grant existed yet. |
+| Control: `tccutil reset Accessibility com.example.definitely.not.installed.xyz` | 64, `No such bundle identifier ... OSStatus -10814` | n/a |
+
+The control is what makes the two exit-0 results mean anything: `tccutil`
+rejects a bundle id LaunchServices does not know. So the host bundle id **is** a
+usable target and `ListenEvent` **is** the right service name for Input
+Monitoring. Neither helper has a bundle id at all (measured above), so this
+target can only ever reach the host's entry. Whether that is enough depends
+entirely on steps 5 and 6.
 
 ## Verdict
 
