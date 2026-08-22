@@ -70,12 +70,26 @@ function createTray() {
   tray = new Tray(trayIcons.idle);
   setTrayState("idle");
 
-  const menu = Menu.buildFromTemplate([
+  const menuTemplate = [
     { label: "Open Window", click: createWindow },
     { type: "separator" },
-    { label: "Quit OpenStream", click: () => app.quit() },
-  ]);
-  tray.setContextMenu(menu);
+  ];
+
+  if (isDev) {
+    menuTemplate.push(
+      {
+        label: "Debug: tray state",
+        submenu: Object.keys(TRAY_ICON_FILES).map((state) => ({
+          label: state,
+          click: () => setTrayState(state),
+        })),
+      },
+      { type: "separator" }
+    );
+  }
+
+  menuTemplate.push({ label: "Quit OpenStream", click: () => app.quit() });
+  tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
 }
 
 app.whenReady().then(() => {
