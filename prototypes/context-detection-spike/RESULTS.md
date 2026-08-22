@@ -76,10 +76,10 @@ the Accessibility grant. "Knob" is whether `AXManualAccessibility` was needed.
 | TextEdit, new untitled doc | `AXTextArea` | yes | yes | unsupported, not needed | works |
 | Chrome, address bar | `AXTextField` | yes, 36 chars | yes, 36 chars | unsupported, not needed | works |
 | Chrome, page content | `AXLink` / `AXButton` / `AXTextField` | yes | varies by role | unsupported, not needed | works |
-| VS Code, untitled editor | `AXTextArea` | yes | yes | accepted, not needed | works |
-| VS Code, chrome/panel field | `AXTextField` | yes | yes | accepted, not needed | works |
-| Cursor | `AXWebArea` | yes, 0 chars | not reported | accepted, still no field role | partial |
-| Obsidian | `kAXErrorNoValue` before poke, `AXGroup` with readable value after | yes after poke | no | **required** | works only when poked |
+| VS Code, untitled editor | `AXTextArea` | **yes, verified: typed "hello world", read back 11 chars** | yes | accepted; necessity unproven, see below | works |
+| VS Code, chrome/panel field | `AXTextField` | yes | yes | accepted; necessity unproven | works |
+| Cursor | `AXWebArea` ("HTML content") | yes, 0 chars | no | **appears required** | works when poked, container role only |
+| Obsidian | `AXGroup` | yes, 0 chars | no | **appears required** | works when poked |
 | Notes | `AXWindow` / `AXStandardWindow` when no field focused | no (`kAXErrorAttributeUnsupported`) | no | unsupported | field-level inconclusive |
 | Safari | `kAXErrorNoValue` | no | no | unsupported | inconclusive |
 | WhatsApp | `kAXErrorNoValue` | no | no | unsupported | inconclusive |
@@ -95,17 +95,21 @@ machine to settle them.
 
 ### The four findings that matter most
 
-1. **`AXManualAccessibility` is real, and it flipped Obsidian.** Obsidian
-   reported `kAXErrorNoValue` for everything before the poke, and `AXGroup` with
-   a readable `AXValue` one sample after it (`logs/probe-20260822-131955.log`,
-   1:20:28 to 1:20:30). VS Code and Cursor accept the flag too. So the helper
-   should set it on every Chromium app it meets, unconditionally. Note that
-   Chromium builds the tree asynchronously: reading in the same breath as the
+1. **`AXManualAccessibility` looks necessary for Electron, on the best evidence
+   available here.** See the controlled A/B section below. Set it on every
+   Chromium app the helper meets, unconditionally: it is free, it is a no-op on
+   native apps (`kAXErrorAttributeUnsupported`), and both Electron apps that
+   could be tested cold exposed a focused element only in the poked arm.
+   Chromium builds the tree asynchronously, so reading in the same breath as the
    poke shows nothing even when the poke worked.
-2. **VS Code needs no poke at all.** The flagship Electron case in the issue is
-   the *good* case: `AXTextArea` in the editor, `AXTextField` in panel fields,
-   value and selection both readable. The worry that Electron uniformly breaks
-   detection is not supported.
+2. **VS Code is the good Electron case, but "needs no poke" is NOT established.**
+   Its editor reports `AXTextArea`, its panel fields `AXTextField`, and value
+   and selection are readable. What cannot be claimed is that this happens
+   unaided: Wispr Flow, a context-aware dictation app and therefore an active
+   accessibility client, was running for the whole first half of this spike, and
+   Chromium builds its tree when *any* AT client asks. VS Code also hosts the
+   session driving the probe, so it cannot be restarted cold to check. Treat VS
+   Code as "works, poke it anyway".
 3. **The system-wide element is useless here.** Every single sample, trusted or
    not, returned `kAXErrorCannotComplete` for
    `AXUIElementCreateSystemWide()` + `kAXFocusedUIElementAttribute`, including
@@ -117,6 +121,49 @@ machine to settle them.
    Terminal mode can be selected by app and role, but any feature needing the
    current command text (vocabulary biasing from the prompt, voice editing of
    the current line) needs a different mechanism there.
+
+### The controlled A/B (`controlled-ab.sh`, `logs/ab-nopoke.log`, `logs/ab-poke.log`)
+
+The first poke run could not support a necessity claim, for two reasons. Wispr
+Flow was running, so something else may already have enabled every Chromium
+tree. And both arms hit the same long-lived Cursor and Obsidian processes, so
+the "un-poked" arm was not actually un-poked.
+
+`controlled-ab.sh` fixes both: it quits Wispr Flow (verified: no matching
+processes remained), quits and cold-relaunches Cursor and Obsidian (fresh pids
+60052 and 60055), then runs a no-poke arm and a poke arm, typing `hello world`
+into a field in each app.
+
+| App (fresh pid) | Arm A, no poke | Arm B, poke |
+| --- | --- | --- |
+| Cursor 60052 | `kAXErrorNoValue` | `AXWebArea`, role description "HTML content", `AXValue` readable |
+| Obsidian 60055 | `kAXErrorNoValue` | `AXGroup`, `AXValue` readable |
+| VS Code 8648 (not cold) | `AXTextArea`, **read back the typed 11 chars** | `AXTextArea` / `AXRow` / `AXButton` |
+
+Two apps, fresh processes, no competing accessibility client, and a focused
+element appeared **only** in the poked arm for both. That is the strongest
+evidence this spike produced, and it points at "poke everything Chromium".
+
+**The caveat that keeps this at "appears required" rather than proven**: the
+arms did not get equal exposure. VS Code hosts the session driving the probe and
+kept reclaiming focus within a second or two, so in arm A Cursor and Obsidian
+each held focus for roughly one second, against 13 to 25 seconds in arm B. A
+one-second window may simply be too short for a focused element to exist yet.
+Settling this needs a machine nobody is working on. The practical
+recommendation does not change either way, because poking is free and harmless.
+
+One cell the A/B strengthens rather than weakens: Chrome kept reporting real
+elements (`AXTextField`, then `AXComboBox` with 8 readable characters) during
+arm A, with Wispr Flow quit and no poke. Chrome rejects `AXManualAccessibility`
+with `kAXErrorAttributeUnsupported` and exposes its tree to a trusted client
+anyway, so browsers need no special handling.
+
+Also verified here, and worth separating from "the attribute is non-nil":
+typing `hello world` into a VS Code editor and reading `AXValue` back returned
+exactly 11 characters. Chrome's address bar likewise returned 36 characters
+matching its contents. Those two are the only cells where readability was
+checked against known content; the other `yes (0 chars)` cells establish that an
+`AXValue` attribute exists and is readable, which is a weaker claim.
 
 ### Role vocabulary is not uniform
 
@@ -151,13 +198,14 @@ to be silent.**
 
 - The **app-level** half is free, permission-free, and correct for every app
   tested. Per-app mode selection is safe.
-- The **field-level** half works in native apps, in Chrome, and in VS Code
-  without any special handling. It works in Obsidian only after setting
-  `AXManualAccessibility`, and degrades to a container role (`AXWebArea`) rather
-  than a field role in Cursor.
-- Known-bad / needs-care set so far: **Cursor** (container role only),
-  **Obsidian** (needs the poke), and everything unmeasured, which still includes
-  Slack, JetBrains and Electron terminals.
+- The **field-level** half works in native apps, in Chrome, and in VS Code.
+  Electron apps need `AXManualAccessibility` set on them, and the helper should
+  set it unconditionally on every Chromium app rather than trying to work out
+  which ones need it.
+- Known-bad / needs-care set so far: **Cursor** (exposes only a container role,
+  `AXWebArea`, so the helper learns "some web surface" and not what kind of
+  field), **Obsidian** (exposes `AXGroup`, same problem), and everything
+  unmeasured, which still includes Slack, JetBrains and Electron terminals.
 - The product thesis survives, but the modes need **a visible indicator of the
   detected mode and a manual override**, because the failure shape is not "no
   answer" but "a plausible wrong answer": a stale frontmost app from a missing
@@ -168,5 +216,19 @@ to be silent.**
   command line needs rethinking.
 
 Remaining work before this is a complete map: install Slack, a JetBrains IDE and
-one Electron terminal, and re-run `focus-retry.sh` on a machine nobody is using
-to settle Safari, Notes and WhatsApp.
+one Electron terminal, and re-run `focus-retry.sh` and `controlled-ab.sh` on a
+machine nobody is using, to settle Safari, Notes and WhatsApp and to turn
+"`AXManualAccessibility` appears required" into a proven result.
+
+## Housekeeping from these runs
+
+The sweeps left state on the machine: several Terminal windows, an untitled
+TextEdit document, a Safari window, and untitled buffers in VS Code and Cursor.
+Wispr Flow was quit for the controlled A/B and relaunched afterwards.
+
+No tests were written for any of this. The prototype skill forbids them ("a
+prototype that needs tests is no longer a prototype") while the repo's standing
+instructions mandate test-first development. The skill was followed here because
+this is throwaway probe code that gets deleted once the question is answered.
+Anything lifted out of it into the real native helper gets tests first, as
+normal.
