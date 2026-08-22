@@ -12,7 +12,8 @@
     "build:whisper": "bash scripts/build-whisper.sh",
     "postinstall": "npm run build:whisper",
     "start": "cross-env NODE_ENV=production electron .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test \"electron/**/*.test.js\""
   },
   "dependencies": {
     "react": "^18.3.1",
