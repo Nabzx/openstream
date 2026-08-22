@@ -15,7 +15,7 @@ What's still missing: **dictation that knows what you're looking at.** Every exi
 1. **Context-aware formatting** — detects the frontmost app/field via the macOS Accessibility API and adapts: no auto-capitalization or punctuation in a terminal, proper comment/docstring formatting in an editor, normal prose everywhere else.
 2. **Codebase-aware vocabulary** — reads identifiers, library names, and project-specific terms from the current git repo / open buffer and biases transcription toward them, so technical jargon and your own function/variable names actually transcribe correctly.
 3. **Voice-driven editing, not just dictation** — select existing text anywhere and speak an edit command ("make this a bullet list", "snake_case that", "shorter") to rewrite it in place.
-4. **Actually zero setup** — STT model and a small local LLM cleanup model ship bundled with the installer. No Ollama, no LM Studio, no manual model downloads, no config screens.
+4. **Build it once, then nothing to set up** — there is no installer and no bundled model. You build from source, and the build compiles whisper.cpp and fetches its model for you. After that: no Ollama, no LM Studio, no manual model downloads, no first-run downloader, no config screens.
 
 ## Status
 
@@ -24,8 +24,9 @@ Early development — pre-alpha, no working build yet. Architecture below is the
 ## Planned architecture
 
 - **App shell**: Electron + React + TypeScript (Vite), menu bar tray app
-- **Speech-to-text**: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), prebuilt binary downloaded at build/first-run (not committed), run as a subprocess
-- **Local LLM cleanup pass**: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`) running **Llama 3.2 3B Instruct** (quantized GGUF, ~2GB), downloaded at build/first-run and called over local HTTP for formatting/editing/command-following. Meta built this size specifically for on-device rewriting/summarization, and it matches or beats Llama 3.1 8B on those tasks despite being under half the size. **Llama 3.2 1B** is offered as a lighter fallback for lower-RAM Macs via the model-size setting.
+- **Speech-to-text**: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), **compiled from source at a pinned tag during the build** - upstream publishes no macOS arm64 CLI binary, and a compiler is already required for the native helpers. One model, `ggml-base.en.bin` (141 MiB), fetched during the build from a **pinned Hugging Face revision** and verified against a known SHA-256; the build fails loudly if it does not match. Neither the binary nor the model is committed. Run as a resident `whisper-server` supervised for the life of the app.
+- **Text cleanup**: a **deterministic rules engine**, not a model. Filler removal, punctuation and per-mode formatting cost 0.1-1.0 ms. **There is no LLM in the dictation path** - measurement showed whisper already self-cleans short clips, so a model only earned its keep on exactly the long inputs where it cost seconds.
+- **Local rewrite model (Phase 3 only)**: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`), used solely for voice-driven editing, where the user explicitly asks for a rewrite and expects to wait. It starts lazily on first use and is released after 5 minutes idle. The model must be **Apache 2.0 or MIT and ungated** (no account, no terms acceptance): **SmolLM2-1.7B-Instruct** provisionally, Qwen3-1.7B the alternate. How it is acquired is still open.
 - **macOS native helpers**: small Swift/Objective-C binaries (compiled via native build scripts) for Accessibility API context detection, text injection, and mic access
 - **Vocabulary biasing**: lightweight scan of open editor buffer / git repo for identifiers and terms, fed into whisper.cpp as an initial prompt / bias list
 
