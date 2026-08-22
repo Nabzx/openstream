@@ -1,10 +1,18 @@
-const { app, Tray, Menu, BrowserWindow } = require("electron");
+const { app, Tray, Menu, BrowserWindow, nativeImage } = require("electron");
 const path = require("path");
 
 const isDev = process.env.NODE_ENV === "development";
 
+const TRAY_ICON_FILES = {
+  idle: "iconTemplate.png",
+  recording: "icon-recording.png",
+  transcribing: "icon-transcribing.png",
+};
+
 let tray = null;
 let win = null;
+let trayIcons = null;
+let trayState = "idle";
 
 function createWindow() {
   if (win) {
@@ -39,17 +47,49 @@ function createWindow() {
   });
 }
 
-function createTray() {
-  const iconPath = path.join(__dirname, "icons", "iconTemplate.png");
-  tray = new Tray(iconPath);
-  tray.setToolTip("OpenStream");
+function loadTrayIcons() {
+  trayIcons = {};
+  for (const [state, file] of Object.entries(TRAY_ICON_FILES)) {
+    trayIcons[state] = nativeImage.createFromPath(path.join(__dirname, "icons", file));
+  }
+}
 
-  const menu = Menu.buildFromTemplate([
+// Called by whatever's driving the actual state later (hotkey handler,
+// transcription pipeline) once those exist. Idle-only for now.
+function setTrayState(state) {
+  if (!trayIcons[state]) {
+    throw new Error(`Unknown tray state: ${state}`);
+  }
+  trayState = state;
+  tray.setImage(trayIcons[state]);
+  tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
+}
+
+function createTray() {
+  loadTrayIcons();
+  tray = new Tray(trayIcons.idle);
+  setTrayState("idle");
+
+  const menuTemplate = [
     { label: "Open Window", click: createWindow },
     { type: "separator" },
-    { label: "Quit OpenStream", click: () => app.quit() },
-  ]);
-  tray.setContextMenu(menu);
+  ];
+
+  if (isDev) {
+    menuTemplate.push(
+      {
+        label: "Debug: tray state",
+        submenu: Object.keys(TRAY_ICON_FILES).map((state) => ({
+          label: state,
+          click: () => setTrayState(state),
+        })),
+      },
+      { type: "separator" }
+    );
+  }
+
+  menuTemplate.push({ label: "Quit OpenStream", click: () => app.quit() });
+  tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
 }
 
 app.whenReady().then(() => {
