@@ -1,0 +1,513 @@
+{
+  "meta": {
+    "machine": "Apple M3",
+    "ram_gb": 16,
+    "macos": "15.6.1",
+    "reps": 3,
+    "when": "2026-08-22 13:09:12"
+  },
+  "cold_start": {
+    "whisper:base.en": 0.38,
+    "whisper:small.en": 0.81,
+    "llm:llama-3.2-3b": 2.27,
+    "llm:llama-3.2-1b": 1.64
+  },
+  "samples": {
+    "cmd-1": {
+      "bucket": "short",
+      "words": 12,
+      "spoken": "um can you just uh run the the test suite again period",
+      "messy": "um can you just uh run the the test suite again period",
+      "reference": "Can you just run the test suite again?",
+      "audio_seconds": 3.17,
+      "rules_from_messy": "Can you just run the test suite again.",
+      "rules_seconds": 9.6e-05,
+      "transcript_base.en": "How can you just run the test suite again period?",
+      "transcribe_seconds_base.en": 0.113,
+      "transcribe_all_base.en": [
+        0.109,
+        0.113,
+        0.115
+      ],
+      "rules_from_base.en": "How can you just run the test suite again?",
+      "transcript_small.en": "Um, can you just run the test suite again period?",
+      "transcribe_seconds_small.en": 0.303,
+      "transcribe_all_small.en": [
+        0.303,
+        0.304,
+        0.293
+      ],
+      "rules_from_small.en": "Can you just run the test suite again?",
+      "llm_llama-3.2-3b_from_messy": "Can you just run the test suite again.",
+      "llm_llama-3.2-3b_seconds_from_messy": 0.281,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 116,
+        "completion_tokens": 10
+      },
+      "llm_llama-3.2-3b_from_base.en": "Run the test suite again.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 0.202,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 115,
+        "completion_tokens": 7
+      },
+      "llm_llama-3.2-3b_from_small.en": "Can you just run the test suite again.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 0.273,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 116,
+        "completion_tokens": 10
+      },
+      "llm_llama-3.2-1b_from_messy": "The test suite again.",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.069,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 116,
+        "completion_tokens": 6
+      },
+      "llm_llama-3.2-1b_from_base.en": "I can run the test suite again.",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.103,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 115,
+        "completion_tokens": 9
+      },
+      "llm_llama-3.2-1b_from_small.en": "I'll run the test suite again.",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.111,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 116,
+        "completion_tokens": 9
+      }
+    },
+    "cmd-2": {
+      "bucket": "short",
+      "words": 13,
+      "spoken": "so like we should probably just revert that commit and and start over",
+      "messy": "so like we should probably just revert that commit and and start over",
+      "reference": "We should probably just revert that commit and start over.",
+      "audio_seconds": 3.99,
+      "rules_from_messy": "We should probably just revert that commit and start over.",
+      "rules_seconds": 0.000125,
+      "transcript_base.en": "so like we should probably just revert that commit and\n start over.",
+      "transcribe_seconds_base.en": 0.115,
+      "transcribe_all_base.en": [
+        0.121,
+        0.115,
+        0.112
+      ],
+      "rules_from_base.en": "We should probably just revert that commit and start over.",
+      "transcript_small.en": "So like we should probably just revert that commit and then\n start over.",
+      "transcribe_seconds_small.en": 0.316,
+      "transcribe_all_small.en": [
+        0.32,
+        0.316,
+        0.308
+      ],
+      "rules_from_small.en": "We should probably just revert that commit and then start over.",
+      "llm_llama-3.2-3b_from_messy": "We should probably just revert that commit and start over.",
+      "llm_llama-3.2-3b_seconds_from_messy": 0.344,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 117,
+        "completion_tokens": 12
+      },
+      "llm_llama-3.2-3b_from_base.en": "We should probably just revert that commit and start over.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 0.329,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 118,
+        "completion_tokens": 12
+      },
+      "llm_llama-3.2-3b_from_small.en": "We should probably just revert that commit and then start over.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 0.355,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 119,
+        "completion_tokens": 13
+      },
+      "llm_llama-3.2-1b_from_messy": "\"so like we should probably just revert that commit and start over\"",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.19,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 117,
+        "completion_tokens": 15
+      },
+      "llm_llama-3.2-1b_from_base.en": "\"so like we should probably just revert that commit and start over.\"",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.185,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 118,
+        "completion_tokens": 15
+      },
+      "llm_llama-3.2-1b_from_small.en": "\"Okay, let's revert that commit and then start over.\"",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.173,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 119,
+        "completion_tokens": 14
+      }
+    },
+    "cmd-3": {
+      "bucket": "short",
+      "words": 15,
+      "spoken": "okay so I think we should probably you know bump the timeout to thirty seconds",
+      "messy": "okay so I think we should probably you know bump the timeout to thirty seconds",
+      "reference": "I think we should bump the timeout to thirty seconds.",
+      "audio_seconds": 4.89,
+      "rules_from_messy": "I think we should probably bump the timeout to thirty seconds.",
+      "rules_seconds": 0.000134,
+      "transcript_base.en": "Okay so I think we should probably you know bump the time\n out to 30 seconds.",
+      "transcribe_seconds_base.en": 0.125,
+      "transcribe_all_base.en": [
+        0.118,
+        0.125,
+        0.134
+      ],
+      "rules_from_base.en": "I think we should probably bump the time out to 30 seconds.",
+      "transcript_small.en": "Okay so I think we should probably you know bump the time\n out to 30 seconds.",
+      "transcribe_seconds_small.en": 0.339,
+      "transcribe_all_small.en": [
+        0.322,
+        0.35,
+        0.339
+      ],
+      "rules_from_small.en": "I think we should probably bump the time out to 30 seconds.",
+      "llm_llama-3.2-3b_from_messy": "We should probably bump the timeout to thirty seconds.",
+      "llm_llama-3.2-3b_seconds_from_messy": 0.326,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 119,
+        "completion_tokens": 11
+      },
+      "llm_llama-3.2-3b_from_base.en": "We should probably bump the time out to 30 seconds.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 0.417,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 123,
+        "completion_tokens": 13
+      },
+      "llm_llama-3.2-3b_from_small.en": "We should probably bump the time out to 30 seconds.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 0.377,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 123,
+        "completion_tokens": 13
+      },
+      "llm_llama-3.2-1b_from_messy": "I will bump the timeout to thirty seconds.",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.113,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 119,
+        "completion_tokens": 10
+      },
+      "llm_llama-3.2-1b_from_base.en": "\"Okay, so we should bump the time out to 30 seconds.\"",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.201,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 123,
+        "completion_tokens": 16
+      },
+      "llm_llama-3.2-1b_from_small.en": "\"Okay, so we should bump the time out to 30 seconds.\"",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.187,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 123,
+        "completion_tokens": 16
+      }
+    },
+    "sent-1": {
+      "bucket": "sentence",
+      "words": 36,
+      "spoken": "um so the the problem is that when the user hits the hotkey uh we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently",
+      "messy": "um so the the problem is that when the user hits the hotkey uh we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently",
+      "reference": "The problem is that when the user hits the hotkey we start recording immediately, but we don't actually check whether the microphone permission has been granted yet, so it just fails silently.",
+      "audio_seconds": 11.59,
+      "rules_from_messy": "The problem is that when the user hits the hotkey we start recording immediately. But we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "rules_seconds": 0.000304,
+      "transcript_base.en": "I'm so that the problem is that when the user hits the hot\n key are we start recording\n immediately but we don't actually check whether the\n microphone permission has been granted\n yet so it just fails silently.",
+      "transcribe_seconds_base.en": 0.177,
+      "transcribe_all_base.en": [
+        0.204,
+        0.177,
+        0.175
+      ],
+      "rules_from_base.en": "I'm so that the problem is that when the user hits the hotkey are we start recording immediately. But we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "transcript_small.en": "Um so the problem is that when the user hits the hotkey are\n we start recording immediately\n but we don't actually check whether the microphone\n permission has been granted yet so it just\n fails silently.",
+      "transcribe_seconds_small.en": 0.524,
+      "transcribe_all_small.en": [
+        0.535,
+        0.508,
+        0.524
+      ],
+      "rules_from_small.en": "The problem is that when the user hits the hotkey are we start recording immediately. But we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "llm_llama-3.2-3b_from_messy": "So the problem is that when the user hits the hotkey, we start recording immediately, but we don't actually check whether the microphone permission has been granted yet, so it just fails silently.",
+      "llm_llama-3.2-3b_seconds_from_messy": 1.274,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 142,
+        "completion_tokens": 40
+      },
+      "llm_llama-3.2-3b_from_base.en": "I'm so that the problem is that when the user hits the hot key are we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 1.175,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 148,
+        "completion_tokens": 41
+      },
+      "llm_llama-3.2-3b_from_small.en": "So the problem is that when the user hits the hotkey, we start recording immediately. But we don't actually check whether the microphone permission has been granted yet, so it just fails silently.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 1.09,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 146,
+        "completion_tokens": 40
+      },
+      "llm_llama-3.2-1b_from_messy": "The the problem is that when the user hits the hotkey, uh, we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.472,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 142,
+        "completion_tokens": 40
+      },
+      "llm_llama-3.2-1b_from_base.en": "I'm so that the problem is that when the user hits the hot key, are we start recording immediately but we don't actually check whether the microphone permission has been granted yet so it just fails silently.",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.657,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 148,
+        "completion_tokens": 42
+      },
+      "llm_llama-3.2-1b_from_small.en": "We start recording immediately\nbut we don't actually check whether the microphone\npermission has been granted yet so it just\nfails silently.",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.344,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 146,
+        "completion_tokens": 28
+      }
+    },
+    "sent-2": {
+      "bucket": "sentence",
+      "words": 43,
+      "spoken": "I mean basically what I want is for the tray icon to to show a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a a static icon wondering if it worked",
+      "messy": "I mean basically what I want is for the tray icon to to show a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a a static icon wondering if it worked",
+      "reference": "What I want is for the tray icon to show a different state while we're transcribing, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "audio_seconds": 12.94,
+      "rules_from_messy": "What I want is for the tray icon to show a different state while we're transcribing. So the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "rules_seconds": 0.000311,
+      "transcript_base.en": "I mean basically what I want is for the tray icon to show a\n different state while we're\n transcribing you know so the user knows something is\n actually happening rather than just staring\n at a static icon wondering if it worked.",
+      "transcribe_seconds_base.en": 0.185,
+      "transcribe_all_base.en": [
+        0.185,
+        0.185,
+        0.192
+      ],
+      "rules_from_base.en": "What I want is for the tray icon to show a different state while we're transcribing. So the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "transcript_small.en": "I mean basically what I want is for the tray icon to to\n show a different state while we're transcribing you know so\n the user knows something is actually happening rather than\n just staring at a static icon wondering if it worked.",
+      "transcribe_seconds_small.en": 0.547,
+      "transcribe_all_small.en": [
+        0.519,
+        0.578,
+        0.547
+      ],
+      "rules_from_small.en": "What I want is for the tray icon to show a different state while we're transcribing. So the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "llm_llama-3.2-3b_from_messy": "I'd like the tray icon to show a different state while we're transcribing, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "llm_llama-3.2-3b_seconds_from_messy": 1.261,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 149,
+        "completion_tokens": 39
+      },
+      "llm_llama-3.2-3b_from_base.en": "I mean basically what I want is for the tray icon to show a different state while we're transcribing, you know, so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 1.39,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 152,
+        "completion_tokens": 47
+      },
+      "llm_llama-3.2-3b_from_small.en": "I mean basically what I want is for the tray icon to show a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 1.545,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 152,
+        "completion_tokens": 45
+      },
+      "llm_llama-3.2-1b_from_messy": "I Tray icon will now show a different state while we're transcribing.",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.201,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 149,
+        "completion_tokens": 16
+      },
+      "llm_llama-3.2-1b_from_base.en": "I - tray icon - will - show - a - different - state - while - we're - transcribing - you - know - so - the - user - knows - something - is - actually - happening - rather - than - just - staring - at - a - static - icon - wondering - if - it - worked.",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.984,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 152,
+        "completion_tokens": 68
+      },
+      "llm_llama-3.2-1b_from_small.en": "I'll remove filler words and stutters, fix punctuation and capitalization, and convert spoken punctuation commands into real punctuation. \n\nI'll show you a different state while we're transcribing you know so the user knows something is actually happening rather than just staring at a static icon wondering if it worked.",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.836,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 152,
+        "completion_tokens": 61
+      }
+    },
+    "sent-3": {
+      "bucket": "sentence",
+      "words": 33,
+      "spoken": "uh let's let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're we're optimizing something that literally nobody uses yet",
+      "messy": "uh let's let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're we're optimizing something that literally nobody uses yet",
+      "reference": "Let's hold off on the auto-update stuff until after we've actually shipped a build that people can install, because right now we're optimizing something that literally nobody uses yet.",
+      "audio_seconds": 11.39,
+      "rules_from_messy": "Let's hold off on the auto-update stuff until after we've actually shipped a build that people can install. Because right now we're optimizing something that literally nobody uses yet.",
+      "rules_seconds": 0.000293,
+      "transcript_base.en": "Let's let's hold off on the auto update stuff until after\n we've actually shipped a build that people can install\n because right now we're we're optimizing something that\n literally nobody uses yet",
+      "transcribe_seconds_base.en": 0.17,
+      "transcribe_all_base.en": [
+        0.165,
+        0.17,
+        0.188
+      ],
+      "rules_from_base.en": "Let's hold off on the auto-update stuff until after we've actually shipped a build that people can install. Because right now we're optimizing something that literally nobody uses yet.",
+      "transcript_small.en": "Let's let's hold off on the auto update stuff until after\n we've actually shipped a bill that people can install\n because right now we're we're optimizing something that\n literally nobody uses yet.",
+      "transcribe_seconds_small.en": 0.447,
+      "transcribe_all_small.en": [
+        0.444,
+        0.45,
+        0.447
+      ],
+      "rules_from_small.en": "Let's hold off on the auto-update stuff until after we've actually shipped a bill that people can install. Because right now we're optimizing something that literally nobody uses yet.",
+      "llm_llama-3.2-3b_from_messy": "Let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're optimizing something that literally nobody uses yet.",
+      "llm_llama-3.2-3b_seconds_from_messy": 1.132,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 142,
+        "completion_tokens": 35
+      },
+      "llm_llama-3.2-3b_from_base.en": "Let's hold off on the auto update stuff until after we've actually shipped a build that people can install. Because right now we're optimizing something that literally nobody uses yet.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 1.137,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 144,
+        "completion_tokens": 36
+      },
+      "llm_llama-3.2-3b_from_small.en": "Let's hold off on the auto update stuff until after we've actually shipped a bill that people can install. Because right now we're optimizing something that literally nobody uses yet.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 1.099,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 145,
+        "completion_tokens": 36
+      },
+      "llm_llama-3.2-1b_from_messy": "\"Let's hold off on the auto update stuff until after we've actually shipped a build that people can install because right now we're optimizing something that literally nobody uses yet.\"",
+      "llm_llama-3.2-1b_seconds_from_messy": 0.474,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 142,
+        "completion_tokens": 36
+      },
+      "llm_llama-3.2-1b_from_base.en": "Let's hold off on the auto update stuff until after\n we've actually shipped a build that people can install\n because right now we're optimizing something that\n literally nobody uses yet",
+      "llm_llama-3.2-1b_seconds_from_base.en": 0.652,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 144,
+        "completion_tokens": 37
+      },
+      "llm_llama-3.2-1b_from_small.en": "Let's hold off on the auto update stuff until after\n we've actually shipped a bill that people can install\n because right now we're optimizing something that\n literally nobody uses yet.",
+      "llm_llama-3.2-1b_seconds_from_small.en": 0.592,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 145,
+        "completion_tokens": 38
+      }
+    },
+    "para-1": {
+      "bucket": "paragraph",
+      "words": 131,
+      "spoken": "okay so um here's where I've landed on the architecture question the the main thing is that we've got two subprocesses to supervise and that's already kind of a lot for a menu bar app uh whisper is unavoidable obviously we need it but the the llama server is the one I keep going back and forth on because it it holds two gigs of ram resident the whole time the app is running and I'm not sure that's a trade people want to make just for slightly nicer punctuation you know so what I'd like to do is is measure it properly before we commit and if the rules based thing gets us like eighty percent of the way there then honestly we should just ship that and revisit later",
+      "messy": "okay so um here's where I've landed on the architecture question the the main thing is that we've got two subprocesses to supervise and that's already kind of a lot for a menu bar app uh whisper is unavoidable obviously we need it but the the llama server is the one I keep going back and forth on because it it holds two gigs of ram resident the whole time the app is running and I'm not sure that's a trade people want to make just for slightly nicer punctuation you know so what I'd like to do is is measure it properly before we commit and if the rules based thing gets us like eighty percent of the way there then honestly we should just ship that and revisit later",
+      "reference": "Here's where I've landed on the architecture question. The main thing is that we've got two subprocesses to supervise, and that's already kind of a lot for a menu bar app. Whisper is unavoidable, obviously we need it, but the llama-server is the one I keep going back and forth on, because it holds two gigs of RAM resident the whole time the app is running, and I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit, and if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later.",
+      "audio_seconds": 37.94,
+      "rules_from_messy": "Here's where I've landed on the architecture question the main thing is that we've got two subprocesses to supervise. And that's already kind of a lot for a menu bar app whisper is unavoidable obviously we need it. But the llama-server is the one I keep going back and forth on. Because it holds two gigs of RAM resident the whole time the app is running. And I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit. And if the rules-based thing gets us like eighty percent of the way there then honestly we should just ship that and revisit later.",
+      "rules_seconds": 0.001007,
+      "transcript_base.en": "Okay so I'm here's where I've landed on the architecture\n question the the main thing is that we've got two sub-\nprocesses to supervise and that's already kind of a lot for\n a menu bar app.\n Our whisper is unavoidable obviously we need it but the the\n llama server is the one I keep going back and forth on\n because it it holds two gigs of ram resident the whole time\n the app is running and I'm not sure that's a trade people\n want to make just for slightly nicer punctuation you know\n so what I'd like to do\n is is measure it properly before we commit and if the rules\n based thing gets us like 80% of the way there then honestly\n we should just ship that and revisit later.",
+      "transcribe_seconds_base.en": 0.599,
+      "transcribe_all_base.en": [
+        0.658,
+        0.532,
+        0.599
+      ],
+      "rules_from_base.en": "I'm here's where I've landed on the architecture question the main thing is that we've got two sub-processes to supervise. And that's already kind of a lot for a menu bar app. Our whisper is unavoidable obviously we need it but the llama-server is the one I keep going back. And forth on because it holds two gigs of RAM resident the whole time the app is running. And I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit. And if the rules-based thing gets us like 80% of the way there then honestly we should just ship that and revisit later.",
+      "transcript_small.en": "Okay so um here's where I've landed on the architecture\n question\n The main thing is that we've got two subprocesses to superv\nise\n And that's already kind of a lot for a menu bar app\n Our whisper is unavoidable obviously we need it but the the\n lama server is the one I keep\n going back and forth on because it it holds two gigs of ram\n resident the whole time the app is\n running and I'm not sure that's a trade people want to make\n just for slightly nicer punctuation\n you know so what I'd like to do is is measure it properly\n before we commit and if the rules\n based thing gets us like 80% of the way there then honestly\n we should just ship that and revisit later",
+      "transcribe_seconds_small.en": 1.575,
+      "transcribe_all_small.en": [
+        1.575,
+        1.539,
+        1.619
+      ],
+      "rules_from_small.en": "Here's where I've landed on the architecture question The main thing is that we've got two subprocesses to superv ise. And that's already kind of a lot for a menu bar app Our whisper is unavoidable obviously we need it. But the llama-server is the one I keep going back and forth on. Because it holds two gigs of RAM resident the whole time the app is running. And I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit. And if the rules-based thing gets us like 80% of the way there then honestly we should just ship that and revisit later.",
+      "llm_llama-3.2-3b_from_messy": "Here's the cleaned text:\n\nOkay, so here's where I've landed on the architecture question. The main thing is that we've got two subprocesses to supervise, and that's already kind of a lot for a menu bar app. Whisper is unavoidable, obviously. We need it, but the llama server is the one I keep going back and forth on because it holds two gigs of RAM resident the whole time the app is running, and I'm not sure that's a trade-off people want to make just for slightly nicer punctuation. You know. So, what I'd like to do is measure it properly before we commit. If the rules-based thing gets us like eighty percent of the way there, then honestly, we should just ship that and revisit later.",
+      "llm_llama-3.2-3b_seconds_from_messy": 4.14,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 243,
+        "completion_tokens": 155
+      },
+      "llm_llama-3.2-3b_from_base.en": "Here's where I've landed on the architecture. The main thing is that we've got two sub-processes to supervise and that's already kind of a lot for a menu bar app. Our whisper is unavoidable, obviously, we need it. The llama server is the one I keep going back and forth on because it holds two gigs of RAM resident the whole time the app is running, and I'm not sure that's a trade-off people want to make just for slightly nicer punctuation, you know. So, what I'd like to do is measure it properly before we commit. If the rules-based thing gets us like 80% of the way there, then honestly, we should just ship that and revisit later.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 4.298,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 259,
+        "completion_tokens": 146
+      },
+      "llm_llama-3.2-3b_from_small.en": "Here's where I've landed on the architecture question. \nThe main thing is that we've got two subprocesses to supervise. \nAnd that's already kind of a lot for a menu bar app. \nOur whisper is unavoidable, obviously we need it. \nBut the lama server is the one I keep going back and forth on because it holds two gigs of ram resident the whole time the app is running and I'm not sure that's a trade people want to make just for slightly nicer punctuation. \nYou know. \nSo what I'd like to do is measure it properly before we commit. \nAnd if the rules-based thing gets us like 80% of the way there, then honestly we should just ship that and revisit later.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 4.645,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 259,
+        "completion_tokens": 152
+      },
+      "llm_llama-3.2-1b_from_messy": "okay so here's the cleaned text:\n\n\"Okay, so here's where I've landed on the architecture question. The main thing is that we've got two subprocesses to supervise, and that's already kind of a lot for a menu bar app. Uh, whisper is unavoidable, obviously. We need it, but the llama server is the one I keep going back and forth on because it holds two gigs of RAM, resident the whole time. The app is running, and I'm not sure that's a trade people want to make. Just for slightly nicer punctuation, you know, so what I'd like to do is measure it properly before we commit. If the rules-based thing gets us like eighty percent of the way there, then honestly, we should just ship that and revisit later.\"",
+      "llm_llama-3.2-1b_seconds_from_messy": 2.625,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 243,
+        "completion_tokens": 161
+      },
+      "llm_llama-3.2-1b_from_base.en": "Okay so I'm here's where I've landed on the architecture\n question the main thing is that we've got two sub-processes to supervise and that's already kind of a lot for\n a menu bar app.\n Our whisper is unavoidable obviously we need it but the\n llama server is the one I keep going back and forth on\n because it holds two gigs of ram resident the whole time\n the app is running and I'm not sure that's a trade people\n want to make just for slightly nicer punctuation you know\n so what I'd like to do\n is measure it properly before we commit and if the rules\n based thing gets us like 80% of the way there then honestly\n we should just ship that and revisit later.",
+      "llm_llama-3.2-1b_seconds_from_base.en": 2.892,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 259,
+        "completion_tokens": 151
+      },
+      "llm_llama-3.2-1b_from_small.en": "Okay so here's where I've landed on the architecture\n question\n The main thing is that we've got two subprocesses to supervise\n And that's already kind of a lot for a menu bar app\n Our whisper is unavoidable obviously we need it but the\n lama server is the one I keep going back and forth on because it\n it holds two gigs of ram resident the whole time the app is\n running and I'm not sure that's a trade people want to make\n just for slightly nicer punctuation\n you know so what I'd like to do is is measure it properly\n before we commit and if the rules based thing gets us like 80% of the way there then honestly\n we should just ship that and revisit later",
+      "llm_llama-3.2-1b_seconds_from_small.en": 3.047,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 259,
+        "completion_tokens": 150
+      }
+    },
+    "para-2": {
+      "bucket": "paragraph",
+      "words": 126,
+      "spoken": "so the the onboarding flow needs to handle three separate permission prompts and they they all behave differently which is annoying uh microphone access is the standard one that pops a system dialog immediately accessibility is the one where macos just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is is detect all three up front on first launch show a single checklist screen with with a green tick next to each one as it gets granted and just poll every second or so to update it because there's no callback for the accessibility one anyway",
+      "messy": "so the the onboarding flow needs to handle three separate permission prompts and they they all behave differently which is annoying uh microphone access is the standard one that pops a system dialog immediately accessibility is the one where macos just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is is detect all three up front on first launch show a single checklist screen with with a green tick next to each one as it gets granted and just poll every second or so to update it because there's no callback for the accessibility one anyway",
+      "reference": "The onboarding flow needs to handle three separate permission prompts, and they all behave differently, which is annoying. Microphone access is the standard one that pops a system dialog immediately. Accessibility is the one where macOS just silently denies you until the user goes into System Settings and flips the toggle manually. And then Input Monitoring is the one nobody remembers exists until the global hotkey doesn't fire. What I think we should do is detect all three up front on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just poll every second or so to update it, because there's no callback for the accessibility one anyway.",
+      "audio_seconds": 41.75,
+      "rules_from_messy": "The onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying microphone access is the standard one that pops a system dialog immediately accessibility is the one where macOS just silently denies you until the user goes into system settings. And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted. And just poll every second or so to update it because there's no callback for the accessibility one anyway.",
+      "rules_seconds": 0.001066,
+      "transcript_base.en": "So that the onboarding flow needs to handle three separate\n permission prompts and they\n they all behave differently which is annoying.\n Our microphone access is the standard one that pops a\n system dialogue immediately.\n Accessibility is the one where Mac OS just silently denies\n you until the user goes into\n system settings and flips the toggle manually and then\n input monitoring is is the one nobody\n remembers exists until the global hotkey doesn't fire what\n I think we should do is is detect\n all three up front on first launch show a single checklist\n screen with with a green\n tick next to each one as it gets granted and just pull\n every second or so to update\n it because there's no callback for the accessibility one\n anyway.",
+      "transcribe_seconds_base.en": 0.615,
+      "transcribe_all_base.en": [
+        0.615,
+        0.617,
+        0.543
+      ],
+      "rules_from_base.en": "That the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings. And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted. And just pull every second or so to update it because there's no callback for the accessibility one anyway.",
+      "transcript_small.en": "so that the onboarding flow needs to handle 3 separate\n permission prompts and they they all behave differently\n which is annoying\n a microphone accesses the standard one that pops a system\n dialogue immediately accessibility is the one where mac os\n just silently denies you until the user goes into system\n settings and flips the toggle manually and then input\n monitoring is is the one nobody remembers exists until the\n global hotkey doesn't fire what i think we should do is is\n detect all 3 up\n front on first launch show a single checklist screen with\n with a green tick next to each one as it gets granted and\n just pull every second or so to update it because there's\n no callback for the accessibility one anyway",
+      "transcribe_seconds_small.en": 1.441,
+      "transcribe_all_small.en": [
+        1.411,
+        1.441,
+        1.463
+      ],
+      "rules_from_small.en": "That the onboarding flow needs to handle 3 separate permission prompts and they all behave differently which is annoying a microphone accesses the standard one that pops a system dialogue immediately accessibility is the one where mac os just silently denies you until the user goes into system settings. And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all 3 up front on first launch show a single checklist screen with a green tick next to each one as it gets granted. And just pull every second or so to update it because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-3b_from_messy": "The onboarding flow needs to handle three separate permission prompts, and they behave differently. Microphone access is the standard one that pops a system dialog immediately. Accessibility is the one where macOS just silently denies you until the user goes into System Settings and flips the toggle manually. Input monitoring is the one nobody remembers exists until the global hotkey doesn't fire.\n\nWe should detect all three up front on first launch. Show a single checklist screen with a green tick next to each one as it gets granted. Just poll every second or so to update it, because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-3b_seconds_from_messy": 3.387,
+      "llm_llama-3.2-3b_tokens_from_messy": {
+        "prompt_tokens": 235,
+        "completion_tokens": 122
+      },
+      "llm_llama-3.2-3b_from_base.en": "So that the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire. What I think we should do is detect all three up front on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just pull every second or so to update it because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-3b_seconds_from_base.en": 3.655,
+      "llm_llama-3.2-3b_tokens_from_base.en": {
+        "prompt_tokens": 252,
+        "completion_tokens": 134
+      },
+      "llm_llama-3.2-3b_from_small.en": "So that the onboarding flow needs to handle 3 separate permission prompts and they all behave differently. Which is annoying. A microphone accesses the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings and flips the toggle manually, and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire. What I think we should do is detect all 3 upfront on first launch, show a single checklist screen with a green tick next to each one as it gets granted, and just pull every second or so to update it because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-3b_seconds_from_small.en": 4.063,
+      "llm_llama-3.2-3b_tokens_from_small.en": {
+        "prompt_tokens": 249,
+        "completion_tokens": 136
+      },
+      "llm_llama-3.2-1b_from_messy": "So the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Uh, microphone access is the standard one that pops a system dialog immediately. Accessibility is the one where macOS just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire. What I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted and just poll every second or so to update it because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-1b_seconds_from_messy": 2.615,
+      "llm_llama-3.2-1b_tokens_from_messy": {
+        "prompt_tokens": 235,
+        "completion_tokens": 132
+      },
+      "llm_llama-3.2-1b_from_base.en": "So that the onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying. Our microphone access is the standard one that pops a system dialogue immediately. Accessibility is the one where Mac OS just silently denies you until the user goes into system settings and flips the toggle manually and then input monitoring is is the one nobody remembers exists until the global hotkey doesn't fire. I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted and just pull every second or so to update. Anyway.",
+      "llm_llama-3.2-1b_seconds_from_base.en": 1.799,
+      "llm_llama-3.2-1b_tokens_from_base.en": {
+        "prompt_tokens": 252,
+        "completion_tokens": 123
+      },
+      "llm_llama-3.2-1b_from_small.en": "So that the onboarding flow needs to handle 3 separate permission prompts and they all behave differently, which is annoying. A microphone accesses the standard one that pops a system. Dialogue immediately accessibility is the one where Mac OS, just silently denies you until the user goes into system settings and flips the toggle manually and then input. Monitoring is is the one nobody remembers exists until the global hotkey doesn't fire, what I think we should do is detect all 3 up front on first launch show a single checklist screen with a green tick next to each one as it gets granted and just pull every second or so to update it because there's no callback for the accessibility one anyway.",
+      "llm_llama-3.2-1b_seconds_from_small.en": 2.387,
+      "llm_llama-3.2-1b_tokens_from_small.en": {
+        "prompt_tokens": 249,
+        "completion_tokens": 137
+      }
+    }
+  }
+}

@@ -1,0 +1,2 @@
+# Regenerate with `python3 make_audio.py` - no need to commit 4 MB of TTS wavs.
+audio/
