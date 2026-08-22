@@ -1,13 +1,10 @@
-const { app, Tray, Menu, BrowserWindow, globalShortcut, ipcMain } = require("electron");
+const { app, Tray, Menu, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
 const whisperServer = require("./whisperServer");
+const hotkeyHelper = require("./hotkeyHelper");
 const { encodeWav } = require("./wav");
 
 const isDev = process.env.NODE_ENV === "development";
-
-// Phase 0 hardcoded hotkey - proof that record -> transcribe -> console
-// works before any UI is built around it. Real push-to-talk config is #5.
-const DICTATE_HOTKEY = "CommandOrControl+Shift+D";
 
 let tray = null;
 let win = null;
@@ -75,11 +72,17 @@ async function transcribeAndPrint(int16Samples) {
   }
 }
 
-function toggleDictation() {
-  if (!captureWin) return;
-  isRecording = !isRecording;
-  captureWin.webContents.send(isRecording ? "start-recording" : "stop-recording");
-  if (isRecording) console.log("[dictation] recording - press the hotkey again to stop");
+function startRecording() {
+  if (!captureWin || isRecording) return;
+  isRecording = true;
+  captureWin.webContents.send("start-recording");
+  console.log("[dictation] recording - release the hotkey to stop");
+}
+
+function stopRecording() {
+  if (!captureWin || !isRecording) return;
+  isRecording = false;
+  captureWin.webContents.send("stop-recording");
 }
 
 function createTray() {
@@ -117,11 +120,13 @@ app.whenReady().then(() => {
   createTray();
   createCaptureWindow();
   whisperServer.start();
-  globalShortcut.register(DICTATE_HOTKEY, toggleDictation);
+  hotkeyHelper.onKeyDown(startRecording);
+  hotkeyHelper.onKeyUp(stopRecording);
+  hotkeyHelper.start();
 });
 
 app.on("will-quit", () => {
-  globalShortcut.unregisterAll();
+  hotkeyHelper.stop();
   whisperServer.stop();
 });
 
