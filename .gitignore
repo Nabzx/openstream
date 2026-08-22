@@ -7,6 +7,7 @@ release/
 
 # Native helper build output (Swift/Obj-C binaries, compiled via native build scripts)
 build/
+.build/
 *.xcuserstate
 DerivedData/
 
