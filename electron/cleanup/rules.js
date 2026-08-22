@@ -183,7 +183,43 @@ function terminalPunct(text) {
   return text;
 }
 
+/**
+ * @param {string} text - raw transcript from whisper-server.
+ * @param {object} [options]
+ * @param {boolean} [options.oneLineBox] - AXTextField-style single-line
+ *   field (#45 §2): no sentence breaks, no final full stop, no newline.
+ * @param {boolean} [options.breakSafe] - frontmost app is on the break-safe
+ *   allow-list (#45 §3). Deny-by-default: unknown/unlisted apps get no
+ *   literal newlines even when the user says "new line"/"new paragraph".
+ */
+function cleanup(text, options = {}) {
+  const oneLineBox = Boolean(options.oneLineBox);
+  // A one-line field cannot hold a newline at all, regardless of the
+  // allow-list - that modifier takes precedence.
+  const allowNewlines = Boolean(options.breakSafe) && !oneLineBox;
+
+  text = text.trim();
+  // whisper-server hard-wraps its output; that's an STT-layer artifact, not
+  // something the speaker said, and must go before anything else runs.
+  text = text.replace(/\s*\n\s*/g, " ");
+
+  text = stripFillers(text);
+  text = collapseRepeats(text);
+  text = applySpokenPunct(text, { allowNewlines });
+  text = stripLeadingFillers(text);
+  if (!oneLineBox) {
+    text = segmentSentences(text);
+  }
+  text = applyVocab(text);
+  text = capitalise(text);
+  text = oneLineBox ? text.replace(/\s+$/, "") : terminalPunct(text);
+  text = text.replace(/[ \t]{2,}/g, " ");
+
+  return text.trim();
+}
+
 module.exports = {
+  cleanup,
   STANDALONE_FILLERS,
   PHRASE_FILLERS,
   LEADING_FILLERS,
