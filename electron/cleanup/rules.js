@@ -82,6 +82,48 @@ function collapseRepeats(text) {
   return text;
 }
 
+function applySpokenPunct(text, { allowNewlines }) {
+  for (const [pattern, replacement] of SPOKEN_PUNCT) {
+    // Deny-by-default (#45 §3): a spoken newline command only becomes a
+    // literal newline when the frontmost app is on the break-safe allow-list.
+    const isNewline = replacement === "\n" || replacement === "\n\n";
+    text = text.replace(pattern, isNewline && !allowNewlines ? " " : replacement);
+  }
+  // Tidy the space the replaced word left behind: " ." -> "."
+  text = text.replace(/\s+([.,!?;:)])/g, "$1");
+  text = text.replace(/([(/-])\s+/g, "$1");
+  // Same tidy for a newline a spoken "new line"/"new paragraph" just inserted.
+  text = text.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n");
+  // whisper often already punctuated the sentence, so a spoken "period" can
+  // land next to real punctuation. The mark whisper inferred is the more
+  // specific one, so it wins on collision.
+  text = text.replace(/\.([?!])/g, "$1");
+  text = text.replace(/([?!,;:])\./g, "$1");
+  text = text.replace(/([.,!?;:])\1+/g, "$1");
+  return text;
+}
+
+function stripLeadingFillers(text) {
+  const parts = text.split(SENT_BOUNDARY_SPLIT);
+  const out = [];
+  for (let part of parts) {
+    let changed = true;
+    while (changed && part) {
+      changed = false;
+      for (const filler of LEADING_FILLERS) {
+        const match = part.match(new RegExp(`^\\s*${filler}\\b[,]?\\s+`, "i"));
+        // Never strip if it would leave nothing behind.
+        if (match && part.slice(match[0].length).trim()) {
+          part = part.slice(match[0].length);
+          changed = true;
+        }
+      }
+    }
+    out.push(part);
+  }
+  return out.join("");
+}
+
 module.exports = {
   STANDALONE_FILLERS,
   PHRASE_FILLERS,
@@ -92,4 +134,6 @@ module.exports = {
   SENT_BOUNDARY_SPLIT,
   stripFillers,
   collapseRepeats,
+  applySpokenPunct,
+  stripLeadingFillers,
 };
