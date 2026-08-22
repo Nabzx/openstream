@@ -22,3 +22,6 @@ resources/bin/
 # Environment / secrets
 .env
 .env.local
+
+# Claude Code local worktrees and session state
+.claude/
