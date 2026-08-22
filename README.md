@@ -26,7 +26,11 @@ Early development — pre-alpha, no working build yet. Architecture below is the
 - **App shell**: Electron + React + TypeScript (Vite), menu bar tray app
 - **Speech-to-text**: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), prebuilt binary downloaded at build/first-run (not committed), run as a subprocess
 - **Local LLM cleanup pass**: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`) running **Llama 3.2 3B Instruct** (quantized GGUF, ~2GB), downloaded at build/first-run and called over local HTTP for formatting/editing/command-following. Meta built this size specifically for on-device rewriting/summarization, and it matches or beats Llama 3.1 8B on those tasks despite being under half the size. **Llama 3.2 1B** is offered as a lighter fallback for lower-RAM Macs via the model-size setting.
-- **macOS native helpers**: small Swift/Objective-C binaries (compiled via native build scripts) for Accessibility API context detection, text injection, and mic access
+- **macOS native helpers**: two small Swift/Objective-C binaries (compiled via native build scripts), split so that each holds exactly one macOS permission:
+  - a **hotkey helper** (Input Monitoring) running a `CGEventTap` for global push-to-talk, since Electron's `globalShortcut` gives no key-up event
+  - an **accessibility helper** (Accessibility) owning both text injection and context detection, which share the same focused-element lookup
+  - They are kept apart because Accessibility calls can block for seconds, and a stalled call in the same process would trip `kCGEventTapDisabledByTimeout` and silently kill the hotkey. Both speak newline-delimited JSON over stdio.
+  - Microphone capture is *not* yet assigned to either helper; whether it needs native code at all is still open.
 - **Vocabulary biasing**: lightweight scan of open editor buffer / git repo for identifiers and terms, fed into whisper.cpp as an initial prompt / bias list
 
 ## Requirements
