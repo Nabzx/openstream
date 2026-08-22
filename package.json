@@ -9,6 +9,8 @@
     "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "build:whisper": "bash scripts/build-whisper.sh",
+    "postinstall": "npm run build:whisper",
     "start": "cross-env NODE_ENV=production electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
