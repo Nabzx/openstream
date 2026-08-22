@@ -17,7 +17,7 @@ Pick who owns which track in Phase 2 based on interest, not this doc — the spl
 Get to "clone and build" for both of you before splitting up.
 
 - [ ] Electron + React + TypeScript (Vite) scaffold, menu bar tray app shell (no functionality yet)
-- [ ] whisper.cpp integrated: download script for the prebuilt binary + a model, **resident `whisper-server` started at app launch and supervised for the life of the app** (not a per-dictation subprocess - see #29), one hardcoded hotkey triggers record → transcribe → print to console
+- [ ] whisper.cpp integrated: build script **compiles whisper.cpp from source at a pinned tag** and fetches `ggml-base.en.bin` from a **pinned Hugging Face revision**, SHA-256 verified (no prebuilt macOS arm64 binary is published - see #30), **resident `whisper-server` started at app launch and supervised for the life of the app** (not a per-dictation subprocess - see #29), one hardcoded hotkey triggers record → transcribe → print to console
 - [ ] GitHub Actions workflow: build check on every PR
 - [ ] Branch protection on `main`: PRs required, one review required
 
@@ -40,18 +40,17 @@ Get to "clone and build" for both of you before splitting up.
 ### Track A — Input & Delivery
 Owns: audio capture, STT, text delivery, packaging.
 
-- [ ] Download pipeline for whisper.cpp binary + models, run at build/first-launch with progress UI
-- [ ] Support multiple whisper.cpp model sizes; settings toggle for speed vs. accuracy
+- [ ] Harden the build-time compile + model fetch: cached artifacts, re-verification on rebuild, loud failure messages. **No first-launch download and no progress UI** - #30 moved model acquisition entirely into the build
+- [ ] ~~Support multiple whisper.cpp model sizes; settings toggle for speed vs. accuracy~~ - **removed by #30.** One model, `ggml-base.en.bin`. The setting existed so low-RAM Macs could dodge the 2 GB LLM, and that LLM left the dictation path in #24; `small.en` is ~3x the work and would put long dictations past the sub-1s budget
 - [ ] Harden text injection across app types — this breaks in Electron apps, terminals, and some Java/Swing apps; needs real cross-app testing
 - [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update
 
 ### Track B — Intelligence
-Owns: context awareness, local LLM cleanup.
+Owns: context awareness, per-mode formatting rules.
 
 - [ ] Accessibility API: native helper detects frontmost app + focused field type, define discrete "modes" (terminal / code editor / prose)
 - [ ] Formatting rules engine per mode (no auto-caps/punctuation in terminal, proper comment formatting in editors)
-- [ ] llama.cpp integration: download `llama-server` + Llama 3.2 3B Instruct (quantized GGUF), get a basic cleanup pass running (filler removal, punctuation) over local HTTP. Offer Llama 3.2 1B as a lighter fallback for lower-RAM Macs
-- [ ] Prompt design + a small eval set to judge cleanup quality before/after changes
+- [ ] Prompt design + a small eval set to judge rewrite quality before/after changes
 
 **Definition of done:** Track A ships more reliable, faster, easier-to-install dictation. Track B ships visibly smarter output. Tag `v0.2`.
 
@@ -62,6 +61,7 @@ Owns: context awareness, local LLM cleanup.
 Same tracks, harder problems — this is where it gets genuinely complex.
 
 - **Track A:** codebase vocabulary scanner — extract identifiers/terms from the open git repo or editor buffer, feed them into whisper.cpp as an initial prompt / bias list
+- **Track B:** `llama-server` plumbing - fetch the binary and an **Apache 2.0 / MIT, ungated** GGUF (SmolLM2-1.7B-Instruct provisionally; acquisition policy open in #52), start it, confirm a local HTTP round trip (moved here from Phase 2 by #24 and #32)
 - **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. That server starts lazily on the first voice-edit command and is released after 5 minutes idle (see #29); it is never resident during ordinary dictation
 
 **Definition of done:** dictation that's measurably more accurate on your own codebase's vocabulary, plus voice-editing of existing text. Tag `v0.3`.
@@ -71,7 +71,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
 - [ ] Permission state check - build script warns when a helper hash changes, app tests all three grants at launch and blocks on Accessibility / Input Monitoring (#47)
-- [ ] Settings UI complete (hotkey remapping, model choice, mode rules)
+- [ ] Settings UI complete (hotkey remapping, mode rules) - **no model choice**, see #30
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
 - [ ] README demo GIF, short landing page
 - [ ] Public launch (Show HN, r/macapps, etc.)
