@@ -38,6 +38,12 @@ reading it. Chromium and Electron apps withhold their accessibility tree until
 something asks; whether this knob flips VS Code and the Electron chat apps is
 the single check most likely to decide the issue.
 
+Chromium builds that tree **asynchronously** after the flag is set, so a read in
+the same breath as the poke shows nothing even when the poke worked. The probe
+pokes each app once and waits a second before its first read for that app. Do
+not judge the knob from `--poke --once` on a cold app: that combination produces
+a false negative, which is the exact opposite of the truth.
+
 ## Running it
 
 ```sh
