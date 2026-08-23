@@ -18,6 +18,7 @@ LLAMA_TAG="b10595"
 LLAMA_ASSET="llama-$LLAMA_TAG-bin-macos-arm64.tar.gz"
 LLAMA_URL="https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_TAG/$LLAMA_ASSET"
 LLAMA_SHA256="a20407d5198b0c4474b5c0c1a67fff1d09e6c5b68e7f1977e99ffc8d9f1f127c"
+LLAMA_SERVER_SHA256="9f34137ff2559c40a0fe9b130937fd745726130074173665127d863846152198"
 
 # HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF - Apache 2.0, ungated (#32 rules
 # out anything gated or non-permissive).
@@ -39,8 +40,8 @@ sha256() {
 }
 
 echo "==> llama-server ($LLAMA_TAG, macos-arm64)"
-if [ -x "$SERVER_BIN" ]; then
-  echo "    already present, skipping fetch"
+if [ -x "$SERVER_BIN" ] && [ "$(sha256 "$SERVER_BIN")" = "$LLAMA_SERVER_SHA256" ]; then
+  echo "    already present and verified, skipping fetch"
 else
   TMP_DIR="$(mktemp -d)"
   trap 'rm -rf "$TMP_DIR"' EXIT
