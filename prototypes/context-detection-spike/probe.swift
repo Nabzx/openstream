@@ -114,6 +114,10 @@ struct Sample {
     }
 }
 
+/// Apps already poked this run, so the one-second settle wait is paid once per
+/// app rather than on every sample.
+var pokedPIDs = Set<pid_t>()
+
 func sampleNow() -> Sample {
     let trusted = AXIsProcessTrusted()
     var s = Sample(frontApp: "<none>", bundleID: "<none>", pid: "<none>",
@@ -135,7 +139,16 @@ func sampleNow() -> Sample {
     // actually publish a tree.
     let appElement = AXUIElementCreateApplication(app.processIdentifier)
     if wantPoke {
-        s.pokeResult = pokeManualAccessibility(appElement)
+        if pokedPIDs.contains(app.processIdentifier) {
+            s.pokeResult = "already poked"
+        } else {
+            s.pokeResult = pokeManualAccessibility(appElement)
+            pokedPIDs.insert(app.processIdentifier)
+            // Chromium builds its accessibility tree asynchronously after the
+            // flag is set. Reading in the same breath as the poke shows nothing
+            // even when the poke worked, so give it a beat before the first read.
+            Thread.sleep(forTimeInterval: 1.0)
+        }
     }
 
     let systemWide = AXUIElementCreateSystemWide()
