@@ -2,6 +2,7 @@ const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electr
 const path = require("path");
 const whisperServer = require("./whisperServer");
 const hotkeyHelper = require("./hotkeyHelper");
+const accessibilityHelper = require("./accessibilityHelper");
 const { encodeWav } = require("./wav");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -74,11 +75,33 @@ async function transcribeAndPrint(int16Samples) {
     const res = await fetch(whisperServer.inferenceUrl(), { method: "POST", body: formData });
     if (!res.ok) throw new Error(`whisper-server returned ${res.status}`);
     const body = await res.json();
-    console.log(`[dictation] ${(body.text || "").trim() || "(no speech detected)"}`);
+    const text = (body.text || "").trim();
+    console.log(`[dictation] ${text || "(no speech detected)"}`);
+    if (text) await injectTranscript(text);
   } catch (err) {
     console.error("[dictation] transcription failed:", err);
   } finally {
     setTrayState("idle");
+  }
+}
+
+// #6's helper reports one of three shapes: delivered (with the rung and
+// whether it could confirm the text landed), held (nothing was risked - see
+// #62's hold-never-guess), or a protocol error. There is no overlay surface
+// yet for a held transcript (#12/#44's job); for now the reason is logged so
+// a held dictation is at least visible, not silently dropped.
+async function injectTranscript(text) {
+  try {
+    const result = await accessibilityHelper.inject(text);
+    if (result.status === "delivered") {
+      console.log(`[dictation] injected via ${result.method}${result.verified ? "" : " (unverified)"}`);
+    } else if (result.status === "held") {
+      console.log(`[dictation] injection held: ${result.reason}`);
+    } else {
+      console.error(`[dictation] injection error: ${result.reason}`);
+    }
+  } catch (err) {
+    console.error("[dictation] injection failed:", err);
   }
 }
 
@@ -164,6 +187,7 @@ app.whenReady().then(() => {
   createTray();
   createCaptureWindow();
   whisperServer.start();
+  accessibilityHelper.start();
   hotkeyHelper.onKeyDown(startRecording);
   hotkeyHelper.onKeyUp(stopRecording);
   hotkeyHelper.start();
@@ -171,6 +195,7 @@ app.whenReady().then(() => {
 
 app.on("will-quit", () => {
   hotkeyHelper.stop();
+  accessibilityHelper.stop();
   whisperServer.stop();
 });
 
