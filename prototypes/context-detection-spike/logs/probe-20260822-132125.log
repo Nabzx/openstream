@@ -1,0 +1,954 @@
+OpenStream context-detection spike (issue #28) - PROTOTYPE, throwaway
+AXIsProcessTrusted() = true
+poke AXManualAccessibility = false   interval = 0.4s
+Switch apps and click into text fields. Records print only when something changes.
+Ctrl-C to stop.
+---------------------------------------------------------------
+[1:21:25 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : domain.md — openstream — Deleted
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:21:38 pm] frontmost app     : Safari
+            bundle id         : com.apple.Safari  (pid 44573)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:21:40 pm] frontmost app     : UserNotificationCenter
+            bundle id         : com.apple.UserNotificationCenter  (pid 8495)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <empty>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWindow
+            focused subrole   : AXSystemDialog
+            role description  : system dialogue
+            focused title     : <empty>
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[1:21:41 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : domain.md — openstream — Deleted
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:21:46 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : New chat - Claude - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXButton
+            focused subrole   : <kAXErrorNoValue>
+            role description  : button
+            focused title     : Usage
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:21:48 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : New chat - Claude - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (36 chars)
+            AXSelectedText    : yes (36 chars)
+---------------------------------------------------------------
+[1:21:48 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : domain.md — openstream — Deleted
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:21:51 pm] frontmost app     : TextEdit
+            bundle id         : com.apple.TextEdit  (pid 52341)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:21:52 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : domain.md — openstream — Deleted
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:21:57 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Untitled-1 — openstream
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : editor
+            focused title     : <empty>
+            AXValue readable  : yes (1 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:21:59 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Untitled-1 — openstream
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:00 pm] frontmost app     : Cursor
+            bundle id         : com.todesktop.230313mzl4w4u92  (pid 52484)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:01 pm] frontmost app     : Cursor
+            bundle id         : com.todesktop.230313mzl4w4u92  (pid 52484)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Cursor Agents
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:02 pm] frontmost app     : Cursor
+            bundle id         : com.todesktop.230313mzl4w4u92  (pid 52484)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Cursor Agents
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:03 pm] frontmost app     : Cursor
+            bundle id         : com.todesktop.230313mzl4w4u92  (pid 52484)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Cursor Agents
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Cursor Agents
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:05 pm] frontmost app     : Notes
+            bundle id         : com.apple.Notes  (pid 52376)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:05 pm] frontmost app     : TextEdit
+            bundle id         : com.apple.TextEdit  (pid 52341)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Untitled
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:06 pm] frontmost app     : TextEdit
+            bundle id         : com.apple.TextEdit  (pid 52341)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Untitled
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : AXSearchField
+            role description  : search text field
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:07 pm] frontmost app     : TextEdit
+            bundle id         : com.apple.TextEdit  (pid 52341)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:08 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : zazai — sleep ◂ focus.sh — 80×24
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (446 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:10 pm] frontmost app     : Obsidian
+            bundle id         : md.obsidian  (pid 52865)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:10 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : zazai — swift-frontend ◂ run.sh — 80×24
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (14280 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:12 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Open
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXList
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : list
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[1:22:15 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : zazai — swift-frontend ◂ run.sh — 80×24
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (15646 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:17 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 8648)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Untitled-1 — openstream
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:26 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : New chat - Claude - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (28 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:28 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <empty>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:31 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <empty>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : New Tab
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:31 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <empty>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:32 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : GitHub - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:32 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : GitHub - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : GitHub
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:36 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : GitHub - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:37 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:37 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers.
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:44 pm] frontmost app     : Safari
+            bundle id         : com.apple.Safari  (pid 44573)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:45 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers.
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:48 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : zazai — osascript ◂ focus-retry.sh — 80×24
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (460 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:22:49 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers.
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:50 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (35 chars)
+            AXSelectedText    : yes (35 chars)
+---------------------------------------------------------------
+[1:22:51 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:52 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Issues · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:56 pm] frontmost app     : Notes
+            bundle id         : com.apple.Notes  (pid 52376)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:22:58 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Issues · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:22:58 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Issues · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:23:00 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Issues · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:00 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:04 pm] frontmost app     : Obsidian
+            bundle id         : md.obsidian  (pid 52865)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:23:05 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:07 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : <kAXErrorAttributeUnsupported>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXList
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : list
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[1:23:09 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:15 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : Add a title *
+            AXValue readable  : yes (37 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:23:24 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:26 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:23:26 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:32 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : Commit message
+            AXValue readable  : yes (62 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:23:34 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXButton
+            focused subrole   : <kAXErrorNoValue>
+            role description  : button
+            focused title     : Confirm merge
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:36 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:43 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:45 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : chore: add agent skills configuration by Zazai840 · Pull Request #35 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:45 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:46 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Comparing Nabzx:main...Zazai840:chore/agent-skills-config · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:46 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Pull requests · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:48 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Pull requests · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:23:49 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:prototype/context-detection-28 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : Add a title *
+            AXValue readable  : yes (56 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:24:16 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:prototype/context-detection-28 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Comparing Nabzx:main...Zazai840:prototype/context-detection-28 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:18 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[1:24:19 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:23 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : Commit message
+            AXValue readable  : yes (67 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[1:24:24 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXButton
+            focused subrole   : <kAXErrorNoValue>
+            role description  : button
+            focused title     : Confirm merge
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:26 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:37 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : spike: probe macOS Accessibility context detection (#28) by Zazai840 · Pull Request #36 · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:38 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Nabzx/openstream: A free, fully local, zero-setup voice dictation app for macOS - built specifically for developers. - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXLink
+            focused subrole   : <kAXErrorNoValue>
+            role description  : link
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[1:24:41 pm] frontmost app     : Google Chrome
+            bundle id         : com.google.Chrome  (pid 2520)
+            AX trusted        : yes
+            AXManualAccess.   : <skipped>
+            window title      : Comparing Nabzx:main...Zazai840:research/model-licensing · Nabzx/openstream - Google Chrome – Abdulaziz
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : Add a title *
+            AXValue readable  : yes (61 chars)
+            AXSelectedText    : yes (0 chars)
