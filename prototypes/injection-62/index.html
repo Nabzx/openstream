@@ -1,0 +1,525 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Injection prototype - issue #62</title>
+<style>
+  :root {
+    --ink: #16181d;
+    --muted: #6b7280;
+    --line: #e3e5ea;
+    --bg: #fbfbfc;
+    --panel: #ffffff;
+    --accent: #2f5fe0;
+    --ok: #16794a;
+    --warn: #9a5b00;
+    --bad: #a51f2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 40px 24px 96px;
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink); background: var(--bg);
+  }
+  main { max-width: 940px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 40px 0 12px; font-weight: 600; }
+  h3 { font-size: 15px; margin: 0 0 6px; }
+  p { margin: 0 0 12px; }
+  .lede { color: var(--muted); max-width: 74ch; }
+  .prototype-tag {
+    display: inline-block; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+    background: #fff3d6; color: var(--warn); border: 1px solid #f0dcae;
+    padding: 3px 8px; border-radius: 4px; margin-bottom: 14px;
+  }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px 26px; }
+  .field { min-width: 0; }
+  .field .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+  .field .value { font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+  .value.ok { color: var(--ok); } .value.warn { color: var(--warn); } .value.bad { color: var(--bad); }
+  .changed { background: #eef3ff; box-shadow: 0 0 0 5px #eef3ff; border-radius: 3px; }
+  button {
+    font: inherit; font-size: 14px; background: var(--panel); color: var(--ink);
+    border: 1px solid #cfd3db; border-radius: 7px; padding: 7px 13px; cursor: pointer; text-align: left;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  button:disabled { opacity: 0.42; cursor: default; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: #2450c9; color: #fff; }
+  .btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .btngroup-label { font-size: 12px; color: var(--muted); margin: 14px 0 6px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tabs button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .step { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 7px; }
+  .step .n { width: 22px; height: 22px; flex: none; border-radius: 50%; background: #eef0f4; color: var(--muted);
+    font-size: 12px; display: grid; place-items: center; margin-top: 5px; }
+  .step.done .n { background: var(--ok); color: #fff; }
+  .step.next .n { background: var(--accent); color: #fff; }
+  .log { font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; max-height: 280px; overflow-y: auto; }
+  .log div { padding: 2px 0; border-bottom: 1px solid #f2f3f6; }
+  .log .t { color: var(--muted); }
+  .attempts { font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .note { font-size: 13px; color: var(--muted); }
+  .settings { display: flex; flex-wrap: wrap; gap: 22px; align-items: center; font-size: 13px; color: var(--muted); }
+  input[type=range] { accent-color: var(--accent); vertical-align: middle; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  @media (max-width: 780px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <span class="prototype-tag">Prototype - throwaway - issue #62</span>
+  <h1>Where does the dictated text actually land?</h1>
+  <p class="lede">
+    You hold a hotkey, talk, and let go. Somewhere in the next fraction of a second the app has to put
+    your words into the box you were pointing at. This demo lets you drive that moment by hand: choose
+    which app is in front, whether it is a normal text box or a terminal, whether you just switched apps
+    a moment ago, whether the app answers questions at all - and then watch which delivery method gets
+    picked, whether the text arrives, and what happens to your clipboard. The question it exists to
+    settle: <strong>one delivery method or a chain of fallbacks, what stops us delivering to the app the
+    user has just left, and what the user sees when delivery fails.</strong>
+  </p>
+
+  <h2>Right now</h2>
+  <div class="panel" id="state"></div>
+
+  <h2>Guided walkthroughs</h2>
+  <div class="tabs" id="tabs"></div>
+  <div class="panel" id="scenario"></div>
+
+  <h2>Free play</h2>
+  <div class="panel">
+    <div class="settings">
+      <label>Wait after an app switch before delivering:
+        <input type="range" id="settle" min="0" max="1200" step="50"> <b id="settleOut"></b></label>
+      <label><input type="checkbox" id="blind"> Paste anyway when the app will not say what is focused</label>
+    </div>
+    <div id="free"></div>
+  </div>
+
+  <h2>What happened</h2>
+  <div class="two">
+    <div class="panel">
+      <h3>Delivery attempts</h3>
+      <div class="attempts" id="attempts"></div>
+    </div>
+    <div class="panel">
+      <h3>Event log</h3>
+      <div class="log" id="log"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+/* ============================================================================
+   THE MODULE UNDER TEST - pure, no DOM, liftable into the real code.
+   A reducer: (state, action) -> state. Time is an input (TIME_PASSES), never a
+   timer, so every run is reproducible.
+   ========================================================================= */
+const InjectionModel = (() => {
+
+  // The tunables this prototype exists to put numbers on.
+  const DEFAULTS = {
+    settleMs: 400,          // how long after an app switch we refuse to deliver
+    settleBudgetMs: 1200,   // give up waiting for a settled target after this
+    axDeadlineMs: 150,      // a question that has not answered by here is abandoned
+    restoreMs: 300,         // how long the user's clipboard stays borrowed
+    axValueMaxChars: 2000,  // a "field" holding more than this is scrollback, not a field
+    longTextChars: 120,     // above this, typing character by character is a real risk
+    blindPaste: false       // paste even when we never learned what was focused
+  };
+
+  // The world the model reacts to. In production these come from the
+  // accessibility helper; here they come from buttons.
+  const FIELDS = {
+    textBox:  { name: 'a normal text box',            axRole: 'AXTextField', axValueChars: 34,   writable: true,  readable: true },
+    terminal: { name: 'a terminal prompt',            axRole: 'AXTextArea',  axValueChars: 9412, writable: true,  readable: true },
+    webArea:  { name: 'an Electron editor (no tree)', axRole: 'AXWebArea',   axValueChars: null, writable: false, readable: false },
+    none:     { name: 'nothing focused',              axRole: null,          axValueChars: null, writable: false, readable: false }
+  };
+
+  const initial = (over = {}) => ({
+    now: 0,
+    phase: 'idle',              // idle | listening | transcribing | waiting | done | held
+    transcript: null,
+    world: { app: 'Notes', field: 'textBox', answersQuestions: true, acceptsPaste: true, switchedAt: -99999 },
+    target: null,               // what we decided to deliver to
+    delivery: null,             // { method, verified, note }
+    attempts: [],
+    clipboard: { user: 'https://example.com/a-link-you-copied', saved: null, restoreAt: null, raced: false, clobbered: false },
+    overlay: null,              // { text, copied, why } - the box the user copies from
+    waitUntil: null,
+    opts: { ...DEFAULTS },
+    log: [],
+    ...over
+  });
+
+  const say = (s, msg) => ({ ...s, log: [...s.log, { at: s.now, msg }] });
+  const age = s => s.now - s.world.switchedAt;
+  const push = (s, what, outcome, why) => ({ ...s, attempts: [...s.attempts, { what, outcome, why }] });
+
+  // --- the fallback chain -------------------------------------------------
+  // Each rung states its own trigger condition, and every condition has to be
+  // something we can actually detect. That is the whole test.
+  function deliver(s) {
+    const f = FIELDS[s.world.field];
+    let out = { ...s, attempts: [], target: { app: s.world.app, field: f.name, switchAgeMs: age(s) } };
+    out = say(out, 'delivering to ' + s.world.app + ' (' + f.name + '), last app switch ' + age(s) + ' ms ago');
+
+    // Rung 0: ask the app what is focused. This is the only question asked at a
+    // latency-sensitive moment, and it is on a deadline.
+    if (!s.world.answersQuestions) {
+      out = push(out, 'ask the app what is focused', 'abandoned', 'no answer within ' + s.opts.axDeadlineMs + ' ms');
+      if (!s.opts.blindPaste) {
+        return hold(out, 'the app never said what was focused, so we never found out where the text would have gone');
+      }
+      out = say(out, 'paste-anyway is on: pasting without knowing what is focused');
+      return paste(out, false);
+    }
+
+    if (s.world.field === 'none') {
+      return hold(out, 'nothing was focused, so there is no field to deliver to');
+    }
+
+    // Rung 1: write the value straight into the field. Atomic, instant, no
+    // clipboard. Trigger: the field is writable AND its current contents are
+    // small enough to be a field rather than a terminal's whole scrollback.
+    if (f.writable && f.readable) {
+      if (f.axValueChars > s.opts.axValueMaxChars) {
+        out = push(out, 'write straight into the field', 'skipped',
+          'the field reports ' + f.axValueChars.toLocaleString() + ' characters of existing content - that is scrollback, not a field');
+      } else {
+        out = push(out, 'write straight into the field', 'delivered', 'inserted at the caret, clipboard untouched');
+        return { ...out, phase: 'done', delivery: { method: 'wrote into the field', verified: true, note: 'read back and confirmed' } };
+      }
+    } else {
+      out = push(out, 'write straight into the field', 'skipped', 'the field exposes ' + f.axRole + ' with no writable value');
+    }
+
+    // Rung 2: borrow the clipboard and synthesise a paste.
+    // We can only claim the text arrived if we can read the field back AND what
+    // comes back is small enough to be a field. Reading a terminal's scrollback
+    // proves nothing about the line the user is typing on.
+    return paste(out, f.readable && f.axValueChars <= s.opts.axValueMaxChars);
+  }
+
+  function paste(s, canVerify) {
+    let out = { ...s };
+    const saved = out.clipboard.user;
+    out = { ...out, clipboard: { ...out.clipboard, saved, user: out.transcript, restoreAt: out.now + out.opts.restoreMs, raced: false } };
+    out = say(out, 'clipboard saved and overwritten; it will be put back in ' + out.opts.restoreMs + ' ms');
+
+    if (!out.world.acceptsPaste) {
+      out = push(out, 'paste it', 'failed', 'the app ignored the synthesised paste');
+      out = { ...out, clipboard: { ...out.clipboard, user: saved, saved: null, restoreAt: null } };
+      out = say(out, 'clipboard put back early');
+      return typeIt(out);
+    }
+
+    out = push(out, 'paste it', 'delivered', canVerify ? 'confirmed by reading the field back' : 'sent, but nothing confirmed it landed');
+    return { ...out, phase: 'done',
+      delivery: { method: 'pasted', verified: canVerify,
+        note: canVerify ? 'read back and confirmed' : 'nothing could confirm it arrived' } };
+  }
+
+  // Rung 3: type it character by character. Works wherever a keyboard works.
+  function typeIt(s) {
+    const long = s.transcript.length > s.opts.longTextChars;
+    const out = push(s, 'type it character by character', 'delivered',
+      long ? s.transcript.length + ' characters - slow, and characters can drop or reorder'
+           : s.transcript.length + ' characters');
+    return { ...out, phase: 'done',
+      delivery: { method: 'typed character by character', verified: false,
+        note: long ? 'long text typed blind - autocomplete or a vim mode can mangle it' : 'nothing confirmed it arrived' } };
+  }
+
+  function hold(s, why) {
+    const out = say(s, 'held on the overlay: ' + why);
+    return { ...out, phase: 'held', delivery: null, overlay: { text: out.transcript, copied: false, why } };
+  }
+
+  // --- reducer ------------------------------------------------------------
+  function reduce(s, action) {
+    switch (action.type) {
+
+      case 'RESET':
+        return initial({ opts: { ...s.opts }, world: { ...initial().world, ...(action.world || {}) } });
+
+      case 'SET_OPT':
+        return { ...s, opts: { ...s.opts, [action.key]: action.value } };
+
+      case 'HOLD_HOTKEY': {
+        if (s.phase === 'listening' || s.phase === 'transcribing' || s.phase === 'waiting') return s;
+        const fresh = initial({ now: s.now, world: s.world, clipboard: s.clipboard, opts: s.opts, log: s.log });
+        return say({ ...fresh, phase: 'listening' }, 'hotkey held - listening');
+      }
+
+      case 'RELEASE_HOTKEY':
+        if (s.phase !== 'listening') return s;
+        return say({ ...s, phase: 'transcribing' }, 'hotkey released - transcribing');
+
+      case 'TRANSCRIPT_READY': {
+        if (s.phase !== 'transcribing') return s;
+        let out = say({ ...s, transcript: action.text }, 'transcript ready (' + action.text.length + ' characters)');
+        if (age(out) < out.opts.settleMs) {
+          out = say(out, 'app switched ' + age(out) + ' ms ago, under the ' + out.opts.settleMs + ' ms guard - waiting');
+          return { ...out, phase: 'waiting', waitUntil: out.now + out.opts.settleBudgetMs };
+        }
+        return deliver(out);
+      }
+
+      case 'SWITCH_APP': {
+        const out = { ...s, world: { ...s.world, app: action.app, field: action.field, switchedAt: s.now } };
+        return say(out, 'user switched to ' + action.app + ' (' + FIELDS[action.field].name + ')');
+      }
+
+      case 'SET_WORLD':
+        return say({ ...s, world: { ...s.world, [action.key]: action.value } }, action.label);
+
+      case 'TIME_PASSES': {
+        let out = { ...s, now: s.now + action.ms };
+        // The clipboard restore lands on its own schedule. This is the race.
+        const c = out.clipboard;
+        if (c.restoreAt !== null && out.now >= c.restoreAt) {
+          out = { ...out, clipboard: { ...c, user: c.saved, saved: null, restoreAt: null, clobbered: c.raced || c.clobbered } };
+          out = say(out, c.raced
+            ? 'clipboard restored - and it overwrote what the user copied during the window'
+            : 'clipboard restored');
+        }
+        if (out.phase === 'waiting') {
+          if (age(out) >= out.opts.settleMs) return deliver(say(out, 'target settled'));
+          if (out.now >= out.waitUntil) return hold(out, 'the front app kept changing, so we never trusted a target');
+        }
+        return out;
+      }
+
+      case 'USER_COPIES': {
+        const racing = s.clipboard.restoreAt !== null;
+        const out = { ...s, clipboard: { ...s.clipboard, user: action.text, raced: racing } };
+        return say(out, racing
+          ? 'user copied something while our paste was still sitting in the clipboard'
+          : 'user copied something');
+      }
+
+      case 'OVERLAY_COPY':
+        if (!s.overlay) return s;
+        return say({ ...s, clipboard: { ...s.clipboard, user: s.overlay.text }, overlay: { ...s.overlay, copied: true } },
+          'user copied from the overlay - an explicit action, never silent');
+
+      case 'OVERLAY_DISMISS':
+        if (!s.overlay) return s;
+        return say({ ...s, overlay: null, phase: 'idle' }, 'overlay dismissed - transcript discarded');
+
+      default:
+        return s;
+    }
+  }
+
+  return { initial, reduce, FIELDS, DEFAULTS };
+})();
+
+/* ============================================================================
+   THROWAWAY PAGE - a thin shell over the module above.
+   ========================================================================= */
+const SHORT = 'Ship the injection decision today.';
+const LONG  = 'Ship the injection decision today, then write the helper against it, because everything downstream of this ticket is blocked on the single word inject and nobody can build against a word.';
+
+let state = InjectionModel.initial();
+let prev = null;
+
+function dispatch(action) {
+  prev = state;
+  state = InjectionModel.reduce(state, action);
+  render();
+}
+
+const FREE = [
+  ['What you do', [
+    ['Hold the hotkey',           () => ({ type: 'HOLD_HOTKEY' })],
+    ['Let go of the hotkey',      () => ({ type: 'RELEASE_HOTKEY' })],
+    ['Copy something else (Cmd-C)', () => ({ type: 'USER_COPIES', text: 'a password you just copied' })],
+    ['Copy from the overlay box', () => ({ type: 'OVERLAY_COPY' })],
+    ['Dismiss the overlay',       () => ({ type: 'OVERLAY_DISMISS' })]
+  ]],
+  ['Switch to', [
+    ['Notes (normal text box)',   () => ({ type: 'SWITCH_APP', app: 'Notes', field: 'textBox' })],
+    ['Terminal (prompt)',         () => ({ type: 'SWITCH_APP', app: 'Terminal', field: 'terminal' })],
+    ['Cursor (Electron editor)',  () => ({ type: 'SWITCH_APP', app: 'Cursor', field: 'webArea' })],
+    ['Finder (nothing focused)',  () => ({ type: 'SWITCH_APP', app: 'Finder', field: 'none' })]
+  ]],
+  ['What the machine does', [
+    ['Transcript arrives (short)', () => ({ type: 'TRANSCRIPT_READY', text: SHORT })],
+    ['Transcript arrives (long)',  () => ({ type: 'TRANSCRIPT_READY', text: LONG })],
+    ['100 ms passes',              () => ({ type: 'TIME_PASSES', ms: 100 })],
+    ['500 ms passes',              () => ({ type: 'TIME_PASSES', ms: 500 })]
+  ]],
+  ['How the app behaves', [
+    ['App stops answering questions', () => ({ type: 'SET_WORLD', key: 'answersQuestions', value: false, label: 'the app has stopped answering questions' })],
+    ['App answers again',             () => ({ type: 'SET_WORLD', key: 'answersQuestions', value: true,  label: 'the app is answering again' })],
+    ['App ignores pasting',           () => ({ type: 'SET_WORLD', key: 'acceptsPaste', value: false, label: 'the app now ignores synthesised pastes' })],
+    ['App accepts pasting',           () => ({ type: 'SET_WORLD', key: 'acceptsPaste', value: true,  label: 'the app accepts pastes again' })],
+    ['Start over',                    () => ({ type: 'RESET' })]
+  ]]
+];
+
+const step = (label, action) => ({ label, action });
+const HOLD  = () => step('Hold the hotkey', { type: 'HOLD_HOTKEY' });
+const LETGO = () => step('Let go of the hotkey', { type: 'RELEASE_HOTKEY' });
+const SHORTX = () => step('Transcript arrives', { type: 'TRANSCRIPT_READY', text: SHORT });
+const LONGX  = () => step('A long transcript arrives', { type: 'TRANSCRIPT_READY', text: LONG });
+const T100  = () => step('100 ms passes', { type: 'TIME_PASSES', ms: 100 });
+const T500  = () => step('500 ms passes', { type: 'TIME_PASSES', ms: 500 });
+
+const SCENARIOS = [
+  {
+    name: 'The happy path',
+    world: { app: 'Notes', field: 'textBox' },
+    blurb: 'A normal text box in an app that answers questions about itself. Watch the very first rung of the chain win, the clipboard stay untouched, and the app confirm the text arrived.',
+    steps: [HOLD(), LETGO(), SHORTX()]
+  },
+  {
+    name: 'You just switched apps',
+    world: { app: 'Notes', field: 'textBox' },
+    blurb: 'The measured failure from issue #28: the app reported as frontmost can be one to three seconds out of date. Here you let go of the hotkey right after switching apps, so the target is not trustworthy yet. Watch the guard hold delivery back, then release it once the switch is old enough - and watch which app it finally delivers to.',
+    steps: [HOLD(), step('Switch to Terminal mid-sentence', { type: 'SWITCH_APP', app: 'Terminal', field: 'terminal' }), LETGO(), SHORTX(), T100(), T500(), T500()]
+  },
+  {
+    name: 'A terminal prompt',
+    world: { app: 'Terminal', field: 'terminal' },
+    blurb: 'Issue #28 measured a terminal reporting between 5,673 and 15,646 characters as its value - the whole scrollback, not the line you are typing. Watch the first rung recognise that and refuse itself, rather than replacing your scrollback with one sentence.',
+    steps: [HOLD(), LETGO(), SHORTX(), T500()]
+  },
+  {
+    name: 'An Electron editor',
+    world: { app: 'Cursor', field: 'webArea' },
+    blurb: 'Cursor and Obsidian expose only a web area with no writable value, so there is nothing to write into. Watch the chain fall through to pasting - and watch the honest part: nothing can read the field back, so the text is delivered without anything confirming it landed.',
+    steps: [HOLD(), LETGO(), SHORTX(), T500()]
+  },
+  {
+    name: 'Nothing is focused',
+    world: { app: 'Finder', field: 'none' },
+    blurb: 'Already decided in issue #44, shown here so it can be felt: with no field to type into, the text goes into a box on the overlay and the clipboard is left alone. Press the copy button and watch the clipboard change only then - never silently.',
+    steps: [HOLD(), LETGO(), SHORTX(), step('Copy from the overlay box', { type: 'OVERLAY_COPY' }), step('Dismiss the overlay', { type: 'OVERLAY_DISMISS' })]
+  },
+  {
+    name: 'The app has hung',
+    world: { app: 'Cursor', field: 'webArea' },
+    blurb: 'Issue #26 treats a hung target as expected, not exceptional. The app stops answering, so we never learn what is focused. With the paste-anyway switch off, the text is held where the user can see it. Turn that switch on in Free play and run this again: it pastes into an unknown window instead. That contrast is the decision this scenario exists to force.',
+    steps: [step('The app stops answering', { type: 'SET_WORLD', key: 'answersQuestions', value: false, label: 'the app has stopped answering questions' }), HOLD(), LETGO(), SHORTX(), T500()]
+  },
+  {
+    name: 'The clipboard race',
+    world: { app: 'Cursor', field: 'webArea' },
+    blurb: 'Pasting means borrowing the clipboard and putting it back a moment later. Here you copy something of your own during that window. Watch what the restore does to it - this is the cost of the paste rung, and the reason the first rung is tried first.',
+    steps: [HOLD(), LETGO(), SHORTX(), step('You copy a password (Cmd-C)', { type: 'USER_COPIES', text: 'a password you just copied' }), T500()]
+  },
+  {
+    name: 'An app that swallows paste',
+    world: { app: 'Terminal', field: 'terminal' },
+    blurb: 'Some apps transform or ignore synthesised input. The paste rung fails, so the last rung types the text one character at a time. Watch the length warning, and watch the clipboard get put back early.',
+    steps: [step('The app ignores pasting', { type: 'SET_WORLD', key: 'acceptsPaste', value: false, label: 'the app now ignores synthesised pastes' }), HOLD(), LETGO(), LONGX(), T500()]
+  }
+];
+
+let tab = 0, stepAt = 0;
+
+function startScenario(i) {
+  tab = i; stepAt = 0; prev = null;
+  state = InjectionModel.reduce(InjectionModel.initial({ opts: { ...state.opts } }),
+    { type: 'RESET', world: SCENARIOS[i].world });
+  render();
+}
+
+const PHASES = {
+  idle: ['Waiting for you', ''], listening: ['Listening', 'warn'], transcribing: ['Transcribing', 'warn'],
+  waiting: ['Holding back - target not trusted yet', 'warn'], done: ['Delivered', 'ok'],
+  held: ['Not delivered - held on the overlay', 'bad']
+};
+
+function fieldHtml(label, value, cls, changed) {
+  return '<div class="field"><div class="label">' + label + '</div><div class="value ' +
+    (cls || '') + ' ' + (changed ? 'changed' : '') + '">' + value + '</div></div>';
+}
+
+function render() {
+  const s = state, p = prev, F = InjectionModel.FIELDS;
+  const ch = get => p && JSON.stringify(get(p)) !== JSON.stringify(get(s));
+  const phase = PHASES[s.phase];
+  const fld = F[s.world.field];
+
+  document.getElementById('state').innerHTML = '<div class="grid">' +
+    fieldHtml('Where we are', phase[0], phase[1], ch(x => x.phase)) +
+    fieldHtml('App in front', s.world.app, '', ch(x => x.world.app)) +
+    fieldHtml('What is focused there', fld.name + (fld.axValueChars ? ' (' + fld.axValueChars.toLocaleString() + ' chars of content)' : ''), '', ch(x => x.world.field)) +
+    fieldHtml('Last app switch', s.world.switchedAt < 0 ? 'not this session' : (s.now - s.world.switchedAt) + ' ms ago', '', ch(x => x.now - x.world.switchedAt)) +
+    fieldHtml('App answers questions', s.world.answersQuestions ? 'yes' : 'no - it is hung', s.world.answersQuestions ? '' : 'bad', ch(x => x.world.answersQuestions)) +
+    fieldHtml('App accepts pasting', s.world.acceptsPaste ? 'yes' : 'no', s.world.acceptsPaste ? '' : 'warn', ch(x => x.world.acceptsPaste)) +
+    fieldHtml('Transcript', s.transcript ? '&ldquo;' + s.transcript + '&rdquo;' : 'none yet', '', ch(x => x.transcript)) +
+    fieldHtml('How it was delivered', s.delivery ? s.delivery.method : '-', s.delivery ? 'ok' : '', ch(x => x.delivery && x.delivery.method)) +
+    fieldHtml('Did anything confirm it arrived?', s.delivery ? (s.delivery.verified ? 'yes - read back' : 'no - ' + s.delivery.note) : '-',
+      s.delivery ? (s.delivery.verified ? 'ok' : 'warn') : '', ch(x => x.delivery && x.delivery.verified)) +
+    fieldHtml('User clipboard', '&ldquo;' + s.clipboard.user + '&rdquo;' + (s.clipboard.restoreAt !== null ? ' (borrowed, being put back)' : ''),
+      s.clipboard.clobbered ? 'bad' : '', ch(x => x.clipboard.user)) +
+    fieldHtml('Clipboard damage', s.clipboard.clobbered ? 'yes - what the user copied was overwritten' : 'none',
+      s.clipboard.clobbered ? 'bad' : 'ok', ch(x => x.clipboard.clobbered)) +
+    fieldHtml('Overlay box', s.overlay ? (s.overlay.copied ? 'showing the text - user has copied it' : 'showing the text - not copied') : 'closed',
+      s.overlay ? 'warn' : '', ch(x => !!x.overlay)) +
+    fieldHtml('Clock', s.now + ' ms', '', ch(x => x.now)) +
+    '</div>' +
+    (s.overlay ? '<p class="note" style="margin-top:14px">The overlay says: <strong>' + s.overlay.why +
+      '</strong>. The text is still here, and the clipboard has not been touched.</p>' : '');
+
+  document.getElementById('attempts').innerHTML = s.attempts.length
+    ? s.attempts.map(a => {
+        const cls = a.outcome === 'delivered' ? 'ok' : a.outcome === 'skipped' ? 'warn' : 'bad';
+        return '<div><span class="value ' + cls + '">' + a.outcome + '</span> - ' + a.what +
+          '<br><span class="note">' + a.why + '</span></div>';
+      }).join('<div style="height:10px"></div>')
+    : '<span class="note">Nothing tried yet.</span>';
+
+  document.getElementById('log').innerHTML = s.log.length
+    ? s.log.slice().reverse().map(l => '<div><span class="t">' + String(l.at).padStart(4) + ' ms</span>  ' + l.msg + '</div>').join('')
+    : '<span class="note">Empty.</span>';
+
+  document.getElementById('free').innerHTML = FREE.map((g, gi) =>
+    '<div class="btngroup-label">' + g[0] + '</div><div class="btnrow">' +
+    g[1].map((b, bi) => '<button data-free="' + gi + '.' + bi + '">' + b[0] + '</button>').join('') + '</div>').join('');
+  document.querySelectorAll('[data-free]').forEach(el => {
+    const parts = el.dataset.free.split('.').map(Number);
+    el.onclick = () => dispatch(FREE[parts[0]][1][parts[1]][1]());
+  });
+
+  document.getElementById('tabs').innerHTML = SCENARIOS.map((sc, i) =>
+    '<button data-tab="' + i + '" class="' + (i === tab ? 'active' : '') + '">' + sc.name + '</button>').join('');
+  document.querySelectorAll('[data-tab]').forEach(el => el.onclick = () => startScenario(Number(el.dataset.tab)));
+
+  const sc = SCENARIOS[tab];
+  document.getElementById('scenario').innerHTML =
+    '<h3>' + sc.name + '</h3><p class="note" style="max-width:80ch">' + sc.blurb + '</p>' +
+    sc.steps.map((stp, i) =>
+      '<div class="step ' + (i < stepAt ? 'done' : i === stepAt ? 'next' : '') + '"><span class="n">' + (i + 1) + '</span>' +
+      '<button data-step="' + i + '" class="' + (i === stepAt ? 'primary' : '') + '" ' + (i === stepAt ? '' : 'disabled') + '>' +
+      stp.label + '</button></div>').join('') +
+    (stepAt >= sc.steps.length ? '<p class="note" style="margin-top:12px">Walkthrough finished. Read the panels above, then pick another tab or poke at it in Free play.</p>' : '') +
+    '<div style="margin-top:12px"><button id="restart">Restart this walkthrough</button></div>';
+  document.querySelectorAll('[data-step]').forEach(el => el.onclick = () => {
+    const i = Number(el.dataset.step);
+    dispatch(sc.steps[i].action);
+    stepAt = i + 1;
+    render();
+  });
+  document.getElementById('restart').onclick = () => startScenario(tab);
+
+  document.getElementById('settle').value = s.opts.settleMs;
+  document.getElementById('settleOut').textContent = s.opts.settleMs + ' ms';
+  document.getElementById('blind').checked = !!s.opts.blindPaste;
+}
+
+document.getElementById('settle').oninput = e => dispatch({ type: 'SET_OPT', key: 'settleMs', value: Number(e.target.value) });
+document.getElementById('blind').onchange = e => dispatch({ type: 'SET_OPT', key: 'blindPaste', value: e.target.checked });
+
+startScenario(0);
+</script>
+</body>
+</html>
