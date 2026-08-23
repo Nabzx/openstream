@@ -48,6 +48,10 @@ _Avoid_: Eviction, unloading, timeout kill
 Deterministic, non-model text tidying applied to every dictation. Costs under a millisecond. It does all cleanup except break placement, which it asks the rewrite model server to decide.
 _Avoid_: Post-processing, formatting pass
 
+**Context detection**:
+Resolving the frontmost application and the focused field via the macOS Accessibility API. It is the input to break-safe determination, not the decision itself: it reports the bundle id and the AX role, and what is done with them is defined separately.
+_Avoid_: App detection, focus detection, context
+
 **Break-safe application**:
 An application where inserting a line break does not submit or send. The app inserts a paragraph break only in these. Every application is treated as unsafe until it is listed.
 _Avoid_: Allow-listed app, multi-line app, safe app

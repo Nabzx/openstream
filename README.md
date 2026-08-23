@@ -27,7 +27,11 @@ Early development — pre-alpha, no working build yet. Architecture below is the
 - **Speech-to-text**: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), **compiled from source at a pinned tag during the build** - upstream publishes no macOS arm64 CLI binary, and a compiler is already required for the native helpers. One model, `ggml-base.en.bin` (141 MiB), fetched during the build from a **pinned Hugging Face revision** and verified against a known SHA-256; the build fails loudly if it does not match. Neither the binary nor the model is committed. Run as a resident `whisper-server` supervised for the life of the app.
 - **Text cleanup**: a **deterministic rules engine**, not a model. Filler removal, punctuation and per-mode formatting cost 0.1-1.0 ms. **There is no LLM in the dictation path** - measurement showed whisper already self-cleans short clips, so a model only earned its keep on exactly the long inputs where it cost seconds.
 - **Local rewrite model (Phase 3 only)**: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`), used solely for voice-driven editing, where the user explicitly asks for a rewrite and expects to wait. It starts lazily on first use and is released after 5 minutes idle. The model must be **Apache 2.0 or MIT and ungated** (no account, no terms acceptance): **SmolLM2-1.7B-Instruct** provisionally, Qwen3-1.7B the alternate. How it is acquired is still open.
-- **macOS native helpers**: small Swift/Objective-C binaries (compiled via native build scripts) for Accessibility API context detection, text injection, and mic access
+- **macOS native helpers**: two small Swift/Objective-C binaries (compiled via native build scripts), split so that each holds exactly one macOS permission:
+  - a **hotkey helper** (Input Monitoring) running a `CGEventTap` for global push-to-talk, since Electron's `globalShortcut` gives no key-up event
+  - an **accessibility helper** (Accessibility) owning both text injection and context detection, which share the same focused-element lookup
+  - They are kept apart because Accessibility calls can block for seconds, and a stalled call in the same process would trip `kCGEventTapDisabledByTimeout` and silently kill the hotkey. Both speak newline-delimited JSON over stdio.
+  - Microphone capture is *not* yet assigned to either helper; whether it needs native code at all is still open.
 - **Vocabulary biasing**: lightweight scan of open editor buffer / git repo for identifiers and terms, fed into whisper.cpp as an initial prompt / bias list
 
 ## Requirements
