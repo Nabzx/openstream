@@ -187,6 +187,37 @@ func delivered(method: String, verified: Bool, note: String) -> [String: Any] {
     ["status": "delivered", "method": method, "verified": verified, "note": note]
 }
 
+// Chromium's own AX tree is normally built lazily, only once Chromium
+// detects a running assistive technology by its own heuristics - which our
+// direct AXUIElementCopyAttributeValue calls never trip. Setting this
+// attribute forces the tree to build regardless. #28 found Electron apps
+// (VS Code, Slack, Discord) exposing nothing but a bare AXWebArea without
+// it. Unconditional and ignored on failure: on an app that doesn't
+// recognise the attribute (i.e. anything not Chromium-based), the set just
+// fails harmlessly - see #12.
+func enableManualAccessibility(_ appElement: AXUIElement) {
+    AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+}
+
+// Resolves the focused element once per dictation. #12 folded this into the
+// same helper #6 creates rather than a separate process or command,
+// specifically so this resolution and inject() never race each other over
+// focus - and so it only ever happens once: everything downstream (the
+// fallback chain below) reuses this same element rather than re-asking.
+func resolveFocusedElement(deadlineMs: Double) -> AXUIElement? {
+    guard let frontApp = NSWorkspace.shared.frontmostApplication else { return nil }
+
+    let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
+    AXUIElementSetMessagingTimeout(appElement, Float(deadlineMs / 1000.0))
+    enableManualAccessibility(appElement)
+
+    var focusedRef: CFTypeRef?
+    let focusErr = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+    guard focusErr == .success, let focusedRef = focusedRef else { return nil }
+
+    return (focusedRef as! AXUIElement) // swiftlint:disable:this force_cast
+}
+
 // The decision procedure itself, ported from InjectionModel in
 // prototypes/injection-62/index.html onto real AX/CGEvent calls.
 func decideAndInject(text: String) -> [String: Any] {
@@ -201,30 +232,21 @@ func decideAndInject(text: String) -> [String: Any] {
         Thread.sleep(forTimeInterval: 0.02)
     }
 
-    guard let frontApp = NSWorkspace.shared.frontmostApplication else {
-        return held(reason: "nothing was focused, so there is no field to deliver to")
-    }
-    let appName = frontApp.localizedName ?? "the frontmost app"
-
-    let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
-    AXUIElementSetMessagingTimeout(appElement, Float(config.axDeadlineMs / 1000.0))
-
-    var focusedRef: CFTypeRef?
-    let focusErr = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
-
-    guard focusErr == .success, let focusedRef = focusedRef else {
-        // Rung 0 didn't answer. The narrow exception settled on #62: a known
-        // app that has sat still well past the settle guard is a much
-        // smaller unknown than "which app" - the user is demonstrably
-        // looking at it, so a blind paste there is a bounded, undoable
-        // mistake rather than a shot in the dark.
-        if let gate = config.stableForBlindPasteMs, tracker.ageMs() >= gate {
+    guard let focused = resolveFocusedElement(deadlineMs: config.axDeadlineMs) else {
+        // Rung 0 didn't answer, or nothing is frontmost at all. The narrow
+        // exception settled on #62: a known app that has sat still well
+        // past the settle guard is a much smaller unknown than "which
+        // app" - the user is demonstrably looking at it, so a blind paste
+        // there is a bounded, undoable mistake rather than a shot in the
+        // dark. We have no app name at all when nothing is frontmost, so
+        // that case always falls through to hold below.
+        if let gate = config.stableForBlindPasteMs, tracker.ageMs() >= gate,
+           let appName = NSWorkspace.shared.frontmostApplication?.localizedName {
             let (_, _, note) = pasteViaClipboard(text: text, verifyAgainst: nil, valueBefore: nil)
-            return delivered(method: "pasted into a known window, field unknown", verified: false, note: note)
+            return delivered(method: "pasted into \(appName), field unknown", verified: false, note: note)
         }
-        return held(reason: "\(appName) never said what was focused, and hasn't been stable long enough to paste blind")
+        return held(reason: "the frontmost app never said what was focused, and hasn't been stable long enough to paste blind")
     }
-    let focused = focusedRef as! AXUIElement // swiftlint:disable:this force_cast
 
     let info = fieldInfo(focused)
     let readableAndFieldSized = info.valueChars.map { $0 <= config.axValueMaxChars } ?? false
