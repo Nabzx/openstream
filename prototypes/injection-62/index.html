@@ -93,7 +93,7 @@
     <div class="settings">
       <label>Wait after an app switch before delivering:
         <input type="range" id="settle" min="0" max="1200" step="50"> <b id="settleOut"></b></label>
-      <label><input type="checkbox" id="blind"> Paste anyway when the app will not say what is focused</label>
+      <label><input type="checkbox" id="blind"> Allow the narrow blind-paste rung (known app, still for 800 ms, field unknown)</label>
     </div>
     <div id="free"></div>
   </div>
@@ -127,7 +127,11 @@ const InjectionModel = (() => {
     restoreMs: 300,         // how long the user's clipboard stays borrowed
     axValueMaxChars: 2000,  // a "field" holding more than this is scrollback, not a field
     longTextChars: 120,     // above this, typing character by character is a real risk
-    blindPaste: false       // paste even when we never learned what was focused
+    // Settled on #62: we never paste into a window we cannot name. The one
+    // exception is a *known* app that has sat still far longer than the settle
+    // guard and merely failed to say which field is focused - there the user is
+    // demonstrably looking at the target. Set to null to disable the rung.
+    stableForBlindPasteMs: 800
   };
 
   // The world the model reacts to. In production these come from the
@@ -171,11 +175,25 @@ const InjectionModel = (() => {
     // latency-sensitive moment, and it is on a deadline.
     if (!s.world.answersQuestions) {
       out = push(out, 'ask the app what is focused', 'abandoned', 'no answer within ' + s.opts.axDeadlineMs + ' ms');
-      if (!s.opts.blindPaste) {
-        return hold(out, 'the app never said what was focused, so we never found out where the text would have gone');
+
+      // Rung 1b, the narrow gate settled on #62. Two unknowns are not the same
+      // unknown. "We do not know which app" means the user is probably not even
+      // looking at the window we would paste into - #28 measured the frontmost
+      // app arriving one to three seconds late during a switch. "We know the
+      // app, it has been still for ages, we just could not learn which field"
+      // is a much smaller claim: the user is watching this window, and a paste
+      // that lands wrong lands somewhere they can see and undo.
+      const gate = s.opts.stableForBlindPasteMs;
+      if (gate !== null && age(out) >= gate) {
+        out = say(out, 'the app is unresponsive, but ' + s.world.app + ' has been frontmost for ' +
+          age(out) + ' ms (over the ' + gate + ' ms stability gate) - pasting into a known window with an unknown field');
+        return paste(out, false, 'pasted into a known, settled window without learning which field was focused');
       }
-      out = say(out, 'paste-anyway is on: pasting without knowing what is focused');
-      return paste(out, false);
+
+      return hold(out, gate === null
+        ? 'the app never said what was focused, so we never found out where the text would have gone'
+        : 'the app never said what was focused, and ' + s.world.app + ' has only been frontmost for ' +
+          age(out) + ' ms - under the ' + gate + ' ms stability gate, so we cannot be sure this is even the window the user is looking at');
     }
 
     if (s.world.field === 'none') {
@@ -204,7 +222,7 @@ const InjectionModel = (() => {
     return paste(out, f.readable && f.axValueChars <= s.opts.axValueMaxChars);
   }
 
-  function paste(s, canVerify) {
+  function paste(s, canVerify, blindNote) {
     let out = { ...s };
     const saved = out.clipboard.user;
     out = { ...out, clipboard: { ...out.clipboard, saved, user: out.transcript, restoreAt: out.now + out.opts.restoreMs, raced: false } };
@@ -214,13 +232,21 @@ const InjectionModel = (() => {
       out = push(out, 'paste it', 'failed', 'the app ignored the synthesised paste');
       out = { ...out, clipboard: { ...out.clipboard, user: saved, saved: null, restoreAt: null } };
       out = say(out, 'clipboard put back early');
+      // The blind rung does not fall through to typing. One atomic paste into a
+      // window the user is watching is a bounded, undoable mistake; typing a
+      // sentence character by character into a field we could not identify is
+      // not - a vim mode or an autocomplete turns it into arbitrary input.
+      if (blindNote) {
+        return hold(out, 'the app ignored the paste, and we never learned which field was focused - typing blind into an unidentified field is not worth the risk');
+      }
       return typeIt(out);
     }
 
-    out = push(out, 'paste it', 'delivered', canVerify ? 'confirmed by reading the field back' : 'sent, but nothing confirmed it landed');
+    out = push(out, 'paste it', 'delivered',
+      canVerify ? 'confirmed by reading the field back' : (blindNote || 'sent, but nothing confirmed it landed'));
     return { ...out, phase: 'done',
-      delivery: { method: 'pasted', verified: canVerify,
-        note: canVerify ? 'read back and confirmed' : 'nothing could confirm it arrived' } };
+      delivery: { method: blindNote ? 'pasted into a known window, field unknown' : 'pasted', verified: canVerify,
+        note: canVerify ? 'read back and confirmed' : (blindNote || 'nothing could confirm it arrived') } };
   }
 
   // Rung 3: type it character by character. Works wherever a keyboard works.
@@ -405,8 +431,19 @@ const SCENARIOS = [
   {
     name: 'The app has hung',
     world: { app: 'Cursor', field: 'webArea' },
-    blurb: 'Issue #26 treats a hung target as expected, not exceptional. The app stops answering, so we never learn what is focused. With the paste-anyway switch off, the text is held where the user can see it. Turn that switch on in Free play and run this again: it pastes into an unknown window instead. That contrast is the decision this scenario exists to force.',
+    blurb: 'Issue #26 treats a hung target as expected, not exceptional. The app stops answering, so we never learn which field is focused. #62 settled what happens next, and the answer turns on which unknown we are facing. Here Cursor has been frontmost and still for a long time, so the user is demonstrably looking at it and only the field is unknown: the narrow rung pastes, and reports plainly that nothing confirmed where it landed. Switch to the next tab to see the same hang immediately after an app switch, where we cannot even be sure this is the window the user is looking at, and the text is held instead.',
     steps: [step('The app stops answering', { type: 'SET_WORLD', key: 'answersQuestions', value: false, label: 'the app has stopped answering questions' }), HOLD(), LETGO(), SHORTX(), T500()]
+  },
+  {
+    name: 'Hung, and just switched to',
+    world: { app: 'Notes', field: 'textBox' },
+    blurb: 'The same hang as the previous tab, but the user has only just switched into this app. #28 measured the frontmost app being reported one to three seconds late in six of eighteen samples, all Electron - so shortly after a switch we may not even have the right app, let alone the right field. The stability gate (800 ms) is longer than the settle guard (400 ms) precisely to separate these two cases: the settle guard says the target stopped moving, the stability gate says we have watched it stand still long enough to believe the user is looking at it. Here it is not met, so the text is held on the overlay with the clipboard untouched.',
+    steps: [
+      step('User switches to Cursor', { type: 'SWITCH_APP', app: 'Cursor', field: 'webArea' }),
+      step('Cursor stops answering', { type: 'SET_WORLD', key: 'answersQuestions', value: false, label: 'the app has stopped answering questions' }),
+      HOLD(), LETGO(), SHORTX(),
+      step('500 ms passes', { type: 'TIME_PASSES', ms: 500 })
+    ]
   },
   {
     name: 'The clipboard race',
@@ -513,11 +550,11 @@ function render() {
 
   document.getElementById('settle').value = s.opts.settleMs;
   document.getElementById('settleOut').textContent = s.opts.settleMs + ' ms';
-  document.getElementById('blind').checked = !!s.opts.blindPaste;
+  document.getElementById('blind').checked = s.opts.stableForBlindPasteMs !== null;
 }
 
 document.getElementById('settle').oninput = e => dispatch({ type: 'SET_OPT', key: 'settleMs', value: Number(e.target.value) });
-document.getElementById('blind').onchange = e => dispatch({ type: 'SET_OPT', key: 'blindPaste', value: e.target.checked });
+document.getElementById('blind').onchange = e => dispatch({ type: 'SET_OPT', key: 'stableForBlindPasteMs', value: e.target.checked ? 800 : null });
 
 startScenario(0);
 </script>
