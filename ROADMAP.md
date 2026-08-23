@@ -30,6 +30,8 @@ Get to "clone and build" for both of you before splitting up.
 - [ ] Global push-to-talk hotkey handling via native macOS helper binary (**Person A**)
 - [ ] Text injection at cursor via native Accessibility API helper (**Person B**)
 - [ ] Menu bar tray icon states: idle / recording / transcribing (either)
+- [ ] Push-to-talk overlay shows a **live sound level** while the key is held - **added by #31.** Provisional text is never shown and never injected; the level is the only in-dictation feedback, because the user is looking at the target app rather than reading
+- [ ] Audio capture feeds the transcription model server **in parts during speech**, not one file at key release - **added by #31**, so the latency budget pays for the final part only. Assumption under test in #76; if it fails, whole-recording capture is the fallback. Also a new requirement on #33
 
 **Definition of done:** a DMG that lets anyone dictate plain text into any app. No context-awareness yet, no LLM cleanup yet — but it's a real, usable, shippable tool. Tag `v0.1`.
 
