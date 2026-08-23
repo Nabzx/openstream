@@ -10,9 +10,11 @@
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "build:whisper": "bash scripts/build-whisper.sh",
-    "postinstall": "npm run build:whisper",
+    "build:hotkey-helper": "bash scripts/build-hotkey-helper.sh",
+    "postinstall": "npm run build:whisper && npm run build:hotkey-helper",
     "start": "cross-env NODE_ENV=production electron .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test \"electron/**/*.test.js\""
   },
   "dependencies": {
     "react": "^18.3.1",
