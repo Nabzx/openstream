@@ -62,12 +62,29 @@ SmolLM2's worst single sample is **0.19s** against Qwen3's **0.65s** - and 0.65s
 overruns the 0.39s headroom outright. Qwen3 is 225 MB cheaper in memory, which
 does not buy back a blown latency budget on the one hard product commitment.
 
-### The one thing that should still worry us
+### Memory: fine, at the context cap that was already decided
 
-Total resident memory is **2051 MB** with SmolLM2, against the **~1800 MB** #45
-assumed - and **still unmeasured at 8 GB**. On the memory floor this is a
-quarter of RAM held for the whole session. That gap is the live risk, not break
-quality.
+Measured at `-c 4096` the total is 2051 MB, over #45's assumed ~1800 MB. But
+#52 had already capped the rewrite model server's context at **2048** after
+measuring SmolLM2's KV cache at 192 KiB/token (it has no grouped-query
+attention). Break placement needs far less: the largest prompt here is **490
+tokens** for a 300-word dictation, so the cap has 4x headroom.
+
+| Context | llama-server RSS | + whisper base.en | 300-word median |
+|---|---|---|---|
+| 4096 | 1814 MB | 2055 MB | 0.203s |
+| **2048 (the decided cap)** | **1463 MB** | **1704 MB** | **0.202s** |
+| 1024 | 1271 MB | 1512 MB | 0.211s |
+
+At the decided cap the total is **1704 MB, under the ~1800 MB #45 assumed**, and
+latency is unchanged. There is no memory problem to escalate - the earlier
+figure was an artifact of benchmarking at 4096 instead of the cap already in
+force. Keep 2048: 1024 saves a further 192 MB but leaves only 2x headroom over
+the largest observed prompt, for no latency gain.
+
+**Still measured on 16 GB, not the 8 GB floor.** That gap is unchanged, but the
+decision now sits comfortably inside the budget it was checked against rather
+than over it.
 
 ## 1. Warm latency, against 0.39s of headroom
 
