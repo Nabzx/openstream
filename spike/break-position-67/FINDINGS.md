@@ -166,6 +166,10 @@ call, not a per-sample tally.
 
 - **16 GB, fanless, one machine.** Not the 8 GB floor, and not sustained
   thermals - every latency figure here is warm and unstressed.
+- **Input fidelity confirmed.** The prose cleanup rules landed in production as
+  `electron/cleanup/rules.js` while this spike ran. Its output was compared
+  against the Python `rules.py` this spike fed the model: **byte-identical on
+  all 12 samples**, same sentence counts. The measured input is the real one.
 - **Text-only.** No audio; transcribe cost is taken from #24, not re-measured.
 - **One prompt, three example variants.** A better prompt might do better. What
   the control shows is that the *example* is doing the work, which is a
