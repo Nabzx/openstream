@@ -1,5 +1,11 @@
 """PROTOTYPE - throwaway. The break-position call, as a pure module.
 
+The system prompt below carries a validated decision: SEVERAL varied examples,
+not one. A single worked example anchors the model's first break onto that
+example's first digit, and removing examples entirely destroys format
+compliance. Several varied examples keep format compliance at 12/12 and
+eliminate Qwen3's degenerate break-at-every-sentence behaviour. See FINDINGS.md.
+
 This is the liftable part of the spike (prototype skill, LOGIC branch): no
 server, no DOM, no timing. Given rules-cleaned text it builds the prompt, and
 given the model's reply it parses indices and assembles paragraphs.
@@ -22,7 +28,8 @@ MIN_SENTENCES = 3
 SYSTEM_PROMPT = (
     "You place paragraph breaks in dictated text. You are given numbered "
     "sentences. Reply with the numbers of the sentences that should START a "
-    "new paragraph, as a comma-separated list, for example: 3, 7\n"
+    "new paragraph, as a comma-separated list. Examples of the reply "
+    "format: `2, 5, 9` or `4` or `3, 6` or `none`\n"
     "Rules:\n"
     "- Break where the topic shifts, not to make paragraphs even.\n"
     "- Never output sentence 1. Never output a number that was not given.\n"

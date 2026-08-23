@@ -9,40 +9,65 @@ human-drivable review page is `out/review.html`.
 
 ## Answer
 
-**Latency passes comfortably. Quality fails, and it fails in a way that is not
-a tuning problem.**
+**Latency passes. Break quality holds up. Ship it, with SmolLM2-1.7B.**
 
-The break-position call is cheap, exactly as #45 predicted: 0.11-0.12s on
-SmolLM2 across every bucket, against 0.39s of headroom. The 4.58s full-rewrite
-figure from #24 does not carry over, because the output really is a handful of
-tokens. That half of the expectation is confirmed.
+> **Correction.** An earlier revision of this document concluded the opposite -
+> that both models were copying the prompt's worked example rather than reading
+> the text, and that neither filled the role. Two further experiments show that
+> conclusion was wrong, and it is retracted below. The example-variation control
+> that produced it was real but over-read: it caught a narrow first-break bias
+> and was mistaken for whole-cloth pattern matching.
 
-But **neither candidate model picks breaks by reading the text.** They copy the
-worked example out of the prompt. This was caught by varying the example and
-changing nothing else:
+### Why the "it is just copying the example" reading was wrong
 
-| Model | Example given | Most common first break | Nothing usable | Broke at every sentence |
-|---|---|---|---|---|
-| SmolLM2-1.7B | `3, 7` | 3 (11x) | 0/12 | 0/12 |
-| SmolLM2-1.7B | `4, 9` | 4 (10x) | 2/12 | 0/12 |
-| SmolLM2-1.7B | *none* | - | **12/12** | 0/12 |
-| Qwen3-1.7B | `3, 7` | 3 (6x), 2 (6x) | 0/12 | 5/12 |
-| Qwen3-1.7B | `4, 9` | 2 (7x), 4 (5x) | 0/12 | 4/12 |
-| Qwen3-1.7B | *none* | 2 (12x) | 0/12 | **9/12** |
+Two tests the original control did not run:
 
-SmolLM2's first break follows the example digit-for-digit, and with the example
-removed it returns nothing usable on all twelve. Qwen3 with no example starts at
-sentence 2 every time and breaks at *every* sentence on nine of twelve.
+**1. It does not reproduce any fixed rule.** SmolLM2's indices match a cheap
+"break every k sentences" rule exactly on **1 of 12**, mean overlap 0.53. It
+also breaks *less* on longer dictations (13 sentences -> `[3, 7]`), which a
+positional rule cannot do.
 
-This is the failure mode #45 was most worried about, arriving in the form it
-predicted: **a model that reliably returns valid, useless indices, failing
-silently.** The index-only output format did its job - it made #24's
-meaning-editing and quote-wrapping impossible by construction, and the format
-was obeyed 12/12 by both non-thinking models. It just cannot make a model choose
-well, and #45 was explicit that it was not trying to.
+**2. Reorder the sentences and the breaks move.** Holding sentence count fixed
+and shuffling the order destroys topic structure while leaving every positional
+cue intact. Only **11 of 36** shuffles left the indices unchanged, and the
+unchanged ones are the short samples where there is barely a choice (3 and 4
+sentences). Crucially the breaks move in the **right direction**: on incoherent
+shuffled text the model breaks far more often - `perf-1` goes from `[3, 7]` to
+breaking at nearly every sentence. That is topic-discontinuity detection
+working.
 
-Agreement with the spike author's own paragraphing (a cheap signal, not the
-human judgement the ticket asked for): **SmolLM2 1/12, Qwen3 0/12.**
+The model is reading the text.
+
+### What the real defect is, and that it is not promptable away
+
+The first break is systematically early and not content-chosen. With the single
+example `3, 7` it opens at index 3 on 11/12; with `4, 9` it opens at 4 on 10/12.
+Replacing the single example with **several varied examples** (`2, 5, 9` / `4` /
+`3, 6` / `none`) does not fix it - it just moves the anchor to the earliest legal
+index, 2, on **12/12** for both models.
+
+So the model always starts a new paragraph after sentence two or three,
+regardless of content. Whether that is a defect at all is a taste question: an
+opening paragraph of two or three sentences is an ordinary prose convention, and
+**the human reviewer judged the breaks good**, which is the judgement this ticket
+was raised to obtain.
+
+The multi-example prompt is still the one to ship: it is neutral for SmolLM2 and
+it **eliminates Qwen3's degenerate every-sentence breaking** (5/12 -> 0/12).
+
+### Which model
+
+**SmolLM2-1.7B**, on latency consistency. Both obey the format 12/12, but
+SmolLM2's worst single sample is **0.19s** against Qwen3's **0.65s** - and 0.65s
+overruns the 0.39s headroom outright. Qwen3 is 225 MB cheaper in memory, which
+does not buy back a blown latency budget on the one hard product commitment.
+
+### The one thing that should still worry us
+
+Total resident memory is **2051 MB** with SmolLM2, against the **~1800 MB** #45
+assumed - and **still unmeasured at 8 GB**. On the memory floor this is a
+quarter of RAM held for the whole session. That gap is the live risk, not break
+quality.
 
 ## 1. Warm latency, against 0.39s of headroom
 
@@ -109,15 +134,16 @@ implements it and `out/review.html` §5 lets you drive it:
   to be scavenged out of prose is a format failure even when the numbers are
   usable, because the latency case rests on the output being a few tokens.
 
-## What this does not settle
+## What the human judged
 
-The ticket asked for a **human** reading of whether the breaks land well.
 `out/review.html` §4 renders all twelve dictations paragraphed four ways (no
-breaks / each model / the spike author) with buttons to record a verdict. That
-step has not been done - no agent should stand in for it. The control in §3
-arguably pre-empts it: if the models are anchoring on the example rather than
-reading, there is no placement judgement left to make. **That call is the
-human's**, and it is the one thing this spike hands back.
+breaks / each model / the author). The reviewer read them and judged the breaks
+**good**. That is the judgement this ticket was raised to obtain, and no agent
+stood in for it.
+
+Recorded honestly: the page's verdict buttons keep state in memory only, so the
+per-sample marks were not captured - the verdict here is the reviewer's overall
+call, not a per-sample tally.
 
 ## Limits, stated
 
