@@ -1,8 +1,9 @@
 const { spawn } = require("child_process");
 const readline = require("readline");
 const path = require("path");
+const { resourcesRoot } = require("./paths");
 
-const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "accessibility-helper");
+const BIN_PATH = path.join(resourcesRoot(), "bin", "accessibility-helper");
 const RESTART_DELAY_MS = 1000;
 
 // Generous: the settle guard alone can hold a reply for up to 1200ms before

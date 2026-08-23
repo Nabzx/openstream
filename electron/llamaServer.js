@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const path = require("path");
+const { resourcesRoot } = require("./paths");
 
 // Plumbing only (#14): fetches and can start llama-server, but nothing
 // calls start() yet. #17 (voice-driven editing) is the feature that
@@ -10,8 +11,8 @@ const HOST = "127.0.0.1";
 const PORT = 8179;
 const RESTART_DELAY_MS = 1000;
 
-const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "llama", "llama-server");
-const MODEL_PATH = path.join(__dirname, "..", "resources", "models", "smollm2-1.7b-instruct-q4_k_m.gguf");
+const BIN_PATH = path.join(resourcesRoot(), "bin", "llama", "llama-server");
+const MODEL_PATH = path.join(resourcesRoot(), "models", "smollm2-1.7b-instruct-q4_k_m.gguf");
 
 let child = null;
 let stopping = false;
