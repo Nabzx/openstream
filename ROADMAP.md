@@ -48,10 +48,10 @@ Owns: audio capture, STT, text delivery, packaging.
 - [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update
 
 ### Track B — Intelligence
-Owns: context awareness, per-mode formatting rules.
+Owns: context awareness, prose cleanup rules, break safety.
 
-- [ ] Accessibility API: native helper detects frontmost app + focused field type, define discrete "modes" (terminal / code editor / prose)
-- [ ] Formatting rules engine per mode (no auto-caps/punctuation in terminal, proper comment formatting in editors)
+- [ ] Accessibility API: native helper detects the frontmost app + focused field type. **No discrete modes** - #45 deleted terminal mode and editor mode, and #44 closed as invalidated on the same finding. What detection feeds is a break-safe allow-list keyed on bundle id, plus a one-line-field modifier from the AX role
+- [ ] One prose rules-cleanup profile applied to every dictation, plus two modifiers (one-line field; break-safe app). Break placement in long dictation is asked of the **rewrite model server**, which answers with sentence numbers and never with text - see #45, #13, #67. **Unresolved ordering conflict:** break placement needs the `llama-server` plumbing listed in Phase 3 below, so either that moves up into Phase 2 or break placement ships in v0.3 and Phase 2 ends with rules-only cleanup
 - [ ] Prompt design + a small eval set to judge rewrite quality before/after changes
 
 **Definition of done:** Track A ships more reliable, faster, easier-to-install dictation. Track B ships visibly smarter output. Tag `v0.2`.
@@ -64,7 +64,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 
 - **Track A:** codebase vocabulary scanner — extract identifiers/terms from the open git repo or editor buffer, feed them into whisper.cpp as an initial prompt / bias list
 - **Track B:** `llama-server` plumbing - fetch the binary and an **Apache 2.0 / MIT, ungated** GGUF (SmolLM2-1.7B-Instruct provisionally; acquisition policy open in #52), start it, confirm a local HTTP round trip (moved here from Phase 2 by #24 and #32)
-- **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. That server starts lazily on the first voice-edit command and is released after 5 minutes idle (see #29); it is never resident during ordinary dictation
+- **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. **Correction from #45:** that server is now **resident**, started at app launch alongside the transcription model server, because it also decides break placement during ordinary dictation. The lazy-then-idle-released lifecycle #29 chose assumed it served voice edits only
 
 **Definition of done:** dictation that's measurably more accurate on your own codebase's vocabulary, plus voice-editing of existing text. Tag `v0.3`.
 
@@ -73,7 +73,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
 - [ ] Permission state check - build script warns when a helper hash changes, app tests all three grants at launch and blocks on Accessibility / Input Monitoring (#47)
-- [ ] Settings UI complete (hotkey remapping, mode rules) - **no model choice**, see #30
+- [ ] Settings UI complete (hotkey remapping, the user-editable break-safe app list) - **no mode rules** (#45) and **no model choice** (#30)
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
 - [ ] README demo GIF, short landing page
 - [ ] Public launch (Show HN, r/macapps, etc.)
