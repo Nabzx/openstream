@@ -11,8 +11,16 @@ One complete act of speaking and having the resulting text placed at the cursor.
 _Avoid_: Utterance, recording, session
 
 **Dictation latency budget**:
-The time from the end of speech to text being ready, which the product commits to keeping under one second.
+The time from the end of speech to the text arriving at the cursor, which the product commits to keeping under one second. It ends where the user can see it end, so the cost of placing the text is inside the budget rather than outside it.
 _Avoid_: Response time, turnaround
+
+**Provisional text**:
+The text the transcription model server has produced before the user releases the key. More audio can change it, so it is never placed at the cursor and never shown to the user.
+_Avoid_: Partial transcript, interim result, draft, streaming text
+
+**Push-to-talk overlay**:
+The panel shown while the user holds the key. It is the surface the app speaks to the user on during a dictation.
+_Avoid_: HUD, popup, indicator
 
 **Voice edit**:
 A rewrite of text the user has already selected, requested by speaking a command such as "make this a bullet list". Distinct from dictation: the user asks for it explicitly and expects to wait.
