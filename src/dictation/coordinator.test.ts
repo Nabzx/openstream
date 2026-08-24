@@ -48,6 +48,7 @@ describe("DictationCoordinator", () => {
     const harness = makeAdapters();
     const coordinator = new DictationCoordinator(harness.adapters);
 
+    coordinator.startRecording();
     const outcome = await coordinator.completeRecording(recording);
 
     expect(outcome).toEqual({
@@ -56,7 +57,12 @@ describe("DictationCoordinator", () => {
     });
     expect(harness.breakCalls).toEqual([["Hello world.", "This is second.", "This is third."]]);
     expect(harness.delivered).toEqual(["Hello world. This is second.\n\nThis is third."]);
-    expect(harness.tray).toEqual(["transcribing", "idle"]);
+    expect(harness.tray).toEqual(["recording", "transcribing", "idle"]);
+    expect(harness.overlay).toEqual([
+      { kind: "recording", level: 0 },
+      { kind: "transcribing" },
+      { kind: "idle" },
+    ]);
   });
 
   it("skips break placement for short dictation", async () => {

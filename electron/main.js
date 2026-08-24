@@ -6,6 +6,7 @@ const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { runCompletedDictation } = require("./dictationCoordinator");
+const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -20,7 +21,7 @@ let win = null;
 let trayIcons = null;
 let trayState = "idle";
 let captureWin = null;
-let isRecording = false;
+let overlayWin = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 
 function createWindow() {
@@ -68,12 +69,34 @@ function createCaptureWindow() {
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
 }
 
+function createOverlayWindow() {
+  overlayWin = new BrowserWindow({
+    width: 180,
+    height: 52,
+    show: false,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    focusable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, "overlay", "overlayPreload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  overlayWin.setIgnoreMouseEvents(true);
+  overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
+}
+
 async function transcribeAndPrint(int16Samples) {
   const result = await runCompletedDictation({
     int16Samples,
     transcription,
     delivery: accessibilityHelper,
-    setUserVisibleState: setTrayState,
+    setUserVisibleState,
   });
 
   if (result.status === "delivered") {
@@ -88,20 +111,18 @@ async function transcribeAndPrint(int16Samples) {
   }
 }
 
-function startRecording() {
-  if (!captureWin || isRecording) return;
-  isRecording = true;
-  captureWin.webContents.send("start-recording");
-  setTrayState("recording");
-  console.log("[dictation] recording - release the hotkey to stop");
-}
-
-function stopRecording() {
-  if (!captureWin || !isRecording) return;
-  isRecording = false;
-  captureWin.webContents.send("stop-recording");
-  setTrayState("transcribing");
-}
+const pushToTalkCoordinator = createPushToTalkCoordinator({
+  startCapture() {
+    if (!captureWin) return;
+    captureWin.webContents.send("start-recording");
+    console.log("[dictation] recording - release the hotkey to stop");
+  },
+  stopCapture() {
+    if (!captureWin) return;
+    captureWin.webContents.send("stop-recording");
+  },
+  setUserVisibleState,
+});
 
 function loadTrayIcons() {
   trayIcons = {};
@@ -117,6 +138,15 @@ function setTrayState(state) {
   trayState = state;
   tray.setImage(trayIcons[state]);
   tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
+}
+
+function setUserVisibleState(state) {
+  setTrayState(state);
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+
+  overlayWin.webContents.send("dictation-state", state);
+  if (state === "recording") overlayWin.showInactive();
+  else overlayWin.hide();
 }
 
 function createTray() {
@@ -151,7 +181,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
   const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
   if (samples.length === 0) {
     console.log("[dictation] no audio captured, skipping");
-    setTrayState("idle");
+    setUserVisibleState("idle");
     return;
   }
   transcribeAndPrint(samples);
@@ -159,8 +189,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
 
 ipcMain.on("recording-error", (event, message) => {
   console.error("[dictation] capture failed:", message);
-  isRecording = false;
-  setTrayState("idle");
+  setUserVisibleState("idle");
 });
 
 app.whenReady().then(() => {
@@ -169,11 +198,12 @@ app.whenReady().then(() => {
   }
   createTray();
   createCaptureWindow();
+  createOverlayWindow();
   whisperServer.start();
   rewriteModelServer.start();
   accessibilityHelper.start();
-  hotkeyHelper.onKeyDown(startRecording);
-  hotkeyHelper.onKeyUp(stopRecording);
+  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
+  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
   hotkeyHelper.start();
 });
 
