@@ -18,49 +18,58 @@ const ARGS = ["--keycode", "2", "--modifiers", "ctrl,alt"];
 
 const RESTART_DELAY_MS = 1000;
 
-let child = null;
-let stopping = false;
-let onDown = () => {};
-let onUp = () => {};
+function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DELAY_MS } = {}) {
+  let child = null;
+  let stopping = false;
+  let onDown = () => {};
+  let onUp = () => {};
 
-function handleLine(line) {
-  let msg;
-  try {
-    msg = JSON.parse(line);
-  } catch {
-    return;
+  function handleLine(line) {
+    let message;
+    try {
+      message = JSON.parse(line);
+    } catch {
+      return;
+    }
+
+    if (!message || typeof message !== "object" || !Number.isFinite(message.ts)) return;
+    if (message.event === "down") onDown();
+    else if (message.event === "up") onUp();
   }
-  if (msg.event === "down") onDown();
-  else if (msg.event === "up") onUp();
-}
 
-function start() {
-  stopping = false;
-  child = spawn(BIN_PATH, ARGS);
+  function start() {
+    stopping = false;
+    child = spawnProcess(BIN_PATH, ARGS);
 
-  readline.createInterface({ input: child.stdout }).on("line", handleLine);
-  child.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
+    readline.createInterface({ input: child.stdout }).on("line", handleLine);
+    child.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
 
-  child.on("exit", (code) => {
-    child = null;
-    if (stopping) return;
-    console.error(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${RESTART_DELAY_MS}ms`);
-    setTimeout(start, RESTART_DELAY_MS);
-  });
-}
+    child.on("exit", (code) => {
+      child = null;
+      if (stopping) return;
+      console.error(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
+      setTimeout(start, restartDelayMs);
+    });
+  }
 
-function stop() {
-  stopping = true;
-  if (child) child.kill();
+  function stop() {
+    stopping = true;
+    if (child) child.kill();
+  }
+
+  return {
+    start,
+    stop,
+    onKeyDown(callback) {
+      onDown = callback;
+    },
+    onKeyUp(callback) {
+      onUp = callback;
+    },
+  };
 }
 
 module.exports = {
-  start,
-  stop,
-  onKeyDown: (callback) => {
-    onDown = callback;
-  },
-  onKeyUp: (callback) => {
-    onUp = callback;
-  },
+  ...createHotkeyHelper(),
+  createHotkeyHelper,
 };

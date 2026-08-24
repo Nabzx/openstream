@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenStream push-to-talk</title>
+    <link rel="stylesheet" href="overlay.css" />
+  </head>
+  <body data-state="recording">
+    <main class="overlay" aria-live="polite">
+      <span class="recording-dot" aria-hidden="true"></span>
+      <span data-status>Recording</span>
+      <span class="sound-meter" aria-hidden="true">
+        <span class="sound-meter__level" data-sound-level></span>
+      </span>
+    </main>
+    <script src="overlay.js"></script>
+  </body>
+</html>
