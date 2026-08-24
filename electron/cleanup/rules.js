@@ -9,11 +9,8 @@
 // that's an STT problem, not this engine's.
 //
 // Paragraph-break *placement* (as opposed to a spoken "new paragraph",
-// which this module handles directly) is decided by the rewrite model
-// server per #45 §5, and is deliberately NOT implemented here: #14
-// (llama-server plumbing) hasn't landed and #67 (whether the model picks
-// sensible breaks at all) hasn't been validated. That's follow-up work
-// once both land, not a gap in this engine.
+// which this module handles directly) belongs to the dictation coordinator.
+// The rewrite model server returns sentence indices and never rewrites text.
 
 const STANDALONE_FILLERS = ["um", "uh", "erm", "er", "ah", "hmm", "mhm"];
 

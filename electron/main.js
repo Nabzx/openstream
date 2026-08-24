@@ -5,6 +5,7 @@ const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
+const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { runCompletedDictation } = require("./dictationCoordinator");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
@@ -24,6 +25,13 @@ let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
+const breakPlacement = createBreakPlacementHttpAdapter({
+  chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
+});
+
+function recordDictationDiagnostic(name, value) {
+  console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
+}
 
 function createWindow() {
   if (win) {
@@ -97,8 +105,10 @@ async function transcribeAndPrint(wavBuffer) {
     wavBuffer,
     transcription,
     contextDetection: accessibilityHelper,
+    breakPlacement,
     delivery: accessibilityHelper,
     setUserVisibleState,
+    recordDiagnostic: recordDictationDiagnostic,
   });
 
   if (result.status === "delivered") {
