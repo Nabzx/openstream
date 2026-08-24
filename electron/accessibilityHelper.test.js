@@ -1,8 +1,9 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { PassThrough } = require("node:stream");
+const { PassThrough, Writable } = require("node:stream");
 const { createAccessibilityHelper } = require("./accessibilityHelper");
+const { createHotkeyHelper } = require("./hotkeyHelper");
 
 function fakeProcess() {
   const process = new EventEmitter();
@@ -11,6 +12,15 @@ function fakeProcess() {
   process.stderr = new PassThrough();
   process.kill = () => {};
   return process;
+}
+
+function captureStream(chunks) {
+  return new Writable({
+    write(chunk, encoding, callback) {
+      chunks.push(String(chunk));
+      callback();
+    },
+  });
 }
 
 function readRequests(child) {
@@ -116,6 +126,86 @@ test("accessibility helper ignores logs and non-contract output on stdout", asyn
 
   assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: true });
   helper.stop();
+});
+
+test("accessibility helper keeps diagnostics on stderr and replies on stdout", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const stderrChunks = [];
+  const helper = createAccessibilityHelper({
+    spawnProcess: () => child,
+    stderr: captureStream(stderrChunks),
+  });
+  helper.start();
+
+  const context = helper.getFocusContext();
+  await nextTurn();
+  child.stderr.write("Accessibility access is missing\n");
+  child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n`);
+
+  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: false });
+  assert.equal(stderrChunks.join(""), "[accessibility-helper] Accessibility access is missing\n");
+  helper.stop();
+});
+
+test("accessibility helper rejects in-flight work, restarts, and correlates new requests after exit", async () => {
+  const firstChild = fakeProcess();
+  const secondChild = fakeProcess();
+  const children = [firstChild, secondChild];
+  const secondRequests = readRequests(secondChild);
+  const timers = [];
+  const helper = createAccessibilityHelper({
+    spawnProcess: () => children.shift(),
+    restartDelayMs: 25,
+    setRestartTimer(callback, delay) {
+      const timer = { callback, delay };
+      timers.push(timer);
+      return timer;
+    },
+    stderr: captureStream([]),
+  });
+  helper.start();
+
+  const interrupted = helper.getFocusContext();
+  firstChild.emit("exit", 1);
+
+  await assert.rejects(interrupted, /exited before replying/);
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].delay, 25);
+  timers[0].callback();
+
+  const delivered = helper.deliver("Text after restart.");
+  await nextTurn();
+  assert.deepEqual(secondRequests, [{ id: "2", cmd: "insert", text: "Text after restart." }]);
+  secondChild.stdout.write('{"id":"2","status":"delivered","method":"pasted","verified":false}\n');
+
+  assert.deepEqual(await delivered, { kind: "inserted" });
+  helper.stop();
+});
+
+test("a blocked accessibility request does not starve hotkey events", async () => {
+  const accessibilityChild = fakeProcess();
+  const hotkeyChild = fakeProcess();
+  const requests = readRequests(accessibilityChild);
+  const accessibility = createAccessibilityHelper({ spawnProcess: () => accessibilityChild });
+  const hotkey = createHotkeyHelper({ spawnProcess: () => hotkeyChild });
+  const events = [];
+  hotkey.onKeyDown(() => events.push("down"));
+  hotkey.onKeyUp(() => events.push("up"));
+  accessibility.start();
+  hotkey.start();
+
+  const context = accessibility.getFocusContext();
+  await nextTurn();
+  hotkeyChild.stdout.write('{"event":"down","ts":1710000000.25}\n');
+  hotkeyChild.stdout.write('{"event":"up","ts":1710000001.5}\n');
+  await nextTurn();
+
+  assert.deepEqual(events, ["down", "up"]);
+  accessibilityChild.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n`);
+  await context;
+  hotkey.stop();
+  accessibility.stop();
 });
 
 test("accessibility helper rejects invalid protocol replies", async () => {
