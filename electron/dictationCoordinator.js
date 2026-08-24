@@ -1,5 +1,6 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
+const { splitSentences, repairBreakIndices, applyParagraphBreaks } = require("./paragraphBreaks");
 
 async function runCompletedDictation(options) {
   const {
@@ -9,7 +10,9 @@ async function runCompletedDictation(options) {
     contextDetection = {
       getFocusContext: async () => ({ bundleId: "", isOneLineField: false }),
     },
+    breakPlacement,
     setUserVisibleState = () => {},
+    recordDiagnostic = () => {},
     logger = console,
   } = options;
 
@@ -44,13 +47,33 @@ async function runCompletedDictation(options) {
     return { status: "failed", stage: "context", error: err };
   }
 
-  const finishedText = cleanup(rawText, {
+  const breakSafe = isBreakSafeApplication(focusContext.bundleId);
+  let finishedText = cleanup(rawText, {
     oneLineBox: focusContext.isOneLineField,
-    breakSafe: isBreakSafeApplication(focusContext.bundleId),
+    breakSafe,
   });
   if (!finishedText) {
     setUserVisibleState("idle");
     return { status: "no-speech" };
+  }
+
+  const sentences = splitSentences(finishedText);
+  const hasExplicitBreakCommand = /\bnew (?:line|paragraph)\b/i.test(rawText);
+  const eligibleForBreakPlacement =
+    breakSafe && !focusContext.isOneLineField && !hasExplicitBreakCommand && sentences.length >= 3;
+
+  if (eligibleForBreakPlacement && breakPlacement) {
+    try {
+      const reply = await breakPlacement.placeParagraphBreaks(sentences);
+      const repair = repairBreakIndices(reply, sentences.length);
+      recordDiagnostic("paragraphBreaks.formatValid", repair.formatValid);
+      recordDiagnostic("paragraphBreaks.repairUsed", repair.repairUsed);
+      if (repair.indices.length > 0) {
+        finishedText = applyParagraphBreaks(sentences, repair.indices);
+      }
+    } catch (err) {
+      recordDiagnostic("paragraphBreaks.failure", err instanceof Error ? err.message : String(err));
+    }
   }
 
   try {
