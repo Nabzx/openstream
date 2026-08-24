@@ -332,29 +332,222 @@ handoff and may be worth revisiting separately.
 
 ---
 
-## Not verified from a primary source
+## Follow-up: gaps closed 2026-08-22
 
-- **Capture start latency on macOS.** I found no first-party number for how long
-  `getUserMedia()` (or the underlying CoreAudio input device open) takes on a cold start on
-  Apple Silicon. Chromium's macOS input buffer bounds are documented in source
-  (`kMinAudioBufferSize = 128`, `kMaxAudioBufferSize = 4096` under `BUILDFLAG(IS_MAC)`,
-  [`media/base/limits.h`](https://chromium.googlesource.com/chromium/src/+/main/media/base/limits.h)), which bounds *steady-state* buffer latency to roughly 8-256 ms at 16 kHz, but says
-  nothing about *acquisition* latency. This needs measuring on the target hardware; it is the
-  one input to the always-on-vs-per-press decision that no document can supply.
-- **TCC grant inheritance by spawned helpers.** #26's premise-check comment asserts that TCC
-  grants attach to the signed bundle rather than to each executable. I did not find a
-  first-party Apple document stating this normatively, and the same caveat noted in #26
-  applies here. It does not change this ticket's conclusion, because under the recommendation
-  the microphone is opened by Electron's own processes inside the app bundle and no helper is
-  involved.
-- **Which Chromium process opens the macOS input device.** Chromium can run its audio service
-  in or out of the browser process, and which one holds the CoreAudio connection on macOS
-  affects nothing in this design, but I was unable to locate the current
-  `IsAudioServiceOutOfProcess` decision point in the tree via the source browser. Flagged as
-  unresolved rather than asserted.
-- **Whether an `AudioWorkletNode` renders when not connected to the destination.** The Web
-  Audio spec's AudioNode Lifetime section defines "actively processing" per node type but I
-  could not extract a normative statement that a worklet with no path to
-  `AudioDestinationNode` is guaranteed to be pulled. Safe implementation: connect the worklet
-  to a `GainNode` with gain 0 and connect that to `context.destination`. Cheap insurance,
-  untested claim.
+A second pass went back to primary sources for the four items this note originally listed as
+unverified. Three are now closed and one remains genuinely open. Sources accessed 2026-08-22.
+None of this changes the ticket's answer - outcome 2 stands, and no third native helper is
+needed. One item reverses a piece of implementation advice this note previously gave.
+
+### Closed: an unconnected `AudioWorkletNode` IS pulled - and the "insurance" was a trap
+
+This note previously suggested connecting the worklet to a `GainNode` with gain 0 and
+connecting that to `context.destination` as cheap insurance. **Do not do that.** It is
+unnecessary under the spec and actively dangerous under Chromium's implementation.
+
+The spec is normative and unambiguous once the right section is read. In the graph ordering
+algorithm ([Web Audio API, § 2.6 Rendering an Audio Graph](https://webaudio.github.io/web-audio-api/#rendering-loop)),
+the set of nodes to be processed is defined as:
+
+> Let `nodes` be the set of all nodes created by this `BaseAudioContext`, and still alive.
+
+Not "all nodes reachable from the destination". Ordering is then a topological visit over
+that whole set, and the per-node step that invokes the worklet's `process` callback is
+applied "For each `AudioNode`, in `ordered node list`". Reachability from
+`AudioDestinationNode` is nowhere in the algorithm.
+
+[§ 1.5.3 AudioNode Lifetime](https://webaudio.github.io/web-audio-api/#AudioNode-actively-processing)
+agrees, and its rule for worklets keys on the *input* side only:
+
+> An `AudioWorkletNode` is actively processing when its `AudioWorkletProcessor`'s
+> `[[callable process]]` returns `true` and either its active source flag is `true` or any
+> `AudioNode` connected to one of its inputs is actively processing.
+
+and in the same section:
+
+> A `MediaStreamAudioSourceNode` or a `MediaStreamTrackAudioSourceNode` are actively
+> processing when the associated `MediaStreamTrack` object has a `readyState` attribute equal
+> to `"live"`, a `muted` attribute equal to `false` and an `enabled` attribute equal to
+> `true`.
+
+So a worklet fed by a live capture track is actively processing regardless of what its output
+is connected to.
+
+Blink implements this, but by a specific mechanism worth knowing about, because the mechanism
+is what makes the GainNode idea hazardous. Chromium's renderer pulls the graph from the
+destination, and compensates with an explicit "automatic pull node" list for nodes that are
+not connected to anything. `RealtimeAudioDestinationHandler::Render` runs it on every audio
+callback ([`realtime_audio_destination_handler.cc:278-280`](https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/renderer/modules/webaudio/realtime_audio_destination_handler.cc)):
+
+> ```cpp
+> // Processes "automatic" nodes that are not connected to anything. This can
+> // be done after copying because it does not affect the rendered result.
+> context->GetDeferredTaskHandler().ProcessAutomaticPullNodes(number_of_frames);
+> ```
+
+`AudioWorkletNode` registers itself on that list at construction, before any `connect()` call
+([`audio_worklet_node.cc:197-203`](https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/renderer/modules/webaudio/audio_worklet_node.cc)):
+
+> ```cpp
+> // The node should be manually added to the automatic pull node list,
+> // even without a `connect()` call.
+> DeferredTaskHandler::GraphAutoLocker locker(
+>     context->GetDeferredTaskHandler());
+> node->Handler().UpdatePullStatusIfNeeded();
+> ```
+
+And membership of that list is maintained purely by whether the node's output is connected
+([`audio_worklet_handler.cc:243-261`](https://chromium.googlesource.com/chromium/src/+/main/third_party/blink/renderer/modules/webaudio/audio_worklet_handler.cc)):
+
+> ```cpp
+> // If no output is connected, add the node to the automatic pull list.
+> // Otherwise, remove it out of the list.
+> if (!is_output_connected) {
+>   Context()->GetDeferredTaskHandler().AddAutomaticPullNode(this);
+> } else {
+>   Context()->GetDeferredTaskHandler().RemoveAutomaticPullNode(this);
+> }
+> ```
+
+Read that carefully: the moment you connect the worklet's output to anything, Blink drops it
+from the automatic pull list and assumes the destination will pull it. If the thing you
+connected it to does not itself reach `context.destination`, the worklet stops being pulled
+entirely. The "insurance" therefore converts a case that works into a case that silently
+produces no audio if the second `connect()` is ever forgotten, refactored away, or fails.
+
+**Implementation rule:** leave the capture worklet's output unconnected. That is correct
+under the spec and correct under Blink, and it is the configuration Blink explicitly
+special-cases for. The only real obligation is to keep a live JavaScript reference to the
+node so it stays "still alive" in the spec's sense.
+
+### Closed: on macOS the audio service is out of process, and sandboxed
+
+Both are on by default for macOS in
+[`content/public/common/content_features.cc:157-173`](https://chromium.googlesource.com/chromium/src/+/main/content/public/common/content_features.cc):
+
+> ```cpp
+> BASE_FEATURE(kAudioServiceOutOfProcess,
+> #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_LINUX)
+>              base::FEATURE_ENABLED_BY_DEFAULT
+> #else
+>              base::FEATURE_DISABLED_BY_DEFAULT
+> #endif
+> );
+>
+> // Enables the audio-service sandbox. This feature has an effect only when the
+> // kAudioServiceOutOfProcess feature is enabled.
+> BASE_FEATURE(kAudioServiceSandbox,
+> #if BUILDFLAG(IS_WIN) || BUILDFLAG(IS_MAC) || BUILDFLAG(IS_FUCHSIA)
+>              base::FEATURE_ENABLED_BY_DEFAULT
+> #else
+>              base::FEATURE_DISABLED_BY_DEFAULT
+> #endif
+> );
+> ```
+
+So the CoreAudio input device is opened by a separate, sandboxed Audio Service process, not
+by the renderer that called `getUserMedia()` and not by the browser process. As previously
+suspected this changes nothing in the design, but it is worth knowing for two practical
+reasons: the process that appears in Activity Monitor holding the mic is an Electron Helper
+(Audio) process rather than the main app, and any future attempt to reason about the mic from
+the main process must not assume the main process owns the device.
+
+For the record, the concrete input stream implementation reached on macOS is
+`AUAudioInputStream`, constructed in `AudioManagerMac::MakeLowLatencyInputStream`
+([`media/audio/mac/audio_manager_mac.cc:944-976`](https://chromium.googlesource.com/chromium/src/+/main/media/audio/mac/audio_manager_mac.cc)).
+Note that the file this note's earlier draft looked for,
+`media/audio/mac/audio_low_latency_input_mac.cc`, no longer exists - the implementation now
+lives at [`media/audio/apple/audio_low_latency_input.cc`](https://chromium.googlesource.com/chromium/src/+/main/media/audio/apple/audio_low_latency_input.cc),
+shared with iOS.
+
+### Partly closed: TCC, entitlements, and where the grant attaches
+
+Apple's own documentation is explicit about three things and silent on the fourth.
+
+Explicit, from [Requesting authorization to capture and save media](https://developer.apple.com/documentation/avfoundation/requesting-authorization-to-capture-and-save-media):
+
+> In iOS and macOS 10.14 and later, the user must explicitly grant permission for each app to
+> access the camera and microphone.
+
+> If your app uses device microphones, include the key in your app's `Info.plist` file.
+
+> Your app needs to contain the appropriate key in its `Info.plist` file, and the appropriate
+> entitlement enabled in macOS, before it requests authorization or attempts to use a capture
+> device. Otherwise, the system terminates your app.
+
+That last sentence is a hard failure mode, not a warning: a missing
+`NSMicrophoneUsageDescription` or a missing entitlement terminates the process rather than
+returning an error. The macOS entitlement required is
+[`com.apple.security.device.audio-input`](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.device.audio-input),
+described as:
+
+> A Boolean value that indicates whether the app may record audio using the built-in
+> microphone and access audio input using Core Audio. To add this entitlement to your app,
+> first enable the Hardened Runtime capability in Xcode, and then under Resource Access,
+> select Audio Input.
+
+Given that Chromium opens the device from a sandboxed Audio Service helper (above), this
+entitlement has to be present on the helper that actually touches Core Audio, not only on the
+top-level app. Electron's standard packaging handles this, but it is the thing to check first
+if capture dies on a signed build while working in development.
+
+Still silent: I did not find a first-party Apple document stating normatively that a TCC
+*consent record* attaches to the signed app bundle rather than to each executable within it.
+The nearest primary signal points mildly the other way in wording - Apple defines
+[Entitlements](https://developer.apple.com/documentation/bundleresources/entitlements) as
+"Key-value pairs that grant an **executable** permission to use a service or technology"
+(emphasis mine). But entitlements are not TCC grants, and this does not settle the question.
+
+**My inference, not the sources'**: this remains unresolved and #26's premise-check comment
+should still be treated as unverified. It continues not to matter for #33, because under the
+recommendation nothing outside the Electron app bundle ever opens the microphone.
+
+### Still open: cold-start capture latency
+
+No first-party number exists, and I now believe none will - Apple does not document Core
+Audio device acquisition latency, and Chromium does not instrument it as a duration. This has
+to be measured on target hardware, exactly as the note already said.
+
+What the second pass *did* find is a documented worst case that matters more for this product
+than the average case. Chromium deliberately defers starting an input stream around system
+suspend and resume ([`media/audio/mac/audio_manager_mac.h:141-153`](https://chromium.googlesource.com/chromium/src/+/main/media/audio/mac/audio_manager_mac.h)):
+
+> ```cpp
+> // OSX has issues with starting streams as the system goes into suspend and
+> // immediately after it wakes up from resume.  See http://crbug.com/160920.
+> // As a workaround we delay Start() when it occurs after suspend and for a
+> // small amount of time after resume.
+> //
+> // Streams should consult ShouldDeferStreamStart() and if true check the value
+> // again after |kStartDelayInSecsForPowerEvents| has elapsed. If false, the
+> // stream may be started immediately.
+> //
+> // As of Nov 2025, this is still helpful, see https://crbug.com/447640763.
+> enum { kStartDelayInSecsForPowerEvents = 5 };
+> ```
+
+The deferral is applied in `AUAudioInputStream::Start`, which posts the real start behind a
+five-second delayed task and returns immediately, logging "Start of input audio is deferred"
+([`media/audio/apple/audio_low_latency_input.cc:742-756`](https://chromium.googlesource.com/chromium/src/+/main/media/audio/apple/audio_low_latency_input.cc)).
+Chromium separately allows five seconds before it even considers a start to have failed
+(`kInputCallbackStartTimeout = base::Seconds(5)`, same file).
+
+**My inference, not the sources'**: this is a direct argument for the always-on stream the
+note already recommends. A dictation app is used constantly right after opening the lid, and
+that is precisely the window in which a per-press `Start()` can be silently deferred by up to
+five seconds. A stream acquired once and held is started once, most likely well before the
+user's first push-to-talk press, and a deferral that lands there is invisible. A stream
+started per keypress puts a documented five-second worst case directly on the user's critical
+path, on the single most common cold-start path the app has. Whoever measures acquisition
+latency should measure it immediately after a lid-open, not on a warm idle machine, or the
+measurement will look far better than reality.
+
+## Still not verified from a primary source
+
+- **Cold-start capture acquisition latency on macOS.** See above. Not documented by Apple or
+  Chromium; must be measured on target hardware, and specifically measured shortly after
+  resume from sleep. This is the one input to the always-on-vs-per-press decision that no
+  document can supply - though the five-second power-event deferral above is a strong
+  argument for always-on without needing the measurement.
+- **TCC grant inheritance by spawned helpers.** See above. No normative first-party statement
+  found. Does not affect this ticket's conclusion.

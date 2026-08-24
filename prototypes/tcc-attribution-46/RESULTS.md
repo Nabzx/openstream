@@ -1,10 +1,8 @@
 # Results (issue #46)
 
-Status: **harness verified, experiment not yet run.** The build, both helpers,
-the Electron host, the headless capture and both rebuild arms have been run and
-checked. The experiment itself needs a human at the machine, because the grant
-must be given in System Settings and the System Settings list is itself the
-main evidence.
+Status: **verdict reached on 2026-08-24.** The Electron host holds all three
+grants in the measured ad-hoc-signed configuration. The observations, caveats,
+and consequences are recorded below.
 
 Every cell below must be a real observation from a run. Cells that were not
 measured say so. Nothing here is inferred.
