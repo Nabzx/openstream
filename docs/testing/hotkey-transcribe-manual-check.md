@@ -38,6 +38,12 @@ treated as menu key-equivalents, so nothing beeps.
   gate against fakes - `swift test --package-path native/accessibility-helper`
   (needs a full Xcode install; Command Line Tools alone are missing
   `Testing.framework`'s runtime search path).
+- Since #116, the overlay's bottom-centering math
+  (`computeBottomCenteredPosition` in `electron/overlayPosition.js`) has 4
+  tests covering centering, the bottom margin, an offset work area (a
+  secondary display), and a custom margin - `node --test
+  electron/overlayPosition.test.js`. The actual on-screen placement still
+  needs a human; the math can't confirm it clears the real Dock.
 - All new/changed files pass `node --check`.
 
 ## Needs a human, one time
@@ -63,6 +69,11 @@ treated as menu key-equivalents, so nothing beeps.
    holding the keys) to confirm the tap is global and doesn't need the
    app focused. The text should land in whichever app is frontmost when
    you release, not the one that was frontmost when you pressed.
+7a. While holding the key, check the overlay itself (#116): it should sit
+   bottom-center of the screen, clear of the Dock, like macOS's own
+   dictation HUD - not centered on the screen or wherever it used to land.
+   On a multi-monitor setup, move the cursor to a second display before
+   pressing the key and confirm the overlay follows it there.
 8. Try a terminal window and an Electron-based editor (e.g. VS Code, Slack)
    as the target - these are exactly the cases #62 designed the fallback
    chain around. A terminal's prompt should receive a clipboard paste, not
