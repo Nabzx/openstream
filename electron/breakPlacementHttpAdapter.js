@@ -1,15 +1,14 @@
 const SYSTEM_PROMPT = [
-  "You place paragraph breaks in dictated text. You are given numbered sentences.",
-  "Reply with the numbers of the sentences that should START a new paragraph, as a comma-separated list.",
-  "Examples of the reply format: `2, 5, 9` or `4` or `3, 6` or `none`.",
-  "Break where the topic shifts, not to make paragraphs even.",
-  "Never output sentence 1 or a number that was not given.",
-  "If the text should stay as one paragraph, reply: none.",
-  "Reply with ONLY numbers or the word none. No text, no explanation.",
+  "You place paragraph breaks in dictated text. You are given numbered sentences. Reply with the numbers of the sentences that should START a new paragraph, as a comma-separated list. Examples of the reply format: `2, 5, 9` or `4` or `3, 6` or `none`",
+  "Rules:",
+  "- Break where the topic shifts, not to make paragraphs even.",
+  "- Never output sentence 1. Never output a number that was not given.",
+  "- If the text should stay as one paragraph, reply: none",
+  "- Reply with ONLY numbers or the word none. No text, no explanation.",
 ].join("\n");
 
 function createBreakPlacementHttpAdapter(options) {
-  const { chatCompletionsUrl, fetchImpl = fetch } = options;
+  const { chatCompletionsUrl, fetchImpl = fetch, requestTimeoutMs = 390 } = options;
   if (typeof chatCompletionsUrl !== "function") {
     throw new Error("Break-placement HTTP adapter requires a chatCompletionsUrl function");
   }
@@ -19,6 +18,7 @@ function createBreakPlacementHttpAdapter(options) {
     const response = await fetchImpl(chatCompletionsUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.timeout(requestTimeoutMs),
       body: JSON.stringify({
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
