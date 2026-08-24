@@ -11,14 +11,20 @@
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "build:whisper": "bash scripts/build-whisper.sh",
     "build:hotkey-helper": "bash scripts/build-hotkey-helper.sh",
-    "postinstall": "npm run build:whisper && npm run build:hotkey-helper",
+    "build:accessibility-helper": "bash scripts/build-accessibility-helper.sh",
+    "build:llama": "bash scripts/fetch-llama.sh",
+    "postinstall": "npm run build:whisper && npm run build:hotkey-helper && npm run build:accessibility-helper && npm run build:llama",
     "start": "cross-env NODE_ENV=production electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test \"electron/**/*.test.js\""
+    "test": "node --test \"electron/**/*.test.js\"",
+    "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg --publish=never"
   },
   "dependencies": {
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
+  },
+  "overrides": {
+    "@noble/hashes": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
@@ -28,8 +34,36 @@
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
     "electron": "^31.0.0",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.5.2",
     "vite": "^5.3.1",
     "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.openstream.app",
+    "productName": "OpenStream",
+    "directories": {
+      "output": "release",
+      "buildResources": "assets"
+    },
+    "files": [
+      "electron/**/*",
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "resources", "to": "resources" }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.icns",
+      "target": [{ "target": "dmg", "arch": ["arm64"] }],
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false
+    },
+    "dmg": {
+      "sign": false
+    }
   }
 }

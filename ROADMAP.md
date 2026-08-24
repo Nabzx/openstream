@@ -30,6 +30,8 @@ Get to "clone and build" for both of you before splitting up.
 - [ ] Global push-to-talk hotkey handling via native macOS helper binary (**Person A**)
 - [ ] Text injection at cursor via native Accessibility API helper (**Person B**)
 - [ ] Menu bar tray icon states: idle / recording / transcribing (either)
+- [ ] Push-to-talk overlay shows a **live sound level** while the key is held - **added by #31.** Provisional text is never shown and never injected; the level is the only in-dictation feedback, because the user is looking at the target app rather than reading
+- [ ] Audio capture feeds the transcription model server **in parts during speech**, not one file at key release - **added by #31**, so the latency budget pays for the final part only. Assumption under test in #76; if it fails, whole-recording capture is the fallback. Also a new requirement on #33
 
 **Definition of done:** a DMG that lets anyone dictate plain text into any app. No context-awareness yet, no LLM cleanup yet — but it's a real, usable, shippable tool. Tag `v0.1`.
 
@@ -43,6 +45,7 @@ Owns: audio capture, STT, text delivery, packaging.
 - [ ] Harden the build-time compile + model fetch: cached artifacts, re-verification on rebuild, loud failure messages. **No first-launch download and no progress UI** - #30 moved model acquisition entirely into the build
 - [ ] ~~Support multiple whisper.cpp model sizes; settings toggle for speed vs. accuracy~~ - **removed by #30.** One model, `ggml-base.en.bin`. The setting existed so low-RAM Macs could dodge the 2 GB LLM, and that LLM left the dictation path in #24; `small.en` is ~3x the work and would put long dictations past the sub-1s budget
 - [ ] Harden text injection across app types — this breaks in Electron apps, terminals, and some Java/Swing apps; needs real cross-app testing
+- [ ] Decide the injection mechanism itself, its guard against a stale target, and what the user sees when injection fails ([#62](https://github.com/Nabzx/openstream/issues/62)). The hardening item above assumes a mechanism that has never been chosen
 - [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update
 
 ### Track B — Intelligence
