@@ -27,89 +27,114 @@ are real, but they are the setup, not the answer.
 | Arm 1 invariant (`rebuild-js.sh`) | helper CDHashes unchanged: `00667d0a…`, `b57a6437…` | The JS-only rebuild is genuinely helper-neutral even though the whole bundle is re-signed `--deep`. Ad-hoc signing is deterministic over identical content, so arm 1 isolates the variable it claims to. |
 | Arm 2 invariant (`rebuild-helpers.sh`) | axhelper CDHash moved `00667d0a…` → `c997c749…`, and its `signingIdentifier` moved too | The helper-only rebuild really does change helper code identity, including the ad-hoc signing identifier and therefore the designated requirement. Arm 2 isolates its variable. |
 
-## Step 2 - baseline, before any grant
+## The run of 2026-08-24, and which half of it counts
 
-Not measured yet.
+The experiment was run twice back to back. **Only the first pass is valid**, and
+the reason is recorded here because it is the easiest mistake to repeat.
+
+| Time (UTC) | Event | Host CDHash |
+| --- | --- | --- |
+| 02:05:36 | `build.sh` | `157799ea…` |
+| 02:12:58 | **`build.sh` again** - second wizard run, full rebuild | `4e05f21b…` |
+
+The grant was given during the first pass and confirmed at 02:11:23. The second
+`build.sh` at 02:12:58 moved the host CDHash, **and the grant did not survive
+it**. Every capture from 02:13:00 onward reads denied, including the one the
+operator confirmed as granted. So steps 5, 6 and 7 below measured denied → denied
+and decide nothing.
+
+## Step 2 - baseline, before any grant (VALID, 02:05:36)
 
 | Subject | CDHash | Reported | Functional |
 | --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
+| `TCCProbe.app` | `157799ea…` | not trusted | - |
+| `axhelper` | `dbfb26dc…` | false | false |
+| `hotkeyhelper` | `5f24cfb7…` | `denied` | false |
 
-## Step 3 - what System Settings names
+Clean baseline: nothing granted, and `responsible` named TCCProbe, not a terminal.
 
-**The single most decisive observation.** Not measured yet.
+## Step 3 - what System Settings names (VALID) - THE DECISIVE OBSERVATION
 
 | Pane | Entry name(s) that appeared | Names the `.app` or the helper binary? |
 | --- | --- | --- |
-| Accessibility | - | - |
-| Input Monitoring | - | - |
+| Accessibility | **`TCCProbe`** | **The `.app`.** No entry named `axhelper` ever appeared. |
+| Input Monitoring | **none** | No entry appeared at the moment of checking. See caveat below. |
 
-## Step 4 - after granting, before any rebuild
-
-Not measured yet.
+## Step 4 - after granting, before any rebuild (VALID, 02:11:23)
 
 | Subject | Reported | Functional |
 | --- | --- | --- |
-| `TCCProbe.app` | - | - |
-| `axhelper` | - | - |
-| `hotkeyhelper` | - | - |
+| `TCCProbe.app` | trusted | - |
+| `axhelper` | **true** | **true** |
+| `hotkeyhelper` | **`granted`** | **true** |
 
-## Step 5 - arm 1: JavaScript rebuilt, helpers untouched
+This is the load-bearing measurement. Granting **only** `TCCProbe` in the
+Accessibility pane was sufficient to make `axhelper` both report and *function*
+as trusted, and `axhelper` never had an entry of its own to grant.
 
-Not measured yet. `rebuild-js.sh` asserts the helper CDHashes did not move;
-record whether that assertion held.
+Open caveat on Input Monitoring: the pane listed nothing at step 3, yet
+`hotkeyhelper` moved from `denied` to `granted` by 02:11:23. Whether an entry
+named `TCCProbe` appeared in that pane later in the sequence was not recorded.
+The transition is real; the mechanism behind it is not established.
 
-| Subject | CDHash moved? | Reported | Functional |
-| --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
+## Step 5 - arm 1: JavaScript rebuilt, helpers untouched (INVALID)
 
-Reading: helpers still pass and the host drops → grants are per-helper.
-All three drop → the Electron bundle holds them.
+Ran at 02:14:43, after the grant had already been destroyed by the 02:12:58
+rebuild. Went denied → denied. The CDHash invariant held (`152d05a4…`
+unchanged), so the *harness* worked; the *measurement* is void. **Must be re-run.**
 
-## Step 6 - arm 2: helpers rebuilt, JavaScript untouched
+## Step 6 - arm 2: helpers rebuilt, JavaScript untouched (INVALID)
 
-Not measured yet. `rebuild-helpers.sh` asserts the helper CDHash did move;
-record whether that assertion held.
-
-| Subject | CDHash moved? | Reported | Functional |
-| --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
-
-Reading: helpers now fail → the entry is keyed to the helper's own code
-identity. Helpers still pass → it is not.
+Ran at 02:16:30 from the same denied state. Helper CDHash moved
+(`152d05a4…` → `8f4e7b9c…`) as designed, but with nothing granted the arm
+decides nothing. **Must be re-run.**
 
 ## Step 7 - `tccutil reset`
 
-**Half measured.** Both commands were run against a clean checkout with *no
-grant in place*, so they establish only that the host bundle id is a valid
-target. What they clear once a real grant exists is still open.
+Established earlier, and still valid: the host bundle id **is** a target
+`tccutil` accepts (exit 0) while a bogus id is rejected (exit 64,
+`OSStatus -10814`), and `ListenEvent` is the right service name for Input
+Monitoring. Both helpers have no bundle identifier at all, so this target can
+only ever reach the host's entry.
 
-| Command | Exit status | What it actually cleared |
-| --- | --- | --- |
-| `tccutil reset Accessibility dev.openstream.prototype.tccprobe` | 0, `Successfully reset Accessibility approval status` | Unknown - no grant existed yet. |
-| `tccutil reset ListenEvent dev.openstream.prototype.tccprobe` | 0, `Successfully reset ListenEvent approval status` | Unknown - no grant existed yet. |
-| Control: `tccutil reset Accessibility com.example.definitely.not.installed.xyz` | 64, `No such bundle identifier ... OSStatus -10814` | n/a |
-
-The control is what makes the two exit-0 results mean anything: `tccutil`
-rejects a bundle id LaunchServices does not know. So the host bundle id **is** a
-usable target and `ListenEvent` **is** the right service name for Input
-Monitoring. Neither helper has a bundle id at all (measured above), so this
-target can only ever reach the host's entry. Whether that is enough depends
-entirely on steps 5 and 6.
+What the reset *clears* was not validly measured: it ran at 02:17:40 when
+nothing was granted.
 
 ## Verdict
 
-Not reached. The three answers this ticket owes issue #23:
+**Answered.** Which binary the Accessibility grant attaches to:
 
-1. Which binary each grant attaches to - **open**.
-2. Whether `tccutil reset` has a usable target - **partially answered**: the
-   helpers have no bundle identifier, so if grants attach per-helper the answer
-   is no. Confirmed by measurement above, but conditional on step 5/6.
-3. How much of the per-rebuild problem the deterministic helper build removes -
-   **open**, follows from 1.
+> **The Electron host holds it.** The System Settings list names `TCCProbe`, no
+> entry for `axhelper` is ever offered, and granting the host alone makes the
+> spawned helper functionally trusted. This is the responsible-process mechanism
+> deciding the outcome, consistent with the earlier measurement that both
+> helpers' responsible process resolves to `TCCProbe`.
+
+**Answered.** Whether `tccutil reset` has a usable target: **yes, but only the
+host's.** The helpers have no bundle identifier, so there is nothing per-helper
+to reset - which is moot, because there is nothing per-helper to grant either.
+
+**Still open, and it is the expensive one.** How much of the per-rebuild problem
+the deterministic helper build removes. This needs arm 1 re-run against a live
+grant. The evidence so far points the pessimistic way and should not be taken as
+settled:
+
+- A full rebuild moved the host CDHash and **did** drop the grant (02:12:58).
+- `rebuild-js.sh` also moves the host CDHash (measured repeatedly: `5b9eeeb0…`,
+  `a20dd4ab…`), even though it leaves the helpers untouched.
+
+If the grant is keyed to the host's code identity, a JavaScript-only rebuild
+drops it, and the deterministic helper build from #40 buys nothing for TCC. That
+is an inference from two measurements, **not** an observation. Arm 1 must be run
+against a real grant to settle it.
+
+## How to re-run the arms correctly
+
+Do **not** run `build.sh` again - that is what voided this run. From a granted
+state:
+
+```sh
+./readstate.sh confirm-granted   # must show granted before continuing
+./rebuild-js.sh && ./readstate.sh arm1-js
+./rebuild-helpers.sh && ./readstate.sh arm2-helpers
+```

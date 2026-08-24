@@ -198,6 +198,23 @@ cd "$PROTO"
 ENV_FILE="$PROTO/logs/observations.env"
 mkdir -p "$PROTO/logs"
 
+# grant_state <label> - echoes "granted" or "denied" by parsing the newest
+# capture readstate.sh just wrote. Machine-checked, because a human reading the
+# output and typing "yes" is exactly how the 2026-08-24 run was voided.
+grant_state() {
+  local f
+  f=$(ls -t "$PROTO/logs"/state-*-"$1".json 2>/dev/null | head -n1) || true
+  [[ -n "$f" ]] || { echo "unknown"; return; }
+  /usr/bin/python3 - "$f" <<'PYEOF'
+import json,sys
+d=json.load(open(sys.argv[1]))
+ax=d["axhelper"]["result"]; hk=d["hotkeyhelper"]["result"]
+ok = ax["reportedTrusted"] and ax["functionallyTrusted"] \
+     and hk["reportedGranted"] and hk["functionallyGranted"]
+print("granted" if ok else "denied")
+PYEOF
+}
+
 AX_PANE="x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"
 IM_PANE="x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent"
 
@@ -226,7 +243,21 @@ stage "Build the probe"
 say "Builds build/TCCProbe.app: an ad-hoc-signed Electron bundle with its own"
 say "bundle id, containing two stub Swift helpers spawned over stdio."
 printf '\n'
-./build.sh 2>&1 | tail -n 8
+if [[ -d "$PROTO/build/TCCProbe.app" ]]; then
+  warn "A build already exists."
+  say "Rebuilding moves the host CDHash, and THAT DESTROYS ANY GRANT YOU"
+  say "ALREADY HAVE. Re-running this wizard from the top is what voided the"
+  say "2026-08-24 run: the arms then measured denied -> denied and decided"
+  say "nothing. If you are resuming with a grant in place, keep the build."
+  printf '\n'
+  if confirm "Rebuild from scratch anyway (destroys any existing grant)?"; then
+    ./build.sh 2>&1 | tail -n 8
+  else
+    say "Keeping the existing build."
+  fi
+else
+  ./build.sh 2>&1 | tail -n 8
+fi
 printf '\n'
 pause "Build done - press Enter."
 
@@ -296,15 +327,21 @@ say "stale prompt, so the two rebuild arms start from a known-good state."
 printf '\n'
 ./readstate.sh granted || true
 printf '\n'
-if confirm "Do both helpers now report AND function as granted?"; then
-  write_env GRANT_CONFIRMED "yes"
-else
-  warn "If they still read False, the arms below will measure nothing."
-  ask GRANT_PROBLEM "What is still False? (one line):"
-  write_env GRANT_CONFIRMED "no"
-  write_env GRANT_PROBLEM "$GRANT_PROBLEM"
-  confirm "Continue anyway?" || exit 1
+GRANT_STATE="$(grant_state granted)"
+write_env GRANT_CONFIRMED "$GRANT_STATE"
+if [[ "$GRANT_STATE" != "granted" ]]; then
+  printf '\n'
+  warn "MACHINE CHECK FAILED: the capture above does not show both helpers"
+  warn "granted. The two arms below would measure denied -> denied and decide"
+  warn "nothing, so this wizard stops here rather than record a void result."
+  printf '\n'
+  say "Fix it, then re-run this wizard and KEEP the existing build at stage 2:"
+  step "Grant TCCProbe in System Settings > Privacy & Security > Accessibility."
+  step "Do not run build.sh again - that moves the host CDHash and drops it."
+  printf '\n'
+  exit 1
 fi
+say "Machine check passed: both helpers granted. The arms can decide something."
 
 # ── 8 ─────────────────────────────────────────────────────────────────────
 stage "Arm 1: rebuild the JavaScript, leave the helpers untouched"
