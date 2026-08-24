@@ -1,9 +1,8 @@
-const { encodeWav } = require("./wav");
 const { cleanup } = require("./cleanup/rules");
 
 async function runCompletedDictation(options) {
   const {
-    int16Samples,
+    wavBuffer,
     transcription,
     delivery,
     context = { oneLineBox: false, breakSafe: false },
@@ -11,7 +10,7 @@ async function runCompletedDictation(options) {
     logger = console,
   } = options;
 
-  if (!int16Samples || int16Samples.length === 0) {
+  if (!wavBuffer || wavBuffer.byteLength <= 44) {
     setUserVisibleState("idle");
     return { status: "empty" };
   }
@@ -20,7 +19,6 @@ async function runCompletedDictation(options) {
 
   let transcript;
   try {
-    const wavBuffer = encodeWav(int16Samples);
     transcript = await transcription.transcribe(wavBuffer);
   } catch (err) {
     logger.error("[dictation] transcription failed:", err);
