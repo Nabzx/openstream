@@ -6,75 +6,120 @@ const { resourcesRoot } = require("./paths");
 const BIN_PATH = path.join(resourcesRoot(), "bin", "accessibility-helper");
 const RESTART_DELAY_MS = 1000;
 
-// Generous: the settle guard alone can hold a reply for up to 1200ms before
-// even the first rung is attempted (see #6, #62), and rung 2's clipboard
-// restore adds another ~300ms on top of whichever rung actually delivers.
+// The settle guard can consume 1200ms before an insertion starts, and the
+// clipboard fallback needs another 300ms to restore the user's clipboard.
 const REQUEST_TIMEOUT_MS = 3000;
 
-let child = null;
-let stopping = false;
-let nextId = 1;
-const pending = new Map(); // id -> { resolve, reject, timer }
+function createAccessibilityHelper({
+  spawnProcess = spawn,
+  restartDelayMs = RESTART_DELAY_MS,
+  requestTimeoutMs = REQUEST_TIMEOUT_MS,
+} = {}) {
+  let child = null;
+  let stopping = false;
+  let nextId = 1;
+  const pending = new Map();
 
-function settle(id, msg, err) {
-  const entry = pending.get(id);
-  if (!entry) return;
-  clearTimeout(entry.timer);
-  pending.delete(id);
-  if (err) entry.reject(err);
-  else entry.resolve(msg);
-}
-
-function handleLine(line) {
-  let msg;
-  try {
-    msg = JSON.parse(line);
-  } catch {
-    return;
+  function settle(id, message, error) {
+    const entry = pending.get(id);
+    if (!entry) return;
+    clearTimeout(entry.timer);
+    pending.delete(id);
+    if (error) entry.reject(error);
+    else entry.resolve(message);
   }
-  if (msg.event === "ready" || msg.id == null) return;
-  settle(msg.id, msg, null);
-}
 
-function start() {
-  stopping = false;
-  child = spawn(BIN_PATH);
-
-  readline.createInterface({ input: child.stdout }).on("line", handleLine);
-  child.stderr.on("data", (data) => process.stderr.write(`[accessibility-helper] ${data}`));
-
-  child.on("exit", (code) => {
-    child = null;
-    for (const id of Array.from(pending.keys())) {
-      settle(id, null, new Error("accessibility-helper exited before replying"));
-    }
-    if (stopping) return;
-    console.error(`[accessibility-helper] exited unexpectedly (code ${code}), restarting in ${RESTART_DELAY_MS}ms`);
-    setTimeout(start, RESTART_DELAY_MS);
-  });
-}
-
-function stop() {
-  stopping = true;
-  if (child) child.kill();
-}
-
-// Tagged with an id and allowed to reply out of order, per #6's contract:
-// this helper is allowed to block on AX calls, so a slow inject must never
-// head-of-line-block whatever the main process sends after it.
-function inject(text) {
-  return new Promise((resolve, reject) => {
-    if (!child) {
-      reject(new Error("accessibility-helper is not running"));
+  function handleLine(line) {
+    let message;
+    try {
+      message = JSON.parse(line);
+    } catch {
       return;
     }
-    const id = String(nextId++);
-    const timer = setTimeout(() => {
-      settle(id, null, new Error(`accessibility-helper did not reply to inject within ${REQUEST_TIMEOUT_MS}ms`));
-    }, REQUEST_TIMEOUT_MS);
-    pending.set(id, { resolve, reject, timer });
-    child.stdin.write(JSON.stringify({ id, cmd: "inject", text }) + "\n");
-  });
+    if (!message || typeof message !== "object" || message.event === "ready" || typeof message.id !== "string") {
+      return;
+    }
+    settle(message.id, message, null);
+  }
+
+  function start() {
+    stopping = false;
+    child = spawnProcess(BIN_PATH);
+
+    readline.createInterface({ input: child.stdout }).on("line", handleLine);
+    child.stderr.on("data", (data) => process.stderr.write(`[accessibility-helper] ${data}`));
+
+    child.on("exit", (code) => {
+      child = null;
+      for (const id of Array.from(pending.keys())) {
+        settle(id, null, new Error("accessibility-helper exited before replying"));
+      }
+      if (stopping) return;
+      console.error(`[accessibility-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
+      setTimeout(start, restartDelayMs);
+    });
+  }
+
+  function stop() {
+    stopping = true;
+    for (const id of Array.from(pending.keys())) {
+      settle(id, null, new Error("accessibility-helper stopped before replying"));
+    }
+    if (child) child.kill();
+  }
+
+  function request(cmd, payload = {}) {
+    return new Promise((resolve, reject) => {
+      if (!child) {
+        reject(new Error("accessibility-helper is not running"));
+        return;
+      }
+
+      const id = String(nextId++);
+      const timer = setTimeout(() => {
+        settle(id, null, new Error(`accessibility-helper ${cmd} request timed out after ${requestTimeoutMs}ms`));
+      }, requestTimeoutMs);
+      pending.set(id, { resolve, reject, timer });
+      child.stdin.write(`${JSON.stringify({ id, cmd, ...payload })}\n`);
+    });
+  }
+
+  async function getFocusContext() {
+    const reply = await request("context");
+    if (
+      reply.status !== "ok" ||
+      typeof reply.bundleId !== "string" ||
+      reply.bundleId.length === 0 ||
+      typeof reply.isOneLineField !== "boolean"
+    ) {
+      throw new Error(`accessibility-helper returned an invalid context reply${reply.reason ? `: ${reply.reason}` : ""}`);
+    }
+    return { bundleId: reply.bundleId, isOneLineField: reply.isOneLineField };
+  }
+
+  async function deliver(text) {
+    const reply = await request("insert", { text });
+    if (reply.status === "delivered") return { kind: "inserted" };
+    if (reply.status === "held" && typeof reply.reason === "string") {
+      return { kind: "held", reason: reply.reason };
+    }
+    throw new Error(`accessibility-helper insertion failed${reply.reason ? `: ${reply.reason}` : ""}`);
+  }
+
+  return {
+    start,
+    stop,
+    getFocusContext,
+    deliver,
+    // The current Electron coordinator still consumes the native reply shape.
+    // Keep this alias until it moves to the typed coordinator adapter.
+    inject(text) {
+      return request("insert", { text });
+    },
+  };
 }
 
-module.exports = { start, stop, inject };
+module.exports = {
+  ...createAccessibilityHelper(),
+  createAccessibilityHelper,
+};
