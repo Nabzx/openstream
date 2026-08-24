@@ -38,6 +38,8 @@ Early development — pre-alpha, no working build yet. Architecture below is the
 
 - Apple Silicon Mac (M1 or later)
 - macOS 13+ (tentative, may adjust)
+- Xcode Command Line Tools, to compile whisper.cpp and the native helpers
+- A network connection for the build, which fetches the speech-to-text model
 
 ## Roadmap
 
