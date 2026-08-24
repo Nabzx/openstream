@@ -1,0 +1,48 @@
+### run-all-42 starting at Sat 22 Aug 2026 17:57:57 BST
+OpenStream context-detection spike (issue #28) - PROTOTYPE, throwaway
+AXIsProcessTrusted() = true
+poke AXManualAccessibility = false   interval = 0.4s
+### probe running -> logs/probe-42-20260822-175757.log
+### activated: Slack
+### activated: Hyper
+### activated: IntelliJ IDEA CE
+### activated: Safari
+### NOT INSTALLED: Notes
+### activated: WhatsApp
+### sweep-42 done, returned to Terminal
+### field pass for issue #42 starting (dwell 12s per app)
+### Slack -> composer (or sign-in field if signed out), typed 'hello world'
+### Hyper -> shell prompt, typed 'hello world' (NOT executed)
+### IntelliJ IDEA CE -> editor, typed 'hello world'
+### field pass for issue #42 done
+### focus retry (issue #42) starting
+### Safari: address bar, typed 'hello world', held ~24s over 12 re-assertions
+### Notes: search field, typed 'hello world', held ~24s over 12 re-assertions
+### WhatsApp: search / composer, typed 'hello world', held ~24s over 12 re-assertions
+### focus retry (issue #42) done
+/Users/zazai/workspace/zazai840/openstream/.claude/worktrees/prototype-context-detection-42/prototypes/context-detection-spike/run-all-42.sh: line 36:  8336 Terminated: 15          swift probe.swift --poke > "$MAIN" 2>&1
+### main probe stopped
+### controlled A/B (issue #42 re-run, equal dwell) starting
+12748 /Applications/Wispr Flow.app/Contents/Frameworks/Wispr Flow Helper.app/Contents/MacOS/Wispr Flow Helper --type=gpu-process --user-data-dir=/Users/zazai/Library/Application Support/Wispr Flow --gpu-preferences=SAAAAAAAAAAgAQAEAAAAAAAAAAAAAGAAAwAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAQAAAAAAAAABAAAAAAAAAACAAAAAAAAAAIAAAAAAAAAA== --shared-files --field-trial-handle=1718379636,r,5715771187735512907,6481856468662991336,262144 --enable-features=MacCatapSystemAudioLoopbackCapture,MacLoopbackAudioForScreenShare,PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,17903971685656825433,13694249673446361843,4 --trace-process-track-uuid=3190708996619331833 --seatbelt-client=41
+12749 /Applications/Wispr Flow.app/Contents/Frameworks/Wispr Flow Helper.app/Contents/MacOS/Wispr Flow Helper --type=utility --utility-sub-type=network.mojom.NetworkService --lang=en-GB --service-sandbox-type=network --user-data-dir=/Users/zazai/Library/Application Support/Wispr Flow --standard-schemes=wispr-extension --secure-schemes=wispr-extension,sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=wispr-extension,sentry-ipc --fetch-schemes=wispr-extension,sentry-ipc --shared-files --field-trial-handle=1718379636,r,5715771187735512907,6481856468662991336,262144 --enable-features=MacCatapSystemAudioLoopbackCapture,MacLoopbackAudioForScreenShare,PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,17903971685656825433,13694249673446361843,4 --trace-process-track-uuid=3190708997556373682 --seatbelt-client=41
+12753 /Applications/Wispr Flow.app/Contents/Frameworks/Wispr Flow Helper.app/Contents/MacOS/Wispr Flow Helper --type=utility --utility-sub-type=video_capture.mojom.VideoCaptureService --lang=en-GB --service-sandbox-type=none --message-loop-type-ui --user-data-dir=/Users/zazai/Library/Application Support/Wispr Flow --standard-schemes=wispr-extension --secure-schemes=wispr-extension,sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=wispr-extension,sentry-ipc --fetch-schemes=wispr-extension,sentry-ipc --shared-files --field-trial-handle=1718379636,r,5715771187735512907,6481856468662991336,262144 --enable-features=MacCatapSystemAudioLoopbackCapture,MacLoopbackAudioForScreenShare,PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,17903971685656825433,13694249673446361843,4 --trace-process-track-uuid=3190708998493415531
+12754 /Applications/Wispr Flow.app/Contents/Frameworks/Wispr Flow Helper.app/Contents/MacOS/Wispr Flow Helper --type=utility --utility-sub-type=audio.mojom.AudioService --lang=en-GB --service-sandbox-type=audio --message-loop-type-ui --user-data-dir=/Users/zazai/Library/Application Support/Wispr Flow --standard-schemes=wispr-extension --secure-schemes=wispr-extension,sentry-ipc --bypasscsp-schemes=sentry-ipc --cors-schemes=wispr-extension,sentry-ipc --fetch-schemes=wispr-extension,sentry-ipc --shared-files --field-trial-handle=1718379636,r,5715771187735512907,6481856468662991336,262144 --enable-features=MacCatapSystemAudioLoopbackCapture,MacLoopbackAudioForScreenShare,PdfUseShowSaveFilePicker,ScreenCaptureKitPickerScreen,ScreenCaptureKitStreamPickerSonoma --disable-features=DropInputEventsWhilePaintHolding,LocalNetworkAccessChecks,ScreenAIOCREnabled,SpareRendererForSitePerProcess,TimeoutHangingVideoCaptureStarts,TraceSiteInstanceGetProcessCreation --variations-seed-version --pseudonymization-salt-handle=1935764596,r,17903971685656825433,13694249673446361843,4 --trace-process-track-uuid=3190708999430457380 --seatbelt-client=41
+62347 /Applications/Wispr Flow.app/Contents/MacOS/Wispr Flow
+### WARNING: Wispr Flow still running, arm A is confounded
+### quit Wispr Flow, Cursor, Obsidian
+### relaunched Cursor and Obsidian cold (pids: 750,12777,12785,12786,12789,12805,12806,13080,13137,13590,13591,13628 / 12779,12781,12782,12783)
+### probe started for arm: nopoke (flags: none)
+### Cursor: new untitled editor, typed 'hello world' (11 chars), held ~24s over 12 re-assertions
+### Obsidian: quick switcher input, typed 'hello world' (11 chars), held ~24s over 12 re-assertions
+./controlled-ab-42.sh: line 33: 13772 Terminated: 15          swift probe.swift "$@" > "logs/ab42-$label.log" 2>&1
+### probe stopped
+### probe started for arm: poke (flags: --poke)
+### Cursor: new untitled editor, typed 'hello world' (11 chars), held ~24s over 12 re-assertions
+### Obsidian: quick switcher input, typed 'hello world' (11 chars), held ~24s over 12 re-assertions
+./controlled-ab-42.sh: line 33: 14450 Terminated: 15          swift probe.swift "$@" > "logs/ab42-$label.log" 2>&1
+### probe stopped
+### controlled A/B (issue #42) done
+### compare: logs/ab42-nopoke.log vs logs/ab42-poke.log
+### run-all-42 done at Sat 22 Aug 2026 18:04:49 BST
+### logs: logs/probe-42-20260822-175757.log, logs/ab42-nopoke.log, logs/ab42-poke.log
+### jetbrains-knob-ab.sh is NOT run here - IntelliJ needs one manual first launch
