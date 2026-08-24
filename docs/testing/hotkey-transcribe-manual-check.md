@@ -1,4 +1,4 @@
-# Manual check: hotkey -> transcribe -> inject (#2, push-to-talk via #5, injection via #6)
+# Manual check: hotkey -> transcribe -> inject (#2, push-to-talk via #5, injection via #6/#12)
 
 What CI/a headless session can verify, and what still needs a human running
 the actual app: launching a real Electron window, granting macOS
@@ -50,11 +50,14 @@ the caret, then clipboard-plus-paste, then synthesised keystrokes - see
    holding the keys) to confirm the tap is global and doesn't need the
    app focused. The text should land in whichever app is frontmost when
    you release, not the one that was frontmost when you pressed.
-8. Try a terminal window and an Electron-based editor (e.g. VS Code) as the
-   target - these are exactly the cases #62 designed the fallback chain
-   around. A terminal's prompt should receive a clipboard paste, not have
-   its scrollback overwritten; an editor with no usable AX tree
-   (`AXWebArea`) should also fall through to paste.
+8. Try a terminal window and an Electron-based editor (e.g. VS Code, Slack)
+   as the target - these are exactly the cases #62 designed the fallback
+   chain around. A terminal's prompt should receive a clipboard paste, not
+   have its scrollback overwritten. In the Electron app, check whether
+   `#12`'s `AXManualAccessibility` forcing actually got a usable focused
+   element (rung 1 or a verified rung 2) rather than the bare `AXWebArea`
+   #28 measured without it - either is an acceptable outcome, but the
+   difference is worth noting since it's unmeasured until this step runs.
 
 If step 2/3 don't fire the OS prompts, or step 5 never prints/injects,
 check the terminal for `[whisper-server]`-, `[hotkey-helper]`- and
