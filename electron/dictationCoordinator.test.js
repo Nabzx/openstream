@@ -290,8 +290,9 @@ test("context detection failure leaves the target application unchanged", async 
   assert.equal(deliveryCalls, 0);
 });
 
-test("delivery failure returns the complete finished text without retrying delivery", async () => {
+test("delivery failure holds the complete finished text without retrying delivery", async () => {
   let deliveryCalls = 0;
+  const states = [];
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => ({ text: "hello world" }) },
@@ -301,17 +302,23 @@ test("delivery failure returns the complete finished text without retrying deliv
         throw new Error("accessibility helper timed out");
       },
     },
+    setUserVisibleState: (state, details) => states.push([state, details]),
     logger: silentLogger(),
   });
 
-  assert.equal(result.status, "failed");
-  assert.equal(result.stage, "delivery");
+  assert.equal(result.status, "held");
   assert.equal(result.text, "Hello world.");
+  assert.equal(result.delivery.reason, "accessibility helper timed out");
   assert.equal(deliveryCalls, 1);
+  assert.deepEqual(states, [
+    ["transcribing", undefined],
+    ["held", { text: "Hello world.", reason: "accessibility helper timed out" }],
+  ]);
 });
 
 test("held delivery preserves the complete finished text without retrying delivery", async () => {
   const delivered = [];
+  const states = [];
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => ({ text: "hello world" }) },
@@ -321,6 +328,7 @@ test("held delivery preserves the complete finished text without retrying delive
         return { kind: "held", reason: "unverified target" };
       },
     },
+    setUserVisibleState: (state, details) => states.push([state, details]),
     logger: silentLogger(),
   });
 
@@ -328,4 +336,8 @@ test("held delivery preserves the complete finished text without retrying delive
   assert.equal(result.text, "Hello world.");
   assert.equal(result.delivery.reason, "unverified target");
   assert.deepEqual(delivered, ["Hello world."]);
+  assert.deepEqual(states, [
+    ["transcribing", undefined],
+    ["held", { text: "Hello world.", reason: "unverified target" }],
+  ]);
 });

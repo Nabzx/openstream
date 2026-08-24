@@ -139,10 +139,8 @@ async function transcribeAndPrint(wavBuffer) {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
   } else if (result.status === "held") {
-    heldResultController.hold(result.text);
     console.log(`[dictation] injection held: ${result.delivery.reason}`);
   } else if (result.status === "failed" && result.stage === "delivery") {
-    heldResultController.hold(result.text);
     console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
@@ -180,7 +178,13 @@ function setTrayState(state) {
   tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
 }
 
-function setUserVisibleState(state) {
+function setUserVisibleState(state, details) {
+  if (state === "held") {
+    setTrayState("idle");
+    heldResultController.hold(details.text);
+    return;
+  }
+
   setTrayState(state);
   if (!overlayWin || overlayWin.isDestroyed()) return;
 
