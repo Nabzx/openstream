@@ -47,10 +47,10 @@ async function waitUntilReady(deadline) {
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  throw new Error("llama-server did not become ready in time");
+  throw new Error("rewrite model server did not become ready in time");
 }
 
-// Confirms the #14 round trip for real: starts the fetched llama-server
+// Confirms the #14 round trip for real: starts the fetched rewrite model server
 // against the fetched model, and gets an actual completion back over HTTP.
 // Skipped when `npm run build:llama` hasn't fetched the assets (e.g. a
 // clean checkout that hasn't run postinstall).
