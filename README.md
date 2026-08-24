@@ -1,53 +1,116 @@
 # OpenStream
 
-> Working name — will likely change before v1.
+OpenStream is a local-first voice dictation app for Apple Silicon Macs. Hold a global hotkey, speak, then release it to place the transcript in the frontmost application. Audio and model requests stay on the Mac.
 
-A free, fully local, zero-setup voice dictation app for macOS — built specifically for developers.
+This repository is a development fork of [Nabzx/openstream](https://github.com/Nabzx/openstream). It now contains a runnable dictation path, an unsigned DMG build, and the start of a stricter coordinator for the next version. There is no published, signed release yet.
 
-## The problem
+## What works
 
-The best AI dictation tools today are genuinely good, but paid, metered, and cloud-based. Free and local alternatives exist too, so "local + free + no signup" alone isn't a gap anymore.
+The current app can:
 
-What's still missing: **dictation that knows what you're looking at.** Every existing tool treats every text field the same way — same formatting, same vocabulary, whether you're writing a Slack message, a terminal command, or a code comment.
+- run as a macOS menu bar app
+- listen for `Cmd+Shift+D` through a native hotkey helper
+- record while the hotkey is held and transcribe after release
+- keep `whisper-server` resident instead of loading it for each dictation
+- insert text at the cursor through a separate Accessibility helper
+- fall back from direct field writes to clipboard paste or synthesized keystrokes
+- show recording and transcription state in the tray, plus a small recording overlay
+- build an unsigned Apple Silicon DMG with `npm run dist`
 
-## What OpenStream does differently
+The repository also has tested rules cleanup and a TypeScript dictation coordinator. The coordinator covers context lookup, one-line fields, break-safe applications, paragraph break replies, held delivery, and failure states. That newer path is not wired into the Electron main process yet, so the runnable app still inserts the direct transcription result.
 
-1. **Context-aware dictation** - detects the frontmost app via the macOS Accessibility API. Text is cleaned the same way everywhere; what changes by app is where it is *safe* to insert a line break, because in a terminal or a chat window Enter submits and a stray break would send half a sentence. In apps where breaks are safe, a small local model decides where paragraphs belong in long dictation. (Earlier drafts promised terminal-specific and editor-specific formatting. That was dropped in #45: dictation into a terminal is dictation into tools like Claude Code, which want ordinary prose.)
-2. **Codebase-aware vocabulary** — reads identifiers, library names, and project-specific terms from the current git repo / open buffer and biases transcription toward them, so technical jargon and your own function/variable names actually transcribe correctly.
-3. **Voice-driven editing, not just dictation** — select existing text anywhere and speak an edit command ("make this a bullet list", "snake_case that", "shorter") to rewrite it in place.
-4. **Build it once, then nothing to set up** — there is no installer and no bundled model. You build from source, and the build compiles whisper.cpp and fetches its model for you. After that: no Ollama, no LM Studio, no manual model downloads, no first-run downloader, no config screens.
+## Why another dictation app
 
-## Status
+Most dictation tools treat every target the same. That is risky when a newline can submit a terminal command or send a chat message. OpenStream is moving toward a deny-by-default rule for line breaks. It checks the frontmost app and focused field before deciding whether a break is safe.
 
-Early development — pre-alpha, no working build yet. Architecture below is the current plan and will evolve.
+The planned product has two other developer-focused features:
 
-## Planned architecture
+- codebase vocabulary biasing, using identifiers and project terms to improve transcription
+- voice edits, where selected text can be rewritten with a spoken command such as "make this a bullet list"
 
-- **App shell**: Electron + React + TypeScript (Vite), menu bar tray app
-- **Speech-to-text**: [whisper.cpp](https://github.com/ggml-org/whisper.cpp), **compiled from source at a pinned tag during the build** - upstream publishes no macOS arm64 CLI binary, and a compiler is already required for the native helpers. One model, `ggml-base.en.bin` (141 MiB), fetched during the build from a **pinned Hugging Face revision** and verified against a known SHA-256; the build fails loudly if it does not match. Neither the binary nor the model is committed. Run as a resident `whisper-server` supervised for the life of the app.
-- **Text cleanup**: a **deterministic rules engine**, not a model. Filler removal, punctuation and per-mode formatting cost 0.1-1.0 ms. **There is no LLM in the dictation path** - measurement showed whisper already self-cleans short clips, so a model only earned its keep on exactly the long inputs where it cost seconds.
-- **Local rewrite model (Phase 3 only)**: [llama.cpp](https://github.com/ggml-org/llama.cpp) (`llama-server`), used solely for voice-driven editing, where the user explicitly asks for a rewrite and expects to wait. It starts lazily on first use and is released after 5 minutes idle. The model must be **Apache 2.0 or MIT and ungated** (no account, no terms acceptance): **SmolLM2-1.7B-Instruct**, fetched via `fetch-llama.sh` alongside llama.cpp's prebuilt macOS arm64 `llama-server` release binary - both pinned and SHA-256 verified, neither committed (#14). Lazy-start and idle-release are not wired up yet; that lands with #17.
-- **macOS native helpers**: two small Swift/Objective-C binaries (compiled via native build scripts), split so that each holds exactly one macOS permission:
-  - a **hotkey helper** (Input Monitoring) running a `CGEventTap` for global push-to-talk, since Electron's `globalShortcut` gives no key-up event
-  - an **accessibility helper** (Accessibility) owning both text injection and context detection, which share the same focused-element lookup
-  - They are kept apart because Accessibility calls can block for seconds, and a stalled call in the same process would trip `kCGEventTapDisabledByTimeout` and silently kill the hotkey. Both speak newline-delimited JSON over stdio.
-  - Microphone capture is *not* yet assigned to either helper; whether it needs native code at all is still open.
-- **Vocabulary biasing**: lightweight scan of open editor buffer / git repo for identifiers and terms, fed into whisper.cpp as an initial prompt / bias list
+Neither feature is available in the app yet.
 
-## Requirements
+## Build and run
 
-- Apple Silicon Mac (M1 or later)
-- macOS 13+ (tentative, may adjust)
+### Requirements
 
-## Roadmap
+- Apple Silicon Mac
+- macOS 13 or newer
+- Node.js 20
+- Xcode Command Line Tools
+- CMake, Git, and curl
+- A network connection for model and server downloads during installation
 
-See [ROADMAP.md](ROADMAP.md) for the phased plan and task ownership.
+Clone this fork and install its dependencies:
 
-## Contributing
+```bash
+git clone https://github.com/Zazai840/openstream.git
+cd openstream
+npm install
+npm start
+```
 
-This project is maintained by human contributors who are directly accountable for everything merged. AI tools may be used to assist with drafting, but every commit must be authored and reviewed by a human contributor — no AI co-authorship on commits or PRs.
+`npm install` does more than install JavaScript packages. It:
 
-Currently a two-person project. Open to outside contributions once there's a working MVP — issues and PRs welcome after that point.
+- compiles a pinned `whisper.cpp` revision with Metal support
+- downloads and verifies the 141 MiB `ggml-base.en` model
+- compiles the Swift hotkey and Accessibility helpers
+- downloads and verifies `llama-server` and a roughly 1 GiB SmolLM2 model
+
+The rewrite model files are prepared now, but the app does not start that server or use it during dictation.
+
+To run the Vite renderer and Electron in development mode:
+
+```bash
+npm run dev
+```
+
+To create an unsigned DMG under `release/`:
+
+```bash
+npm run dist
+```
+
+There is no code signing or notarization yet. macOS may block the DMG until you explicitly allow it.
+
+## First-run permissions
+
+OpenStream needs three macOS permissions:
+
+1. Microphone access for Electron.
+2. Input Monitoring for the hotkey helper.
+3. Accessibility for the text-insertion helper.
+
+After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Cmd+Shift+D`, speak, and release the keys. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
+
+Development builds can appear in System Settings as Electron rather than OpenStream. Permission identity across rebuilds is still being worked out.
+
+## Design
+
+- **Electron and React** provide the menu bar shell, hidden capture window, overlay, and renderer.
+- **The transcription model server** is a pinned `whisper.cpp` build using `ggml-base.en`. Electron supervises it for the life of the app.
+- **Rules cleanup** removes fillers, handles spoken punctuation, fixes a small technical vocabulary list, and segments long run-on text. It is deterministic and tested against a sub-millisecond budget.
+- **The rewrite model server** uses `llama-server` with SmolLM2-1.7B-Instruct. Its files and supervisor exist, but it is not connected to the app. The intended jobs are paragraph break placement and explicit voice edits, not rewriting every dictation.
+- **Native helpers** keep Input Monitoring and Accessibility in separate processes. A blocked Accessibility call cannot disable the global hotkey event tap.
+- **The dictation coordinator** defines the newer end-to-end flow and keeps model, context, delivery, and UI adapters behind one interface.
+
+See [CONTEXT.md](CONTEXT.md) for the project's terms, [ROADMAP.md](ROADMAP.md) for the longer plan, and [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md) for the cleanup decision.
+
+## Tests
+
+```bash
+npm test
+npm run typecheck
+npm run build
+```
+
+The global hotkey, macOS permission prompts, microphone capture, and insertion into other applications still need a real Mac and a human check. The steps live in [docs/testing/hotkey-transcribe-manual-check.md](docs/testing/hotkey-transcribe-manual-check.md).
+
+## Project status
+
+OpenStream is pre-alpha. The main slice works from source, but installation, permission handling, delivery recovery, context-aware cleanup, and the newer coordinator integration are unfinished. The app is not ready for everyday use or outside contributors yet.
+
+Upstream issue history records most of the design work. Changes specific to this fork should target `Zazai840/openstream`, not the upstream repository.
 
 ## License
 
