@@ -102,7 +102,7 @@ async function transcribeAndPrint(wavBuffer) {
 
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
-    console.log(`[dictation] injected via ${result.delivery.method}${result.delivery.verified ? "" : " (unverified)"}`);
+    console.log("[dictation] inserted through accessibility");
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.delivery.reason}`);
   } else if (result.status === "failed" && result.stage === "delivery") {

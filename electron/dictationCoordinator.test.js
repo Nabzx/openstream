@@ -22,9 +22,9 @@ test("completed recording is transcribed, cleaned, and delivered once", async ()
       },
     },
     delivery: {
-      inject: async (text) => {
+      deliver: async (text) => {
         delivered.push(text);
-        return { status: "delivered", method: "paste", verified: true };
+        return { kind: "inserted" };
       },
     },
     context: { breakSafe: true, oneLineBox: false },
@@ -45,7 +45,7 @@ test("empty recordings do not call transcription or delivery", async () => {
   const result = await runCompletedDictation({
     wavBuffer: Buffer.alloc(44),
     transcription: { transcribe: async () => transcribeCalls++ },
-    delivery: { inject: async () => deliveryCalls++ },
+    delivery: { deliver: async () => deliveryCalls++ },
     logger: silentLogger(),
   });
 
@@ -60,7 +60,7 @@ test("no-speech transcription leaves the target application unchanged", async ()
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => ({ text: "   " }) },
-    delivery: { inject: async () => deliveryCalls++ },
+    delivery: { deliver: async () => deliveryCalls++ },
     logger: silentLogger(),
   });
 
@@ -74,7 +74,7 @@ test("transcription failure does not insert partial output", async () => {
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => { throw new Error("server unavailable"); } },
-    delivery: { inject: async () => deliveryCalls++ },
+    delivery: { deliver: async () => deliveryCalls++ },
     logger: silentLogger(),
   });
 
@@ -87,7 +87,7 @@ test("held delivery preserves the complete finished text", async () => {
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => ({ text: "hello world" }) },
-    delivery: { inject: async () => ({ status: "held", reason: "unverified target" }) },
+    delivery: { deliver: async () => ({ kind: "held", reason: "unverified target" }) },
     logger: silentLogger(),
   });
 
