@@ -1,8 +1,9 @@
 const { spawn } = require("child_process");
 const readline = require("readline");
 const path = require("path");
+const { resourcesRoot } = require("./paths");
 
-const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "hotkey-helper");
+const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 
 // Keycode 2 is 'D' on the ANSI layout - matches the CommandOrControl+Shift+D
 // hotkey this replaces. The helper only knows keycodes, not accelerator
