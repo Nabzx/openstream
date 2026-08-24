@@ -346,7 +346,8 @@ if [[ "$GRANT_STATE" != "granted" ]]; then
   printf '\n'
   exit 1
 fi
-say "Machine check passed: both helpers granted. The arms can decide something."
+say "Machine check passed: Accessibility is granted. Input Monitoring is advisory."
+say "The arms can decide the attribution question."
 
 # ── 8 ─────────────────────────────────────────────────────────────────────
 stage "Arm 1: rebuild the JavaScript, leave the helpers untouched"

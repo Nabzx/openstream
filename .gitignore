@@ -7,6 +7,7 @@ release/
 
 # Native helper build output (Swift/Obj-C binaries, compiled via native build scripts)
 build/
+.build/
 *.xcuserstate
 DerivedData/
 
@@ -18,6 +19,9 @@ resources/bin/
 *.gguf
 *.bin
 *.mlmodelc
+
+# Vendored source cloned by build scripts (e.g. whisper.cpp), not checked in
+vendor/
 
 # Environment / secrets
 .env
