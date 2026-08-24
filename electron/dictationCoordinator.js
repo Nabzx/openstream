@@ -1,11 +1,14 @@
 const { cleanup } = require("./cleanup/rules");
+const { isBreakSafeApplication } = require("./breakSafety");
 
 async function runCompletedDictation(options) {
   const {
     wavBuffer,
     transcription,
     delivery,
-    context = { oneLineBox: false, breakSafe: false },
+    contextDetection = {
+      getFocusContext: async () => ({ bundleId: "", isOneLineField: false }),
+    },
     setUserVisibleState = () => {},
     logger = console,
   } = options;
@@ -32,7 +35,19 @@ async function runCompletedDictation(options) {
     return { status: "no-speech" };
   }
 
-  const finishedText = cleanup(rawText, context);
+  let focusContext;
+  try {
+    focusContext = await contextDetection.getFocusContext();
+  } catch (err) {
+    logger.error("[dictation] context detection failed:", err);
+    setUserVisibleState("idle");
+    return { status: "failed", stage: "context", error: err };
+  }
+
+  const finishedText = cleanup(rawText, {
+    oneLineBox: focusContext.isOneLineField,
+    breakSafe: isBreakSafeApplication(focusContext.bundleId),
+  });
   if (!finishedText) {
     setUserVisibleState("idle");
     return { status: "no-speech" };

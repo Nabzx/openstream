@@ -214,7 +214,7 @@ function cleanup(text, options = {}) {
   // Apply fixed casing after sentence capitalisation so names such as macOS
   // keep their settled spelling even at the start of a dictation.
   text = applyVocab(text);
-  text = oneLineBox ? text.replace(/\s+$/, "") : terminalPunct(text);
+  text = oneLineBox ? text.replace(/\.\s*$/, "").replace(/\s+$/, "") : terminalPunct(text);
   text = text.replace(/[ \t]{2,}/g, " ");
 
   return text.trim();
