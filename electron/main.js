@@ -1,9 +1,11 @@
 const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const whisperServer = require("./whisperServer");
+const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
-const { encodeWav } = require("./wav");
+const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
+const { runCompletedDictation } = require("./dictationCoordinator");
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -19,6 +21,7 @@ let trayIcons = null;
 let trayState = "idle";
 let captureWin = null;
 let isRecording = false;
+const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 
 function createWindow() {
   if (win) {
@@ -66,42 +69,22 @@ function createCaptureWindow() {
 }
 
 async function transcribeAndPrint(int16Samples) {
-  const wavBuffer = encodeWav(int16Samples);
-  const formData = new FormData();
-  formData.append("file", new Blob([wavBuffer], { type: "audio/wav" }), "dictation.wav");
-  formData.append("response_format", "json");
+  const result = await runCompletedDictation({
+    int16Samples,
+    transcription,
+    delivery: accessibilityHelper,
+    setUserVisibleState: setTrayState,
+  });
 
-  try {
-    const res = await fetch(whisperServer.inferenceUrl(), { method: "POST", body: formData });
-    if (!res.ok) throw new Error(`whisper-server returned ${res.status}`);
-    const body = await res.json();
-    const text = (body.text || "").trim();
-    console.log(`[dictation] ${text || "(no speech detected)"}`);
-    if (text) await injectTranscript(text);
-  } catch (err) {
-    console.error("[dictation] transcription failed:", err);
-  } finally {
-    setTrayState("idle");
-  }
-}
-
-// #6's helper reports one of three shapes: delivered (with the rung and
-// whether it could confirm the text landed), held (nothing was risked - see
-// #62's hold-never-guess), or a protocol error. There is no overlay surface
-// yet for a held transcript (#12/#44's job); for now the reason is logged so
-// a held dictation is at least visible, not silently dropped.
-async function injectTranscript(text) {
-  try {
-    const result = await accessibilityHelper.inject(text);
-    if (result.status === "delivered") {
-      console.log(`[dictation] injected via ${result.method}${result.verified ? "" : " (unverified)"}`);
-    } else if (result.status === "held") {
-      console.log(`[dictation] injection held: ${result.reason}`);
-    } else {
-      console.error(`[dictation] injection error: ${result.reason}`);
-    }
-  } catch (err) {
-    console.error("[dictation] injection failed:", err);
+  if (result.status === "delivered") {
+    console.log(`[dictation] ${result.text}`);
+    console.log(`[dictation] injected via ${result.delivery.method}${result.delivery.verified ? "" : " (unverified)"}`);
+  } else if (result.status === "held") {
+    console.log(`[dictation] injection held: ${result.delivery.reason}`);
+  } else if (result.status === "failed" && result.stage === "delivery") {
+    console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
+  } else if (result.status === "no-speech") {
+    console.log("[dictation] (no speech detected)");
   }
 }
 
@@ -187,6 +170,7 @@ app.whenReady().then(() => {
   createTray();
   createCaptureWindow();
   whisperServer.start();
+  rewriteModelServer.start();
   accessibilityHelper.start();
   hotkeyHelper.onKeyDown(startRecording);
   hotkeyHelper.onKeyUp(stopRecording);
@@ -197,6 +181,7 @@ app.on("will-quit", () => {
   hotkeyHelper.stop();
   accessibilityHelper.stop();
   whisperServer.stop();
+  rewriteModelServer.stop();
 });
 
 // Menu bar app: stay alive with no windows open, quit only from the tray menu.
