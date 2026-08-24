@@ -68,16 +68,36 @@ test("accessibility helper returns a held insertion without retrying it", async 
 test("accessibility helper times out only the request that did not receive a correlated reply", async () => {
   const child = fakeProcess();
   const requests = readRequests(child);
-  const helper = createAccessibilityHelper({ spawnProcess: () => child, requestTimeoutMs: 20 });
+  const timers = [];
+  const helper = createAccessibilityHelper({
+    spawnProcess: () => child,
+    requestTimeoutMs: 20,
+    setRequestTimer(callback, delay) {
+      const timer = { callback, delay, cleared: false };
+      timers.push(timer);
+      return timer;
+    },
+    clearRequestTimer(timer) {
+      timer.cleared = true;
+    },
+  });
   helper.start();
 
   const timedOut = helper.getFocusContext();
   const delivered = helper.deliver("Text once.");
   await nextTurn();
   child.stdout.write(`{"id":"${requests[1].id}","status":"delivered","method":"pasted","verified":false}\n`);
+  timers[0].callback();
 
   assert.deepEqual(await delivered, { kind: "inserted" });
   await assert.rejects(timedOut, /context request timed out after 20ms/);
+  assert.deepEqual(
+    timers.map(({ delay, cleared }) => ({ delay, cleared })),
+    [
+      { delay: 20, cleared: true },
+      { delay: 20, cleared: true },
+    ],
+  );
   helper.stop();
 });
 
