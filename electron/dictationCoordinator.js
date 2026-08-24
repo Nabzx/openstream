@@ -39,12 +39,12 @@ async function runCompletedDictation(options) {
   }
 
   try {
-    const deliveryResult = await delivery.inject(finishedText);
+    const deliveryResult = await delivery.deliver(finishedText);
     setUserVisibleState("idle");
-    if (deliveryResult.status === "delivered") {
+    if (deliveryResult.kind === "inserted") {
       return { status: "delivered", text: finishedText, delivery: deliveryResult };
     }
-    if (deliveryResult.status === "held") {
+    if (deliveryResult.kind === "held") {
       return { status: "held", text: finishedText, delivery: deliveryResult };
     }
     return { status: "failed", stage: "delivery", text: finishedText, delivery: deliveryResult };

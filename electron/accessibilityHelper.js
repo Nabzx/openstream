@@ -113,11 +113,6 @@ function createAccessibilityHelper({
     stop,
     getFocusContext,
     deliver,
-    // The current Electron coordinator still consumes the native reply shape.
-    // Keep this alias until it moves to the typed coordinator adapter.
-    inject(text) {
-      return request("insert", { text });
-    },
   };
 }
 
