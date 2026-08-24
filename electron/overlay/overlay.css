@@ -1,0 +1,41 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: transparent;
+}
+
+body {
+  display: grid;
+  place-items: center;
+}
+
+.overlay {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #fff;
+  background: rgb(27 27 30 / 92%);
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.recording-dot {
+  width: 10px;
+  height: 10px;
+  background: #ff453a;
+  border-radius: 50%;
+}
+
+body[data-state="idle"] .recording-dot {
+  background: #8e8e93;
+}

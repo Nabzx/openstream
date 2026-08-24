@@ -19,6 +19,8 @@ func eprint(_ message: String) {
 func emit(_ event: String) {
     // No user text ever crosses this channel, so no escaping is needed here.
     print("{\"event\":\"\(event)\",\"ts\":\(Date().timeIntervalSince1970)}")
+    // stdout is fully buffered when Electron reads it through a pipe.
+    fflush(stdout)
 }
 
 func parseModifiers(_ raw: String) -> CGEventFlags {

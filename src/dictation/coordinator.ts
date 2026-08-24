@@ -6,6 +6,11 @@ import type { CompletedRecording, DictationAdapters, DictationOutcome, FocusCont
 export class DictationCoordinator {
   constructor(private readonly adapters: DictationAdapters) {}
 
+  startRecording(): void {
+    this.adapters.setTrayState?.("recording");
+    this.adapters.setOverlayState?.({ kind: "recording", level: 0 });
+  }
+
   async completeRecording(recording: CompletedRecording): Promise<DictationOutcome> {
     if (recording.durationMs <= 0 || recording.wav.byteLength === 0) {
       this.adapters.setTrayState?.("idle");
