@@ -13,6 +13,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "$ROOT/scripts/lib/artifact.sh"
 
 WHISPER_TAG="v1.9.3"
 WHISPER_COMMIT="371b5a7561823ab2bb32142d2751e35e7534727b"
@@ -28,28 +29,8 @@ MODEL_PATH="$MODEL_DIR/ggml-base.en.bin"
 BIN_DIR="$ROOT/resources/bin"
 SERVER_BIN="$BIN_DIR/whisper-server"
 
-sha256() {
-  if command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 "$1" | awk '{print $1}'
-  else
-    sha256sum "$1" | awk '{print $1}'
-  fi
-}
-
 echo "==> whisper.cpp source ($WHISPER_TAG)"
-if [ -d "$WHISPER_SRC" ] && [ "$(git -C "$WHISPER_SRC" rev-parse HEAD 2>/dev/null)" = "$WHISPER_COMMIT" ]; then
-  echo "    already at $WHISPER_COMMIT, skipping clone"
-else
-  rm -rf "$WHISPER_SRC"
-  mkdir -p "$(dirname "$WHISPER_SRC")"
-  git clone --branch "$WHISPER_TAG" --depth 1 "$WHISPER_REPO" "$WHISPER_SRC"
-  ACTUAL_COMMIT="$(git -C "$WHISPER_SRC" rev-parse HEAD)"
-  if [ "$ACTUAL_COMMIT" != "$WHISPER_COMMIT" ]; then
-    echo "error: $WHISPER_TAG resolved to $ACTUAL_COMMIT, expected $WHISPER_COMMIT" >&2
-    echo "       the tag has moved since this script was pinned - stopping rather than building an unverified checkout." >&2
-    exit 1
-  fi
-fi
+clone_pinned "$WHISPER_REPO" "$WHISPER_TAG" "$WHISPER_COMMIT" "$WHISPER_SRC" "whisper.cpp"
 
 echo "==> compiling whisper-server (Metal, Release)"
 # WHISPER_BUILD_EXAMPLES must stay ON: examples/server is only added to the
@@ -66,24 +47,8 @@ mkdir -p "$BIN_DIR"
 cp "$WHISPER_SRC/build/bin/whisper-server" "$SERVER_BIN"
 echo "    built: $SERVER_BIN"
 
-echo "==> ggml-base.en.bin"
-mkdir -p "$MODEL_DIR"
-if [ -f "$MODEL_PATH" ] && [ "$(sha256 "$MODEL_PATH")" = "$MODEL_SHA256" ]; then
-  echo "    already present and verified, skipping fetch"
-else
-  rm -f "$MODEL_PATH"
-  echo "    fetching from pinned revision $MODEL_REVISION (141 MiB)"
-  curl -fL --progress-bar -o "$MODEL_PATH" "$MODEL_URL"
-  ACTUAL_SHA256="$(sha256 "$MODEL_PATH")"
-  if [ "$ACTUAL_SHA256" != "$MODEL_SHA256" ]; then
-    rm -f "$MODEL_PATH"
-    echo "error: ggml-base.en.bin checksum mismatch" >&2
-    echo "       expected $MODEL_SHA256" >&2
-    echo "       got      $ACTUAL_SHA256" >&2
-    exit 1
-  fi
-  echo "    verified: $MODEL_PATH"
-fi
+echo "==> ggml-base.en.bin (from pinned revision $MODEL_REVISION, 141 MiB)"
+fetch_verified "$MODEL_URL" "$MODEL_PATH" "$MODEL_SHA256" "ggml-base.en.bin"
 
 echo "==> done"
 echo "    whisper-server: $SERVER_BIN"
