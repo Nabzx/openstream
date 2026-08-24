@@ -100,6 +100,39 @@ only ever reach the host's entry.
 What the reset *clears* was not validly measured: it ran at 02:17:40 when
 nothing was granted.
 
+## Step 8 - the grant that displays as ON but is not in effect (VALID, 02:29:30)
+
+Measured 2026-08-24. Build at 02:28:30 produced host CDHash `3d9ec264...`.
+
+| Source | Reading |
+| --- | --- |
+| System Settings > Accessibility | a row named `TCCProbe`, switch **ON** |
+| `state-20260824-022930-confirm-granted.json` | host `reportedTrusted=false`; `axhelper` reported **false**, functional **false** |
+
+**The displayed grant and the effective grant disagree.** macOS shows the
+permission as granted while denying the binary that is actually running. For an
+ad-hoc-signed app this is the per-rebuild problem in its nastiest form: the
+failure is silent and the UI actively misleads. A user - or a build script -
+that trusts the System Settings toggle is reading a stale artefact, not the
+grant.
+
+Two candidate causes, not separated by this measurement:
+
+1. A stale entry from an earlier build at the same path. Host CDHash has moved
+   repeatedly across runs (`157799ea...`, `4e05f21b...`, `8679f617...`,
+   `3d9ec264...`).
+2. **Measurement contamination, disclosed:** during harness verification a
+   second `TCCProbe.app` was built and launched from a git worktree at
+   `.claude/worktrees/tcc-attribution-46-verify/...`. It carries the same
+   display name and the same bundle id, so the ON row may belong to that build
+   rather than to a stale entry of this one.
+
+Either way the operational conclusion is the same and is the one that matters
+for #40: **a visible ON toggle is not evidence of an effective grant**, and the
+app start gate must probe the permission functionally rather than trust the UI
+or the presence of a TCC row. `tccutil reset` on the host bundle id clears every
+entry for that id regardless of path, which is the way out.
+
 ## Verdict
 
 **Answered.** Which binary the Accessibility grant attaches to:
