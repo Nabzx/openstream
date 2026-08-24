@@ -10,8 +10,9 @@
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "test": "vitest run",
+    "prepare:model-artifacts": "node scripts/prepare-model-artifacts.mjs",
     "build:whisper": "bash scripts/build-whisper.sh",
-    "postinstall": "npm run build:whisper",
+    "postinstall": "npm run prepare:model-artifacts",
     "start": "cross-env NODE_ENV=production electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
