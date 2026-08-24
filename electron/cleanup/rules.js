@@ -38,8 +38,8 @@ const SPOKEN_PUNCT = [
   [/\bsemicolon\b/gi, ";"],
   [/\bopen paren(thesis)?\b/gi, "("],
   [/\bclose paren(thesis)?\b/gi, ")"],
-  [/\bdash\b/gi, "-"],
-  [/\bslash\b/gi, "/"],
+  [/[ \t]*\bdash\b[ \t]*/gi, "-"],
+  [/[ \t]*\bslash\b[ \t]*/gi, "/"],
 ];
 
 // Technical vocabulary dictation reliably mangles. A fixed list for now; the
@@ -210,8 +210,10 @@ function cleanup(text, options = {}) {
   if (!oneLineBox) {
     text = segmentSentences(text);
   }
-  text = applyVocab(text);
   text = capitalise(text);
+  // Apply fixed casing after sentence capitalisation so names such as macOS
+  // keep their settled spelling even at the start of a dictation.
+  text = applyVocab(text);
   text = oneLineBox ? text.replace(/\s+$/, "") : terminalPunct(text);
   text = text.replace(/[ \t]{2,}/g, " ");
 
