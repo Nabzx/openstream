@@ -55,7 +55,7 @@ async function waitUntilReady(deadline) {
 // Skipped when `npm run build:llama` hasn't fetched the assets (e.g. a
 // clean checkout that hasn't run postinstall).
 test(
-  "llama-server starts and answers a chat completion over HTTP",
+  "rewrite model server starts and answers a chat completion over HTTP",
   { skip: !hasFetchedAssets && "rewrite model server artifacts are missing - run `npm run prepare:model-artifacts`" },
   async () => {
     rewriteModelServer.start();
