@@ -28,3 +28,39 @@ TCCProbe.app                 f1fd7593920fcc0abc84509e945c56e29b348ee9       dev.
 axhelper                     3a378bfa8cdc98b5522a4bb5b953c915cbc7987d       axhelper-55554944adf51a2421453116b4cb0083719ffb31
 hotkeyhelper                 b5bf42dcba8b48b09d349454b4ebc7f64fda47dc       hotkeyhelper-55554944f47d07216fbc3dc3b9a47c0d4e8ae352
 
+=== build.sh (initial full build)  (2026-08-24T02:05:36Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 157799ea80e2efde795ad925a0637faf9523c8be       dev.openstream.prototype.tccprobe
+axhelper                     dbfb26dc8c0b63bb1621739a04a3ad8638cbe242       axhelper-55554944f064b8ceaa16312bafa882fcfd844a6a
+hotkeyhelper                 5f24cfb77666606eb7657d4c7e6a7b5818dc61bf       hotkeyhelper-555549445707923ab9e6399293747fcce08ba3ea
+
+=== build.sh (initial full build)  (2026-08-24T02:12:58Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 4e05f21b31053260e162305dcc9ab568810d747d       dev.openstream.prototype.tccprobe
+axhelper                     152d05a4f997fe716920904ecd0380d725b052cf       axhelper-555549448b316e605a4f351bbcbd2269e1b00506
+hotkeyhelper                 3161c0e9b80519c44f95e4ab227251445316cded       hotkeyhelper-555549444129ff62de9b39f184a8470959a13fc5
+
+=== rebuild-js.sh (JavaScript changed, helpers untouched)  (2026-08-24T02:14:43Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 a20dd4ab642da7bd96c7d8ded8b6ccfcf6752ccb       dev.openstream.prototype.tccprobe
+axhelper                     152d05a4f997fe716920904ecd0380d725b052cf       axhelper-555549448b316e605a4f351bbcbd2269e1b00506
+hotkeyhelper                 3161c0e9b80519c44f95e4ab227251445316cded       hotkeyhelper-555549444129ff62de9b39f184a8470959a13fc5
+
+=== rebuild-helpers.sh (helpers recompiled, JavaScript untouched)  (2026-08-24T02:16:30Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 8679f617dc69d0d26562eff3c903a3a4b93242ee       dev.openstream.prototype.tccprobe
+axhelper                     8f4e7b9c2509ed2d9de174869e320f76e598fc89       axhelper-55554944d05571ae4b9e3d25a63657f8a70a94b8
+hotkeyhelper                 e5a79c18cc10103ede3534ec376ba61dc866d695       hotkeyhelper-55554944870e9ca50f6937949e9fc46d6261c85e
+
+=== build.sh (initial full build)  (2026-08-24T02:28:30Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 3d9ec264cd283465a0c51756abd654e87ef5903d       dev.openstream.prototype.tccprobe
+axhelper                     b425603d91311dbe97bcb91eb37c5aec225ca0c1       axhelper-555549441aec5adc9ec93a37ba4cb0d21abc82f5
+hotkeyhelper                 95d7f721964221a963abb0034715099386d918cd       hotkeyhelper-555549444944c4c6dd1e3b2abaa0745ef08d7f79
+
+=== rebuild-js.sh (JavaScript changed, helpers untouched)  (2026-08-24T02:40:07Z)
+TARGET                       CDHASH                                         SIGNING IDENTIFIER
+TCCProbe.app                 15c95c06f71fe7f707297e6ef7d85293b5157d58       dev.openstream.prototype.tccprobe
+axhelper                     b425603d91311dbe97bcb91eb37c5aec225ca0c1       axhelper-555549441aec5adc9ec93a37ba4cb0d21abc82f5
+hotkeyhelper                 95d7f721964221a963abb0034715099386d918cd       hotkeyhelper-555549444944c4c6dd1e3b2abaa0745ef08d7f79
+
