@@ -22,3 +22,26 @@ body {
   opacity: 0.7;
   margin: 0;
 }
+
+.setting {
+  margin-top: 1rem;
+}
+
+.setting h2 {
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.setting-current {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  opacity: 1;
+}
+
+.setting-error {
+  color: #d64545;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  opacity: 1;
+}
