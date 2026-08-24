@@ -11,9 +11,16 @@ const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 const ARGS = ["--keycode", "2", "--modifiers", "cmd,shift"];
 const RESTART_DELAY_MS = 1000;
 
-function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DELAY_MS } = {}) {
+function createHotkeyHelper({
+  spawnProcess = spawn,
+  restartDelayMs = RESTART_DELAY_MS,
+  setRestartTimer = setTimeout,
+  clearRestartTimer = clearTimeout,
+  stderr = process.stderr,
+} = {}) {
   let child = null;
   let stopping = false;
+  let restartTimer = null;
   let onDown = () => {};
   let onUp = () => {};
 
@@ -31,23 +38,37 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
   }
 
   function start() {
+    if (child) return;
     stopping = false;
-    child = spawnProcess(BIN_PATH, ARGS);
+    const spawnedChild = spawnProcess(BIN_PATH, ARGS);
+    child = spawnedChild;
 
-    readline.createInterface({ input: child.stdout }).on("line", handleLine);
-    child.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
+    readline.createInterface({ input: spawnedChild.stdout }).on("line", handleLine);
+    spawnedChild.stderr.on("data", (data) => stderr.write(`[hotkey-helper] ${data}`));
 
-    child.on("exit", (code) => {
+    spawnedChild.on("exit", (code) => {
+      if (child !== spawnedChild) return;
       child = null;
       if (stopping) return;
-      console.error(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
-      setTimeout(start, restartDelayMs);
+      stderr.write(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms\n`);
+      restartTimer = setRestartTimer(() => {
+        restartTimer = null;
+        start();
+      }, restartDelayMs);
     });
   }
 
   function stop() {
     stopping = true;
-    if (child) child.kill();
+    if (restartTimer) {
+      clearRestartTimer(restartTimer);
+      restartTimer = null;
+    }
+    if (child) {
+      const runningChild = child;
+      child = null;
+      runningChild.kill();
+    }
   }
 
   return {

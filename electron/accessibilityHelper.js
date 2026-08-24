@@ -16,9 +16,13 @@ function createAccessibilityHelper({
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
   setRequestTimer = setTimeout,
   clearRequestTimer = clearTimeout,
+  setRestartTimer = setTimeout,
+  clearRestartTimer = clearTimeout,
+  stderr = process.stderr,
 } = {}) {
   let child = null;
   let stopping = false;
+  let restartTimer = null;
   let nextId = 1;
   const pending = new Map();
 
@@ -45,29 +49,43 @@ function createAccessibilityHelper({
   }
 
   function start() {
+    if (child) return;
     stopping = false;
-    child = spawnProcess(BIN_PATH);
+    const spawnedChild = spawnProcess(BIN_PATH);
+    child = spawnedChild;
 
-    readline.createInterface({ input: child.stdout }).on("line", handleLine);
-    child.stderr.on("data", (data) => process.stderr.write(`[accessibility-helper] ${data}`));
+    readline.createInterface({ input: spawnedChild.stdout }).on("line", handleLine);
+    spawnedChild.stderr.on("data", (data) => stderr.write(`[accessibility-helper] ${data}`));
 
-    child.on("exit", (code) => {
+    spawnedChild.on("exit", (code) => {
+      if (child !== spawnedChild) return;
       child = null;
       for (const id of Array.from(pending.keys())) {
         settle(id, null, new Error("accessibility-helper exited before replying"));
       }
       if (stopping) return;
-      console.error(`[accessibility-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
-      setTimeout(start, restartDelayMs);
+      stderr.write(`[accessibility-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms\n`);
+      restartTimer = setRestartTimer(() => {
+        restartTimer = null;
+        start();
+      }, restartDelayMs);
     });
   }
 
   function stop() {
     stopping = true;
+    if (restartTimer) {
+      clearRestartTimer(restartTimer);
+      restartTimer = null;
+    }
     for (const id of Array.from(pending.keys())) {
       settle(id, null, new Error("accessibility-helper stopped before replying"));
     }
-    if (child) child.kill();
+    if (child) {
+      const runningChild = child;
+      child = null;
+      runningChild.kill();
+    }
   }
 
   function request(cmd, payload = {}) {
