@@ -8,7 +8,7 @@ export default defineConfig({
     outDir: "dist",
   },
   test: {
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "scripts/**/*.test.mjs"],
     exclude: [".claude/**", "vendor/**", "node_modules/**"],
   },
 });
