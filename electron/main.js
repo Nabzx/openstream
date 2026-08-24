@@ -3,6 +3,7 @@ const path = require("path");
 const whisperServer = require("./whisperServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
+const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 const { encodeWav } = require("./wav");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -18,7 +19,7 @@ let win = null;
 let trayIcons = null;
 let trayState = "idle";
 let captureWin = null;
-let isRecording = false;
+let overlayWin = null;
 
 function createWindow() {
   if (win) {
@@ -65,6 +66,28 @@ function createCaptureWindow() {
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
 }
 
+function createOverlayWindow() {
+  overlayWin = new BrowserWindow({
+    width: 180,
+    height: 52,
+    show: false,
+    frame: false,
+    transparent: true,
+    resizable: false,
+    focusable: false,
+    alwaysOnTop: true,
+    skipTaskbar: true,
+    webPreferences: {
+      preload: path.join(__dirname, "overlay", "overlayPreload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+  overlayWin.setIgnoreMouseEvents(true);
+  overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
+}
+
 async function transcribeAndPrint(int16Samples) {
   const wavBuffer = encodeWav(int16Samples);
   const formData = new FormData();
@@ -81,15 +104,15 @@ async function transcribeAndPrint(int16Samples) {
   } catch (err) {
     console.error("[dictation] transcription failed:", err);
   } finally {
-    setTrayState("idle");
+    setUserVisibleState("idle");
   }
 }
 
 // #6's helper reports one of three shapes: delivered (with the rung and
 // whether it could confirm the text landed), held (nothing was risked - see
-// #62's hold-never-guess), or a protocol error. There is no overlay surface
-// yet for a held transcript (#12/#44's job); for now the reason is logged so
-// a held dictation is at least visible, not silently dropped.
+// #62's hold-never-guess), or a protocol error. The recording-only overlay
+// added by #95 cannot show held text yet, so log the reason rather than
+// silently dropping the dictation.
 async function injectTranscript(text) {
   try {
     const result = await accessibilityHelper.inject(text);
@@ -105,20 +128,18 @@ async function injectTranscript(text) {
   }
 }
 
-function startRecording() {
-  if (!captureWin || isRecording) return;
-  isRecording = true;
-  captureWin.webContents.send("start-recording");
-  setTrayState("recording");
-  console.log("[dictation] recording - release the hotkey to stop");
-}
-
-function stopRecording() {
-  if (!captureWin || !isRecording) return;
-  isRecording = false;
-  captureWin.webContents.send("stop-recording");
-  setTrayState("transcribing");
-}
+const pushToTalkCoordinator = createPushToTalkCoordinator({
+  startCapture() {
+    if (!captureWin) return;
+    captureWin.webContents.send("start-recording");
+    console.log("[dictation] recording - release the hotkey to stop");
+  },
+  stopCapture() {
+    if (!captureWin) return;
+    captureWin.webContents.send("stop-recording");
+  },
+  setUserVisibleState,
+});
 
 function loadTrayIcons() {
   trayIcons = {};
@@ -134,6 +155,15 @@ function setTrayState(state) {
   trayState = state;
   tray.setImage(trayIcons[state]);
   tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
+}
+
+function setUserVisibleState(state) {
+  setTrayState(state);
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+
+  overlayWin.webContents.send("dictation-state", state);
+  if (state === "recording") overlayWin.showInactive();
+  else overlayWin.hide();
 }
 
 function createTray() {
@@ -168,7 +198,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
   const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
   if (samples.length === 0) {
     console.log("[dictation] no audio captured, skipping");
-    setTrayState("idle");
+    setUserVisibleState("idle");
     return;
   }
   transcribeAndPrint(samples);
@@ -176,8 +206,7 @@ ipcMain.on("recording-data", (event, arrayBuffer) => {
 
 ipcMain.on("recording-error", (event, message) => {
   console.error("[dictation] capture failed:", message);
-  isRecording = false;
-  setTrayState("idle");
+  setUserVisibleState("idle");
 });
 
 app.whenReady().then(() => {
@@ -186,10 +215,11 @@ app.whenReady().then(() => {
   }
   createTray();
   createCaptureWindow();
+  createOverlayWindow();
   whisperServer.start();
   accessibilityHelper.start();
-  hotkeyHelper.onKeyDown(startRecording);
-  hotkeyHelper.onKeyUp(stopRecording);
+  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
+  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
   hotkeyHelper.start();
 });
 
