@@ -1,6 +1,7 @@
 const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const whisperServer = require("./whisperServer");
+const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
@@ -169,6 +170,7 @@ app.whenReady().then(() => {
   createTray();
   createCaptureWindow();
   whisperServer.start();
+  rewriteModelServer.start();
   accessibilityHelper.start();
   hotkeyHelper.onKeyDown(startRecording);
   hotkeyHelper.onKeyUp(stopRecording);
@@ -179,6 +181,7 @@ app.on("will-quit", () => {
   hotkeyHelper.stop();
   accessibilityHelper.stop();
   whisperServer.stop();
+  rewriteModelServer.stop();
 });
 
 // Menu bar app: stay alive with no windows open, quit only from the tray menu.

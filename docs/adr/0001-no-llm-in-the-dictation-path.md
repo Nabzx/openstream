@@ -9,8 +9,8 @@ status: accepted, partially superseded
 > model is asked which sentence numbers take a paragraph break and never returns text,
 > so the cleanup decision below stands: cleanup is still rules-only, and no model
 > rewrites dictated words. What no longer holds is the absolute claim that the
-> dictation path touches no model at all, and that voice editing is the only feature
-> using one.
+> dictation path touches no model at all, that voice editing is the only feature
+> using one, or that the dictation path holds no rewrite model resident.
 
 `README.md` and `ROADMAP.md` both assume every dictation runs through a local LLM cleanup pass (`llama-server`) for filler removal and punctuation, and five issues were scoped on that assumption without anyone measuring it. A throwaway spike measured it end to end ([issue #24](https://github.com/Nabzx/openstream/issues/24); code and data in `spike/llm-cleanup-latency/`). **We are removing the LLM from the dictation path**: cleanup is a deterministic rules engine costing 0.1-1.0 ms, and the local LLM is deferred to Phase 3 voice editing, which is now the only feature that uses one.
 
