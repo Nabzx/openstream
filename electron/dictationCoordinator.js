@@ -78,18 +78,21 @@ async function runCompletedDictation(options) {
 
   try {
     const deliveryResult = await delivery.deliver(finishedText);
-    setUserVisibleState("idle");
     if (deliveryResult.kind === "inserted") {
+      setUserVisibleState("idle");
       return { status: "delivered", text: finishedText, delivery: deliveryResult };
     }
-    if (deliveryResult.kind === "held") {
-      return { status: "held", text: finishedText, delivery: deliveryResult };
-    }
-    return { status: "failed", stage: "delivery", text: finishedText, delivery: deliveryResult };
+
+    const reason = deliveryResult.reason || "delivery could not proceed";
+    const heldDelivery = { kind: "held", reason };
+    setUserVisibleState("held", { text: finishedText, reason });
+    return { status: "held", text: finishedText, delivery: heldDelivery };
   } catch (err) {
     logger.error("[dictation] injection failed:", err);
-    setUserVisibleState("idle");
-    return { status: "failed", stage: "delivery", text: finishedText, error: err };
+    const reason = err instanceof Error ? err.message : "delivery failed";
+    const heldDelivery = { kind: "held", reason };
+    setUserVisibleState("held", { text: finishedText, reason });
+    return { status: "held", text: finishedText, delivery: heldDelivery, error: err };
   }
 }
 
