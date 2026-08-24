@@ -96,6 +96,7 @@ async function transcribeAndPrint(wavBuffer) {
   const result = await runCompletedDictation({
     wavBuffer,
     transcription,
+    contextDetection: accessibilityHelper,
     delivery: accessibilityHelper,
     setUserVisibleState,
   });
