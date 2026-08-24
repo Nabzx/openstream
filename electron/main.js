@@ -1,4 +1,4 @@
-const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electron");
+const { app, Tray, Menu, BrowserWindow, clipboard, ipcMain, nativeImage } = require("electron");
 const path = require("path");
 const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
@@ -7,6 +7,7 @@ const accessibilityHelper = require("./accessibilityHelper");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { runCompletedDictation } = require("./dictationCoordinator");
+const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
 const isDev = process.env.NODE_ENV === "development";
@@ -100,6 +101,29 @@ function createOverlayWindow() {
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
+function showHeldResult(text) {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.setFocusable(true);
+  overlayWin.setIgnoreMouseEvents(false);
+  overlayWin.setSize(420, 260, true);
+  overlayWin.webContents.send("held-result", text);
+  overlayWin.showInactive();
+}
+
+function hideHeldResult() {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.hide();
+  overlayWin.setIgnoreMouseEvents(true);
+  overlayWin.setFocusable(false);
+  overlayWin.setSize(180, 52, false);
+}
+
+const heldResultController = createHeldResultController({
+  showHeldResult,
+  hideHeldResult,
+  writeClipboard: (text) => clipboard.writeText(text),
+});
+
 async function transcribeAndPrint(wavBuffer) {
   const result = await runCompletedDictation({
     wavBuffer,
@@ -115,8 +139,10 @@ async function transcribeAndPrint(wavBuffer) {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
   } else if (result.status === "held") {
+    heldResultController.hold(result.text);
     console.log(`[dictation] injection held: ${result.delivery.reason}`);
   } else if (result.status === "failed" && result.stage === "delivery") {
+    heldResultController.hold(result.text);
     console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
@@ -158,6 +184,7 @@ function setUserVisibleState(state) {
   setTrayState(state);
   if (!overlayWin || overlayWin.isDestroyed()) return;
 
+  if (state === "recording") heldResultController.dismiss();
   overlayWin.webContents.send("dictation-state", state);
   if (state === "recording") overlayWin.showInactive();
   else overlayWin.hide();
@@ -209,6 +236,20 @@ ipcMain.on("sound-level", (event, level) => {
   if (!isCaptureSender(event) || !overlayWin || overlayWin.isDestroyed()) return;
   const normalizedLevel = Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0;
   overlayWin.webContents.send("sound-level", normalizedLevel);
+});
+
+function isOverlaySender(event) {
+  return overlayWin && !overlayWin.isDestroyed() && event.sender === overlayWin.webContents;
+}
+
+ipcMain.on("copy-held-result", (event) => {
+  if (!isOverlaySender(event) || !heldResultController.copy()) return;
+  overlayWin.webContents.send("held-result-copied");
+});
+
+ipcMain.on("dismiss-held-result", (event) => {
+  if (!isOverlaySender(event)) return;
+  heldResultController.dismiss();
 });
 
 ipcMain.on("recording-error", (event, message) => {
