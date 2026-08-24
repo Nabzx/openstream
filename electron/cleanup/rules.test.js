@@ -25,9 +25,22 @@ test("collapses stutters and repeats, including contractions", () => {
 });
 
 test("converts spoken punctuation commands", () => {
-  assert.equal(cleanup("run the tests period"), "Run the tests.");
-  assert.equal(cleanup("is that right question mark"), "Is that right?");
-  assert.equal(cleanup("wait comma really"), "Wait, really.");
+  const cases = [
+    ["run the tests period", "Run the tests."],
+    ["run the tests full stop", "Run the tests."],
+    ["is that right question mark", "Is that right?"],
+    ["great work exclamation point", "Great work!"],
+    ["great work exclamation mark", "Great work!"],
+    ["wait comma really", "Wait, really."],
+    ["items colon one semicolon two", "Items: one; two."],
+    ["call open paren now close paren", "Call (now)."],
+    ["alpha dash beta", "Alpha-beta."],
+    ["path slash value", "Path/value."],
+  ];
+
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
 });
 
 test("lets whisper's own inferred punctuation win on collision", () => {
@@ -39,11 +52,21 @@ test("normalises whisper-server's hard line wraps", () => {
 });
 
 test("applies technical vocabulary fixups", () => {
-  assert.equal(
-    cleanup("open git hub and check the java script and type script files"),
-    "Open GitHub and check the JavaScript and TypeScript files."
-  );
-  assert.equal(cleanup("we need more ram"), "We need more RAM.");
+  const cases = [
+    ["start the lama server", "Start the llama-server."],
+    ["start the llama server", "Start the llama-server."],
+    ["macos uses ram", "macOS uses RAM."],
+    ["press the hot key", "Press the hotkey."],
+    ["disable auto update", "Disable auto-update."],
+    ["use rules based cleanup", "Use rules-based cleanup."],
+    ["open git hub", "Open GitHub."],
+    ["check the java script file", "Check the JavaScript file."],
+    ["check the type script file", "Check the TypeScript file."],
+  ];
+
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
 });
 
 test("capitalises sentence starts and bare i", () => {
