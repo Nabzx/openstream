@@ -12,11 +12,11 @@
     "build:whisper": "bash scripts/build-whisper.sh",
     "build:hotkey-helper": "bash scripts/build-hotkey-helper.sh",
     "build:accessibility-helper": "bash scripts/build-accessibility-helper.sh",
-    "build:llama": "bash scripts/fetch-llama.sh",
+    "build:llama": "bash scripts/build-llama.sh",
     "postinstall": "npm run build:whisper && npm run build:hotkey-helper && npm run build:accessibility-helper && npm run build:llama",
     "start": "cross-env NODE_ENV=production electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "node --test \"electron/**/*.test.js\"",
+    "test": "node --test \"electron/**/*.test.js\" \"scripts/**/*.test.js\"",
     "dist": "npm run build && cross-env CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac dmg --publish=never"
   },
   "dependencies": {
