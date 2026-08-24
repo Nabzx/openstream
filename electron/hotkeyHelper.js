@@ -5,8 +5,9 @@ const { resourcesRoot } = require("./paths");
 
 const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 
-// Keycode 2 is 'D' on the ANSI layout. The helper only knows keycodes, not
-// accelerator strings, so the mapping lives here.
+// Keycode 2 is 'D' on the ANSI layout - matches settingsStore.js's
+// DEFAULT_SETTINGS, so a fresh install with no settings file behaves
+// exactly as it always has.
 //
 // Control+Option, not Cmd+Shift: this tap is listen-only (see main.swift),
 // so the keystroke still reaches whatever app is focused. A Cmd-combo that
@@ -14,11 +15,16 @@ const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 // then gets captured at the start of the recording and Whisper hallucinates
 // as "[Music]". Control+Option isn't treated as a menu key-equivalent, so
 // nothing beeps.
-const ARGS = ["--keycode", "2", "--modifiers", "ctrl,alt"];
+const DEFAULT_HOTKEY = { keyCode: 2, modifiers: ["ctrl", "alt"] };
 
 const RESTART_DELAY_MS = 1000;
 
-function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DELAY_MS } = {}) {
+function argsForHotkey(hotkey) {
+  return ["--keycode", String(hotkey.keyCode), "--modifiers", hotkey.modifiers.join(",")];
+}
+
+function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DELAY_MS, hotkey = DEFAULT_HOTKEY } = {}) {
+  let currentHotkey = hotkey;
   let child = null;
   let stopping = false;
   let onDown = () => {};
@@ -39,12 +45,18 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
 
   function start() {
     stopping = false;
-    child = spawnProcess(BIN_PATH, ARGS);
+    const proc = spawnProcess(BIN_PATH, argsForHotkey(currentHotkey));
+    child = proc;
 
-    readline.createInterface({ input: child.stdout }).on("line", handleLine);
-    child.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
+    readline.createInterface({ input: proc.stdout }).on("line", handleLine);
+    proc.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
 
-    child.on("exit", (code) => {
+    proc.on("exit", (code) => {
+      // setHotkey() replaces `child` with a new process before this old
+      // one's exit event arrives - without this check, that old event
+      // would null out the reference to the new child and schedule a
+      // spurious second restart on top of it.
+      if (child !== proc) return;
       child = null;
       if (stopping) return;
       console.error(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
@@ -57,9 +69,18 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
     if (child) child.kill();
   }
 
+  function setHotkey(newHotkey) {
+    currentHotkey = newHotkey;
+    if (child) {
+      stop();
+      start();
+    }
+  }
+
   return {
     start,
     stop,
+    setHotkey,
     onKeyDown(callback) {
       onDown = callback;
     },
@@ -72,4 +93,5 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
 module.exports = {
   ...createHotkeyHelper(),
   createHotkeyHelper,
+  DEFAULT_HOTKEY,
 };
