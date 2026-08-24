@@ -107,10 +107,14 @@ struct FieldInfo {
     var selectedTextSettable: Bool
 }
 
-func fieldInfo(_ element: AXUIElement) -> FieldInfo {
+func elementRole(_ element: AXUIElement) -> String {
     var roleRef: CFTypeRef?
     AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &roleRef)
-    let role = (roleRef as? String) ?? "unknown"
+    return (roleRef as? String) ?? "unknown"
+}
+
+func fieldInfo(_ element: AXUIElement) -> FieldInfo {
+    let role = elementRole(element)
 
     var valueRef: CFTypeRef?
     let valueErr = AXUIElementCopyAttributeValue(element, kAXValueAttribute as CFString, &valueRef)
@@ -123,7 +127,7 @@ func fieldInfo(_ element: AXUIElement) -> FieldInfo {
 }
 
 func isOneLineField(_ element: AXUIElement) -> Bool {
-    let role = fieldInfo(element).role
+    let role = elementRole(element)
     return role == "AXTextField" || role == "AXComboBox"
 }
 

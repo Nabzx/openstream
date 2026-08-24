@@ -14,6 +14,8 @@ function createAccessibilityHelper({
   spawnProcess = spawn,
   restartDelayMs = RESTART_DELAY_MS,
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
+  setRequestTimer = setTimeout,
+  clearRequestTimer = clearTimeout,
 } = {}) {
   let child = null;
   let stopping = false;
@@ -23,7 +25,7 @@ function createAccessibilityHelper({
   function settle(id, message, error) {
     const entry = pending.get(id);
     if (!entry) return;
-    clearTimeout(entry.timer);
+    clearRequestTimer(entry.timer);
     pending.delete(id);
     if (error) entry.reject(error);
     else entry.resolve(message);
@@ -76,7 +78,7 @@ function createAccessibilityHelper({
       }
 
       const id = String(nextId++);
-      const timer = setTimeout(() => {
+      const timer = setRequestTimer(() => {
         settle(id, null, new Error(`accessibility-helper ${cmd} request timed out after ${requestTimeoutMs}ms`));
       }, requestTimeoutMs);
       pending.set(id, { resolve, reject, timer });
