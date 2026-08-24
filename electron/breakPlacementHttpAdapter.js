@@ -5,7 +5,7 @@ function createBreakPlacementHttpAdapter(options) {
   }
 
   async function requestBreakIndices({ systemPrompt, numberedSentences }) {
-    const res = await fetchImpl(chatCompletionsUrl(), {
+    const response = await fetchImpl(chatCompletionsUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -19,14 +19,14 @@ function createBreakPlacementHttpAdapter(options) {
       }),
     });
 
-    if (!res.ok) throw new Error(`rewrite model server returned ${res.status}`);
+    if (!response.ok) throw new Error(`rewrite model server returned ${response.status}`);
 
-    const body = await res.json();
-    const reply = body?.choices?.[0]?.message?.content;
-    if (typeof reply !== "string") {
+    const body = await response.json();
+    const rawBreakIndices = body?.choices?.[0]?.message?.content;
+    if (typeof rawBreakIndices !== "string") {
       throw new Error("rewrite model server returned an invalid break-placement reply");
     }
-    return { reply: reply.trim() };
+    return { reply: rawBreakIndices.trim() };
   }
 
   return { requestBreakIndices };

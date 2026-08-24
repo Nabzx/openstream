@@ -34,4 +34,4 @@ function createRewriteModelServer(options = {}) {
 
 const server = createRewriteModelServer();
 
-module.exports = { ...server, createRewriteModelServer, CONTEXT_SIZE };
+module.exports = { ...server, createRewriteModelServer };
