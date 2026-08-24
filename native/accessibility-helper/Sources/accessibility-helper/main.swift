@@ -122,6 +122,11 @@ func fieldInfo(_ element: AXUIElement) -> FieldInfo {
     return FieldInfo(role: role, valueChars: valueChars, selectedTextSettable: settable.boolValue)
 }
 
+func isOneLineField(_ element: AXUIElement) -> Bool {
+    let role = fieldInfo(element).role
+    return role == "AXTextField" || role == "AXComboBox"
+}
+
 // Rung 1: replace the current selection (a caret is a zero-length selection)
 // with the transcript. Atomic, instant, no clipboard - this is the AX
 // primitive for "insert at the cursor", distinct from kAXValueAttribute,
@@ -225,9 +230,7 @@ func enableManualAccessibility(_ appElement: AXUIElement) {
 // specifically so this resolution and inject() never race each other over
 // focus - and so it only ever happens once: everything downstream (the
 // fallback chain below) reuses this same element rather than re-asking.
-func resolveFocusedElement(deadlineMs: Double) -> AXUIElement? {
-    guard let frontApp = tracker.currentFrontmost() else { return nil }
-
+func resolveFocusedElement(in frontApp: NSRunningApplication, deadlineMs: Double) -> AXUIElement? {
     let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
     AXUIElementSetMessagingTimeout(appElement, Float(deadlineMs / 1000.0))
     enableManualAccessibility(appElement)
@@ -237,6 +240,21 @@ func resolveFocusedElement(deadlineMs: Double) -> AXUIElement? {
     guard focusErr == .success, let focusedRef = focusedRef else { return nil }
 
     return (focusedRef as! AXUIElement) // swiftlint:disable:this force_cast
+}
+
+func readFocusContext() -> [String: Any] {
+    guard let frontApp = tracker.currentFrontmost(),
+          let bundleId = frontApp.bundleIdentifier else {
+        return ["status": "error", "reason": "frontmost application unavailable"]
+    }
+    guard let focused = resolveFocusedElement(in: frontApp, deadlineMs: config.axDeadlineMs) else {
+        return ["status": "error", "reason": "focused element unavailable"]
+    }
+    return [
+        "status": "ok",
+        "bundleId": bundleId,
+        "isOneLineField": isOneLineField(focused)
+    ]
 }
 
 // The decision procedure itself, ported from InjectionModel in
@@ -253,7 +271,11 @@ func decideAndInject(text: String) -> [String: Any] {
         Thread.sleep(forTimeInterval: 0.02)
     }
 
-    guard let focused = resolveFocusedElement(deadlineMs: config.axDeadlineMs) else {
+    guard let frontApp = tracker.currentFrontmost() else {
+        return held(reason: "frontmost application unavailable")
+    }
+
+    guard let focused = resolveFocusedElement(in: frontApp, deadlineMs: config.axDeadlineMs) else {
         // Rung 0 didn't answer, or nothing is frontmost at all. The narrow
         // exception settled on #62: a known app that has sat still well
         // past the settle guard is a much smaller unknown than "which
@@ -262,7 +284,7 @@ func decideAndInject(text: String) -> [String: Any] {
         // dark. We have no app name at all when nothing is frontmost, so
         // that case always falls through to hold below.
         if let gate = config.stableForBlindPasteMs, tracker.ageMs() >= gate,
-           let appName = tracker.currentFrontmost()?.localizedName {
+           let appName = frontApp.localizedName {
             let (_, _, note) = pasteViaClipboard(text: text, verifyAgainst: nil, valueBefore: nil)
             return delivered(method: "pasted into \(appName), field unknown", verified: false, note: note)
         }
@@ -320,9 +342,13 @@ while let line = readLine(strippingNewline: true) {
     }
 
     switch cmd {
-    case "inject":
+    case "context":
+        var reply = readFocusContext()
+        reply["id"] = id
+        emit(reply)
+    case "insert", "inject":
         guard let text = obj["text"] as? String, !text.isEmpty else {
-            emit(["id": id, "status": "error", "reason": "inject requires non-empty \"text\""])
+            emit(["id": id, "status": "error", "reason": "insert requires non-empty \"text\""])
             continue
         }
         var reply = decideAndInject(text: text)
