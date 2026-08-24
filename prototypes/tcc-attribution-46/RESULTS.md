@@ -1,10 +1,8 @@
 # Results (issue #46)
 
-Status: **harness verified, experiment not yet run.** The build, both helpers,
-the Electron host, the headless capture and both rebuild arms have been run and
-checked. The experiment itself needs a human at the machine, because the grant
-must be given in System Settings and the System Settings list is itself the
-main evidence.
+Status: **verdict reached on 2026-08-24.** The Electron host holds all three
+grants in the measured ad-hoc-signed configuration. The observations, caveats,
+and consequences are recorded below.
 
 Every cell below must be a real observation from a run. Cells that were not
 measured say so. Nothing here is inferred.
@@ -27,89 +25,198 @@ are real, but they are the setup, not the answer.
 | Arm 1 invariant (`rebuild-js.sh`) | helper CDHashes unchanged: `00667d0a…`, `b57a6437…` | The JS-only rebuild is genuinely helper-neutral even though the whole bundle is re-signed `--deep`. Ad-hoc signing is deterministic over identical content, so arm 1 isolates the variable it claims to. |
 | Arm 2 invariant (`rebuild-helpers.sh`) | axhelper CDHash moved `00667d0a…` → `c997c749…`, and its `signingIdentifier` moved too | The helper-only rebuild really does change helper code identity, including the ad-hoc signing identifier and therefore the designated requirement. Arm 2 isolates its variable. |
 
-## Step 2 - baseline, before any grant
+## The run of 2026-08-24, and which half of it counts
 
-Not measured yet.
+The experiment was run twice back to back. **Only the first pass is valid**, and
+the reason is recorded here because it is the easiest mistake to repeat.
+
+| Time (UTC) | Event | Host CDHash |
+| --- | --- | --- |
+| 02:05:36 | `build.sh` | `157799ea…` |
+| 02:12:58 | **`build.sh` again** - second wizard run, full rebuild | `4e05f21b…` |
+
+The grant was given during the first pass and confirmed at 02:11:23. The second
+`build.sh` at 02:12:58 moved the host CDHash, **and the grant did not survive
+it**. Every capture from 02:13:00 onward reads denied, including the one the
+operator confirmed as granted. So steps 5, 6 and 7 below measured denied → denied
+and decide nothing.
+
+## Step 2 - baseline, before any grant (VALID, 02:05:36)
 
 | Subject | CDHash | Reported | Functional |
 | --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
+| `TCCProbe.app` | `157799ea…` | not trusted | - |
+| `axhelper` | `dbfb26dc…` | false | false |
+| `hotkeyhelper` | `5f24cfb7…` | `denied` | false |
 
-## Step 3 - what System Settings names
+Clean baseline: nothing granted, and `responsible` named TCCProbe, not a terminal.
 
-**The single most decisive observation.** Not measured yet.
+## Step 3 - what System Settings names (VALID) - THE DECISIVE OBSERVATION
 
 | Pane | Entry name(s) that appeared | Names the `.app` or the helper binary? |
 | --- | --- | --- |
-| Accessibility | - | - |
-| Input Monitoring | - | - |
+| Accessibility | **`TCCProbe`** | **The `.app`.** No entry named `axhelper` ever appeared. |
+| Input Monitoring | **none** | No entry appeared at the moment of checking. See caveat below. |
 
-## Step 4 - after granting, before any rebuild
-
-Not measured yet.
+## Step 4 - after granting, before any rebuild (VALID, 02:11:23)
 
 | Subject | Reported | Functional |
 | --- | --- | --- |
-| `TCCProbe.app` | - | - |
-| `axhelper` | - | - |
-| `hotkeyhelper` | - | - |
+| `TCCProbe.app` | trusted | - |
+| `axhelper` | **true** | **true** |
+| `hotkeyhelper` | **`granted`** | **true** |
 
-## Step 5 - arm 1: JavaScript rebuilt, helpers untouched
+This is the load-bearing measurement. Granting **only** `TCCProbe` in the
+Accessibility pane was sufficient to make `axhelper` both report and *function*
+as trusted, and `axhelper` never had an entry of its own to grant.
 
-Not measured yet. `rebuild-js.sh` asserts the helper CDHashes did not move;
-record whether that assertion held.
+Open caveat on Input Monitoring: the pane listed nothing at step 3, yet
+`hotkeyhelper` moved from `denied` to `granted` by 02:11:23. Whether an entry
+named `TCCProbe` appeared in that pane later in the sequence was not recorded.
+The transition is real; the mechanism behind it is not established.
+
+## Step 5 - arm 1: JavaScript rebuilt, helpers untouched (VALID, 02:40:07)
+
+**Re-run correctly on 2026-08-24 against a live, verified grant. This is the
+measurement the ticket was for.**
+
+Before (02:38:11), grant confirmed live: host `3d9ec264...` trusted, `axhelper`
+reported **true** / functional **true**, `hotkeyhelper` `granted` / functional
+**true**.
+
+Then `rebuild-js.sh`: JavaScript changed, both helper binaries left byte-identical.
 
 | Subject | CDHash moved? | Reported | Functional |
 | --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
+| `TCCProbe.app` | **yes**, `3d9ec264...` → `15c95c06...` | not trusted | - |
+| `axhelper` | **no**, `b425603d...` unchanged | **false** | **false** |
+| `hotkeyhelper` | **no**, `95d7f721...` unchanged | **false** | **false** |
 
-Reading: helpers still pass and the host drops → grants are per-helper.
-All three drop → the Electron bundle holds them.
+**Every grant dropped, although neither helper binary changed by a single byte.**
+The only thing that moved was the host bundle's code identity. That is the
+answer: the grant is keyed to the Electron host's CDHash, and helper code
+identity is irrelevant to it.
 
-## Step 6 - arm 2: helpers rebuilt, JavaScript untouched
+## Step 6 - arm 2: helpers rebuilt, JavaScript untouched (NOT NEEDED)
 
-Not measured yet. `rebuild-helpers.sh` asserts the helper CDHash did move;
-record whether that assertion held.
+Arm 2 was designed to test whether the entry is keyed to helper code identity.
+Arm 1 already answers that: the helpers' CDHashes did **not** move and the grants
+dropped anyway, so helper identity cannot be the key.
 
-| Subject | CDHash moved? | Reported | Functional |
-| --- | --- | --- | --- |
-| `TCCProbe.app` | - | - | - |
-| `axhelper` | - | - | - |
-| `hotkeyhelper` | - | - | - |
-
-Reading: helpers now fail → the entry is keyed to the helper's own code
-identity. Helpers still pass → it is not.
+Arm 2 also cannot isolate its variable as written: `rebuild-helpers.sh` re-signs
+the bundle, so it moves the host CDHash too (measured: `8679f617...`). With the
+host identity now known to be the deciding factor, arm 2 confounds the two and
+would add nothing. Recorded as a harness limitation, not run again.
 
 ## Step 7 - `tccutil reset`
 
-**Half measured.** Both commands were run against a clean checkout with *no
-grant in place*, so they establish only that the host bundle id is a valid
-target. What they clear once a real grant exists is still open.
+Established earlier, and still valid: the host bundle id **is** a target
+`tccutil` accepts (exit 0) while a bogus id is rejected (exit 64,
+`OSStatus -10814`), and `ListenEvent` is the right service name for Input
+Monitoring. Both helpers have no bundle identifier at all, so this target can
+only ever reach the host's entry.
 
-| Command | Exit status | What it actually cleared |
-| --- | --- | --- |
-| `tccutil reset Accessibility dev.openstream.prototype.tccprobe` | 0, `Successfully reset Accessibility approval status` | Unknown - no grant existed yet. |
-| `tccutil reset ListenEvent dev.openstream.prototype.tccprobe` | 0, `Successfully reset ListenEvent approval status` | Unknown - no grant existed yet. |
-| Control: `tccutil reset Accessibility com.example.definitely.not.installed.xyz` | 64, `No such bundle identifier ... OSStatus -10814` | n/a |
+What the reset *clears* was not validly measured: it ran at 02:17:40 when
+nothing was granted.
 
-The control is what makes the two exit-0 results mean anything: `tccutil`
-rejects a bundle id LaunchServices does not know. So the host bundle id **is** a
-usable target and `ListenEvent` **is** the right service name for Input
-Monitoring. Neither helper has a bundle id at all (measured above), so this
-target can only ever reach the host's entry. Whether that is enough depends
-entirely on steps 5 and 6.
+## Step 8 - the grant that displays as ON but is not in effect (VALID, 02:29:30)
+
+Measured 2026-08-24. Build at 02:28:30 produced host CDHash `3d9ec264...`.
+
+| Source | Reading |
+| --- | --- |
+| System Settings > Accessibility | a row named `TCCProbe`, switch **ON** |
+| `state-20260824-022930-confirm-granted.json` | host `reportedTrusted=false`; `axhelper` reported **false**, functional **false** |
+
+**The displayed grant and the effective grant disagree.** macOS shows the
+permission as granted while denying the binary that is actually running. For an
+ad-hoc-signed app this is the per-rebuild problem in its nastiest form: the
+failure is silent and the UI actively misleads. A user - or a build script -
+that trusts the System Settings toggle is reading a stale artefact, not the
+grant.
+
+Two candidate causes, not separated by this measurement:
+
+1. A stale entry from an earlier build at the same path. Host CDHash has moved
+   repeatedly across runs (`157799ea...`, `4e05f21b...`, `8679f617...`,
+   `3d9ec264...`).
+2. **Measurement contamination, disclosed:** during harness verification a
+   second `TCCProbe.app` was built and launched from a git worktree at
+   `.claude/worktrees/tcc-attribution-46-verify/...`. It carries the same
+   display name and the same bundle id, so the ON row may belong to that build
+   rather than to a stale entry of this one.
+
+Either way the operational conclusion is the same and is the one that matters
+for #40: **a visible ON toggle is not evidence of an effective grant**, and the
+app start gate must probe the permission functionally rather than trust the UI
+or the presence of a TCC row. `tccutil reset` on the host bundle id clears every
+entry for that id regardless of path, which is the way out.
 
 ## Verdict
 
-Not reached. The three answers this ticket owes issue #23:
+**Reached, 2026-08-24.** All three answers the ticket owed #23:
 
-1. Which binary each grant attaches to - **open**.
-2. Whether `tccutil reset` has a usable target - **partially answered**: the
-   helpers have no bundle identifier, so if grants attach per-helper the answer
-   is no. Confirmed by measurement above, but conditional on step 5/6.
-3. How much of the per-rebuild problem the deterministic helper build removes -
-   **open**, follows from 1.
+### 1. Which binary each grant attaches to
+
+**The Electron host bundle, keyed to its CDHash.** Three independent lines of
+evidence agree:
+
+- The System Settings Accessibility list names **`TCCProbe`**. No entry for
+  `axhelper` or `hotkeyhelper` is ever offered.
+- Granting `TCCProbe` alone makes both spawned helpers report *and* function as
+  granted, though neither has an entry of its own.
+- Arm 1: moving only the host CDHash drops every grant while both helper
+  binaries stay byte-identical.
+
+The responsible-process mechanism wins. Accessibility and Input Monitoring are
+**not** checked against the calling helper's own code requirement here.
+
+### 2. Whether `tccutil reset` has a usable target
+
+**Yes, the host bundle id - and it is necessary, not merely available.** The
+helpers have no bundle identifier, but that is moot: there is nothing
+per-helper to reset because there is nothing per-helper to grant. `tccutil reset
+Accessibility dev.openstream.prototype.tccprobe` is also the only clean escape
+from the displayed-ON / effectively-denied state in step 8; re-granting through
+System Settings alone did not clear it.
+
+### 3. How much of the per-rebuild problem the deterministic helper build removes
+
+**None of it.** This is the expensive answer and it is now measured, not
+inferred.
+
+Issue #40 makes helper builds deterministic so that a rebuild need not cost the
+helpers' grants. But the helpers never hold grants. The grant lives on the
+Electron host, and *any* rebuild that re-signs the bundle - including a
+JavaScript-only change - moves the host CDHash and drops all three grants. Arm 1
+demonstrates exactly this: byte-identical helpers, grants gone.
+
+So a deterministic helper build buys nothing for TCC. Every JavaScript change
+costs the user a full re-grant of Accessibility and Input Monitoring.
+
+### Consequences for the implementation
+
+- **The start gate must probe functionally.** Step 8 showed the System Settings
+  toggle reading ON while the running binary was denied. Neither the presence of
+  a TCC row nor its switch state is evidence of an effective grant. Call the API
+  and see whether it works.
+- **The re-grant problem is a host-identity problem, not a helper problem.**
+  Anything spent on helper build determinism to protect grants is misdirected;
+  the leverage is entirely in keeping the *host bundle's* code identity stable
+  across builds. Stable signing identity for the host is the thing worth
+  investigating next.
+- **Development builds will re-prompt constantly** unless host code identity is
+  held stable, because every JS edit re-signs the bundle.
+
+### Scope and limits
+
+- One machine: macOS 15.6.1 (Darwin 24.6.0), Apple Silicon, **ad-hoc signed**.
+  A Developer ID signature gives a stable designated requirement across
+  rebuilds, which may well change the per-rebuild picture entirely. **Untested,
+  and the single most important follow-up.**
+- Input Monitoring was never observed to produce its own System Settings row,
+  yet `hotkeyhelper` tracked the host's grant state throughout. The mechanism
+  behind that was not isolated.
+- Step 8's displayed-ON row could not be attributed conclusively between a stale
+  entry and a same-bundle-id build made from a git worktree during harness
+  verification.
