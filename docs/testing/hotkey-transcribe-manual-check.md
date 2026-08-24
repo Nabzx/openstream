@@ -5,11 +5,18 @@ the actual app: launching a real Electron window, granting macOS
 permissions, and pressing a global hotkey aren't things a sandboxed session
 can drive.
 
-Since #5, `Cmd+Shift+D` is real push-to-talk: hold to record, release to
-stop and transcribe. Since #6, the transcript is delivered to the field
+Since #5, `Control+Option+D` is real push-to-talk: hold to record, release
+to stop and transcribe. Since #6, the transcript is delivered to the field
 under the cursor via the accessibility helper's fallback chain (write at
 the caret, then clipboard-plus-paste, then synthesised keystrokes - see
 #62), not just printed to the terminal.
+
+The default was originally `Cmd+Shift+D`; #84 moved it to `Control+Option+D`
+after finding that a Cmd-combo with no matching menu item makes AppKit play
+the system alert beep in the focused app (the tap is listen-only, so the
+keystroke still reaches it) - and that beep, landing at the start of the
+clip, got hallucinated by Whisper as "[Music]". Control/Option combos aren't
+treated as menu key-equivalents, so nothing beeps.
 
 ## Already verified without a GUI
 
@@ -32,14 +39,14 @@ the caret, then clipboard-plus-paste, then synthesised keystrokes - see
 1. `npm install` (builds `whisper-server`, `hotkey-helper` and
    `accessibility-helper`, fetches the model if not already present), then
    `npm start`.
-2. The first hold of `Cmd+Shift+D` should trigger the macOS **Input
+2. The first hold of `Control+Option+D` should trigger the macOS **Input
    Monitoring** prompt (not Accessibility - see #5's contract). Grant it.
 3. The next dictation attempt should trigger a separate **Accessibility**
    prompt for the injection helper (not Input Monitoring - see #6's
    contract, two helpers, two permissions). Grant it, then quit and
    relaunch the app so both helpers pick up their grants.
 4. Click into a normal text field (e.g. a Notes window, or this file in an
-   editor), hold `Cmd+Shift+D`, say something, release it.
+   editor), hold `Control+Option+D`, say something, release it.
 5. The transcript should appear **in the field**, not just the terminal.
    The terminal running `npm start` still prints it too, prefixed
    `[dictation]`, followed by a line reporting how it was delivered - e.g.
