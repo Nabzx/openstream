@@ -1,5 +1,6 @@
-const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage } = require("electron");
+const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage, screen } = require("electron");
 const path = require("path");
+const { computeBottomCenteredPosition } = require("./overlayPosition");
 const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
@@ -143,13 +144,27 @@ function setTrayState(state) {
   tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
 }
 
+// Positioned fresh on every show, not once at creation, so it follows
+// whichever display the user is actually on - #116, same spot macOS's own
+// dictation HUD uses: bottom-center, clear of the Dock.
+function positionOverlayAtBottom() {
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+  const [width, height] = overlayWin.getSize();
+  const { x, y } = computeBottomCenteredPosition(display.workArea, width, height);
+  overlayWin.setPosition(x, y);
+}
+
 function setUserVisibleState(state) {
   setTrayState(state);
   if (!overlayWin || overlayWin.isDestroyed()) return;
 
   overlayWin.webContents.send("dictation-state", state);
-  if (state === "recording") overlayWin.showInactive();
-  else overlayWin.hide();
+  if (state === "recording") {
+    positionOverlayAtBottom();
+    overlayWin.showInactive();
+  } else {
+    overlayWin.hide();
+  }
 }
 
 function createTray() {
