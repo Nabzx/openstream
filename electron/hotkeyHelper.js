@@ -5,10 +5,16 @@ const { resourcesRoot } = require("./paths");
 
 const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 
-// Keycode 2 is 'D' on the ANSI layout - matches the CommandOrControl+Shift+D
-// hotkey this replaces. The helper only knows keycodes, not accelerator
-// strings, so the mapping lives here.
-const ARGS = ["--keycode", "2", "--modifiers", "cmd,shift"];
+// Keycode 2 is 'D' on the ANSI layout. The helper only knows keycodes, not
+// accelerator strings, so the mapping lives here.
+//
+// Control+Option, not Cmd+Shift: this tap is listen-only (see main.swift),
+// so the keystroke still reaches whatever app is focused. A Cmd-combo that
+// doesn't match a menu item makes AppKit play the system alert beep, which
+// then gets captured at the start of the recording and Whisper hallucinates
+// as "[Music]". Control+Option isn't treated as a menu key-equivalent, so
+// nothing beeps.
+const ARGS = ["--keycode", "2", "--modifiers", "ctrl,alt"];
 
 const RESTART_DELAY_MS = 1000;
 
