@@ -5,6 +5,7 @@ const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
+const { createSettingsStore } = require("./settingsStore");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { runCompletedDictation } = require("./dictationCoordinator");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
@@ -24,6 +25,7 @@ let trayState = "idle";
 let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
+let settingsStore = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 
 function createWindow() {
@@ -221,10 +223,25 @@ ipcMain.on("recording-error", (event, message) => {
   setUserVisibleState("idle");
 });
 
+ipcMain.handle("settings:get", () => settingsStore.get());
+
+ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
+  // setHotkey validates and throws on a malformed hotkey - ipcMain.handle
+  // turns that into a rejected promise on the renderer side automatically,
+  // and the previously-saved hotkey is left untouched (see
+  // settingsStore.js), so a bad renderer-side capture can't leave the app
+  // with no working hotkey.
+  const settings = settingsStore.setHotkey(hotkey);
+  hotkeyHelper.setHotkey(settings.hotkey);
+  return settings;
+});
+
 app.whenReady().then(() => {
   if (process.platform === "darwin") {
     app.dock.hide();
   }
+  settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
+  hotkeyHelper.setHotkey(settingsStore.get().hotkey);
   createTray();
   hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
   hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
