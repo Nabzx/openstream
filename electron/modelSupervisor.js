@@ -26,23 +26,33 @@ function createModelSupervisor(options) {
     stream.write(`[${roleName}] ${data}`);
   }
 
+  function restartAfterFailure(failedChild, message) {
+    if (child !== failedChild) return;
+    child = null;
+    if (stopping) return;
+    stderr.write(`[${roleName}] ${message}, restarting in ${restartDelayMs}ms\n`);
+    restartTimer = setRestartTimer(() => {
+      restartTimer = null;
+      start();
+    }, restartDelayMs);
+  }
+
   function start() {
     if (child) return;
     stopping = false;
-    child = spawn(command, args);
+    const spawnedChild = spawn(command, args);
+    child = spawnedChild;
 
-    if (child.stdout) child.stdout.on("data", (data) => prefixedWrite(stdout, data));
-    if (child.stderr) child.stderr.on("data", (data) => prefixedWrite(stderr, data));
+    if (spawnedChild.stdout) spawnedChild.stdout.on("data", (data) => prefixedWrite(stdout, data));
+    if (spawnedChild.stderr) spawnedChild.stderr.on("data", (data) => prefixedWrite(stderr, data));
 
-    child.on("exit", (code, signal) => {
-      child = null;
-      if (stopping) return;
+    spawnedChild.on("error", (error) => {
+      const detail = error.code ? `${error.code}: ${error.message}` : error.message;
+      restartAfterFailure(spawnedChild, `failed to start (${detail})`);
+    });
+    spawnedChild.on("exit", (code, signal) => {
       const detail = signal ? `signal ${signal}` : `code ${code}`;
-      stderr.write(`[${roleName}] exited unexpectedly (${detail}), restarting in ${restartDelayMs}ms\n`);
-      restartTimer = setRestartTimer(() => {
-        restartTimer = null;
-        start();
-      }, restartDelayMs);
+      restartAfterFailure(spawnedChild, `exited unexpectedly (${detail})`);
     });
   }
 

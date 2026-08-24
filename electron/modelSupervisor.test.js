@@ -59,6 +59,37 @@ test("supervises a model process by role name and restarts unexpected exits", ()
   assert.deepEqual(spawned[1].args, ["--host", "127.0.0.1"]);
 });
 
+test("restarts when the model process cannot be spawned", () => {
+  const spawned = [];
+  const stderrChunks = [];
+  const timers = [];
+  const supervisor = createModelSupervisor({
+    roleName: "transcription model server",
+    command: "/missing/transcription-server",
+    restartDelayMs: 25,
+    spawn: () => {
+      const child = fakeChild();
+      spawned.push(child);
+      return child;
+    },
+    setRestartTimer: (fn, delay) => {
+      timers.push({ fn, delay });
+      return { unref() {} };
+    },
+    stderr: captureStream(stderrChunks),
+  });
+
+  supervisor.start();
+  spawned[0].emit("error", Object.assign(new Error("spawn ENOENT"), { code: "ENOENT" }));
+
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].delay, 25);
+  assert.match(stderrChunks.join(""), /\[transcription model server\] failed to start \(ENOENT: spawn ENOENT\)/);
+
+  timers[0].fn();
+  assert.equal(spawned.length, 2);
+});
+
 test("expected stop does not schedule a restart", () => {
   const spawned = [];
   const timers = [];
