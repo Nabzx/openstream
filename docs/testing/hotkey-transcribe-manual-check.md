@@ -1,109 +1,61 @@
-# Manual check: hotkey -> transcribe -> inject (#2, push-to-talk via #5, injection via #6/#12)
+# Manual check: settled dictation pipeline
 
-What CI/a headless session can verify, and what still needs a human running
-the actual app: launching a real Electron window, granting macOS
-permissions, and pressing a global hotkey aren't things a sandboxed session
-can drive.
+Issue [#105](https://github.com/Nabzx/openstream/issues/105) covers the macOS boundaries that CI cannot drive: global key events, a real microphone, menu bar and overlay feedback, and insertion into another application.
 
-Since #5, `Control+Option+D` is real push-to-talk: hold to record, release
-to stop and transcribe. Since #6, the transcript is delivered to the field
-under the cursor via the accessibility helper's fallback chain (write at
-the caret, then clipboard-plus-paste, then synthesised keystrokes - see
-#62), not just printed to the terminal.
+The default hotkey is `Control+Option+D`. Issue #84 replaced `Cmd+Shift+D` because the listen-only Command shortcut played the system alert beep in apps without a matching menu item. Whisper could transcribe that beep as "[Music]".
 
-The default was originally `Cmd+Shift+D`; #84 moved it to `Control+Option+D`
-after finding that a Cmd-combo with no matching menu item makes AppKit play
-the system alert beep in the focused app (the tap is listen-only, so the
-keystroke still reaches it) - and that beep, landing at the start of the
-clip, got hallucinated by Whisper as "[Music]". Control/Option combos aren't
-treated as menu key-equivalents, so nothing beeps.
+## Run the wizard
 
-## Already verified without a GUI
+From the repository root:
 
-- `whisper-server` compiles and serves `/inference`: a synthetic TTS clip
-  posted with the exact `encodeWav` + `fetch`/`FormData` code path `main.js`
-  uses came back correctly transcribed.
-- `encodeWav` produces a valid mono 16kHz 16-bit WAV (checked against
-  `afinfo`).
-- `hotkey-helper` compiles, and run standalone without Input Monitoring
-  granted, correctly logs the permission gap to stderr and exits `1`
-  rather than hanging or crashing.
-- `accessibility-helper` compiles, and run standalone without Accessibility
-  granted, its `inject` command correctly reports the frontmost app but
-  holds rather than delivering - AX calls fail cleanly without the grant,
-  they don't hang.
-- Since #10, the fallback chain's decision logic (`InjectionEngine` in
-  `native/accessibility-helper/Sources/AccessibilityInjection/`) has 12
-  automated tests covering every rung, the settle guard, and the blind-paste
-  gate against fakes - `swift test --package-path native/accessibility-helper`
-  (needs a full Xcode install; Command Line Tools alone are missing
-  `Testing.framework`'s runtime search path).
-- Since #116, the overlay's bottom-centering math
-  (`computeBottomCenteredPosition` in `electron/overlayPosition.js`) has 4
-  tests covering centering, the bottom margin, an offset work area (a
-  secondary display), and a custom margin - `node --test
-  electron/overlayPosition.test.js`. The actual on-screen placement still
-  needs a human; the math can't confirm it clears the real Dock.
-- All new/changed files pass `node --check`.
+```bash
+./scripts/verify-dictation-pipeline.sh
+```
 
-## Needs a human, one time
+The automated coverage behind the wizard also includes:
 
-1. `npm install` (builds `whisper-server`, `hotkey-helper` and
-   `accessibility-helper`, fetches the model if not already present), then
-   `npm start`.
-2. The first hold of `Control+Option+D` should trigger the macOS **Input
-   Monitoring** prompt (not Accessibility - see #5's contract). Grant it.
-3. The next dictation attempt should trigger a separate **Accessibility**
-   prompt for the injection helper (not Input Monitoring - see #6's
-   contract, two helpers, two permissions). Grant it, then quit and
-   relaunch the app so both helpers pick up their grants.
-4. Click into a normal text field (e.g. a Notes window, or this file in an
-   editor), hold `Control+Option+D`, say something, release it.
-5. The transcript should appear **in the field**, not just the terminal.
-   The terminal running `npm start` still prints it too, prefixed
-   `[dictation]`, followed by a line reporting how it was delivered - e.g.
-   `injected via wrote into the field` or `injected via pasted`.
-6. Tap it very briefly with no speech - should log
-   `no audio captured, skipping` and nothing is injected.
-7. Hold it, say something, and switch to another app mid-hold (still
-   holding the keys) to confirm the tap is global and doesn't need the
-   app focused. The text should land in whichever app is frontmost when
-   you release, not the one that was frontmost when you pressed.
-7a. While holding the key, check the overlay itself (#116): it should sit
-   bottom-center of the screen, clear of the Dock, like macOS's own
-   dictation HUD - not centered on the screen or wherever it used to land.
-   On a multi-monitor setup, move the cursor to a second display before
-   pressing the key and confirm the overlay follows it there.
-8. Try a terminal window and an Electron-based editor (e.g. VS Code, Slack)
-   as the target - these are exactly the cases #62 designed the fallback
-   chain around. A terminal's prompt should receive a clipboard paste, not
-   have its scrollback overwritten. In the Electron app, check whether
-   `#12`'s `AXManualAccessibility` forcing actually got a usable focused
-   element (rung 1 or a verified rung 2) rather than the bare `AXWebArea`
-   #28 measured without it - either is an acceptable outcome, but the
-   difference is worth noting since it's unmeasured until this step runs.
-   This is also the step #10 is actually asking for: real testing across a
-   spread of apps (Electron, terminals, Java/Swing) rather than the
-   automated coverage above, which exercises the decision logic against
-   fakes but can't confirm what a real app actually does with a paste or a
-   synthesised keystroke.
+- `whisper-server` serving `/inference` and producing a transcription from a synthetic WAV.
+- A valid mono 16kHz 16-bit WAV from the capture path.
+- `hotkey-helper` and `accessibility-helper` handling missing permissions without hanging or crashing.
+- Twelve `InjectionEngine` tests covering the fallback chain, settle guard, and blind-paste gate. Run them with `swift test --package-path native/accessibility-helper` on a full Xcode installation.
+- Four overlay-positioning tests covering centering, the bottom margin, offset work areas, and a custom margin. Run them with `node --test electron/overlayPosition.test.js`. The actual Dock clearance still needs a human check.
+- `node --check` passing for all new and changed JavaScript files.
 
-If step 2/3 don't fire the OS prompts, or step 5 never prints/injects,
-check the terminal for `[whisper-server]`-, `[hotkey-helper]`- and
-`[accessibility-helper]`-prefixed lines first:
+The wizard checks the build, then walks through seven stages:
 
-- The resident whisper server takes ~15-20s to load Metal shaders on a
-  cold start (see the M1 timing in `spike/llm-cleanup-latency/`), so an
-  early hotkey press mid-load will log a connection error rather than a
-  transcript.
-- If `[hotkey-helper]` logs `failed to create event tap` repeatedly, the
-  Input Monitoring grant either wasn't given or hasn't taken effect yet -
-  check System Settings > Privacy & Security > Input Monitoring for
-  OpenStream (or Electron, in dev).
-- If `[dictation] injection held: ...` keeps appearing even in a plain
-  text field, check System Settings > Privacy & Security > Accessibility
-  for the same target - the accessibility helper needs its own grant,
-  separate from Input Monitoring.
-- `injection held` right after switching apps is expected, not a bug -
-  that's the settle guard (#62) refusing to trust a target for the first
-  ~400ms after a switch.
+1. Check that the Electron runtime has not been revoked by Gatekeeper, then run the automated test suite and typecheck on an Apple Silicon Mac.
+2. Start OpenStream and grant Microphone, Input Monitoring, and Accessibility permissions.
+3. Use `Control+Option+D` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it.
+4. Dictate into TextEdit and confirm the finished text is inserted once.
+5. Inspect both model-server listeners and sample their TCP connections during a dictation. Ports 8178 and 8179 must stay on `127.0.0.1`.
+6. Measure three warm dictations from key release to confirmed insertion. Every measurement must be below 1000 ms.
+7. Write a Markdown report and optionally post it to issue #105.
+8. Try a terminal window and an Electron-based editor such as VS Code or Slack. A terminal prompt should receive a clipboard paste, not have its scrollback overwritten. In the Electron app, check whether `AXManualAccessibility` produces a usable focused element, rather than the bare `AXWebArea` measured in #28. This real cross-app testing is the remaining scope of #10; the automated tests exercise the decision logic against fakes but cannot confirm how a real app handles paste or synthesized keystrokes.
+
+The report and application log are written under `${TMPDIR:-/tmp}`. The wizard does not save audio. The application log contains dictated text, so delete it when the check is finished.
+
+## What the timing means
+
+The main process records a monotonic timestamp when the global hotkey reports key-up. It carries that timestamp with the completed recording and logs the elapsed time after the Accessibility helper confirms insertion:
+
+```text
+[dictation] release-to-insertion: 742.3ms (within 1000ms budget)
+```
+
+This includes WAV finalization, whole-recording transcription, rules cleanup, optional paragraph break placement, context detection, and delivery. Failed or held dictations have no insertion latency because no text arrived at the cursor.
+
+## Troubleshooting
+
+When `npm start` runs from Terminal, macOS can attribute Electron and both native helpers to Terminal. Enable Terminal under Microphone, Input Monitoring, and Accessibility. If macOS shows Electron or OpenStream instead, enable that entry. Quit and relaunch after changing Input Monitoring or Accessibility.
+
+Do not bypass a Gatekeeper malware or revoked-code warning. The wizard checks for that state before launch. Reinstalling the same revoked Electron version will not fix it.
+
+On a cold start, the resident transcription model server can spend 15 to 20 seconds loading Metal shaders. The wizard waits up to 120 seconds for each local listener.
+
+Use the prefixes in the wizard's application log to locate failures:
+
+- `[hotkey-helper]` for Input Monitoring and global key events
+- `[accessibility-helper]` for context detection and insertion
+- `[transcription model server]` for port 8178 and transcription
+- `[rewrite model server]` for port 8179 and paragraph placement
+- `[dictation]` for pipeline outcomes and latency

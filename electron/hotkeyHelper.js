@@ -23,10 +23,18 @@ function argsForHotkey(hotkey) {
   return ["--keycode", String(hotkey.keyCode), "--modifiers", hotkey.modifiers.join(",")];
 }
 
-function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DELAY_MS, hotkey = DEFAULT_HOTKEY } = {}) {
+function createHotkeyHelper({
+  spawnProcess = spawn,
+  restartDelayMs = RESTART_DELAY_MS,
+  setRestartTimer = setTimeout,
+  clearRestartTimer = clearTimeout,
+  stderr = process.stderr,
+  hotkey = DEFAULT_HOTKEY,
+} = {}) {
   let currentHotkey = hotkey;
   let child = null;
   let stopping = false;
+  let restartTimer = null;
   let onDown = () => {};
   let onUp = () => {};
 
@@ -44,12 +52,13 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
   }
 
   function start() {
+    if (child) return;
     stopping = false;
     const proc = spawnProcess(BIN_PATH, argsForHotkey(currentHotkey));
     child = proc;
 
     readline.createInterface({ input: proc.stdout }).on("line", handleLine);
-    proc.stderr.on("data", (data) => process.stderr.write(`[hotkey-helper] ${data}`));
+    proc.stderr.on("data", (data) => stderr.write(`[hotkey-helper] ${data}`));
 
     proc.on("exit", (code) => {
       // setHotkey() replaces `child` with a new process before this old
@@ -59,14 +68,25 @@ function createHotkeyHelper({ spawnProcess = spawn, restartDelayMs = RESTART_DEL
       if (child !== proc) return;
       child = null;
       if (stopping) return;
-      console.error(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms`);
-      setTimeout(start, restartDelayMs);
+      stderr.write(`[hotkey-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms\n`);
+      restartTimer = setRestartTimer(() => {
+        restartTimer = null;
+        start();
+      }, restartDelayMs);
     });
   }
 
   function stop() {
     stopping = true;
-    if (child) child.kill();
+    if (restartTimer) {
+      clearRestartTimer(restartTimer);
+      restartTimer = null;
+    }
+    if (child) {
+      const runningChild = child;
+      child = null;
+      runningChild.kill();
+    }
   }
 
   function setHotkey(newHotkey) {
