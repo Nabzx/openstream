@@ -128,6 +128,17 @@ public final class RealFocusResolver: FocusResolving {
         return RealAXTarget(focusedRef as! AXUIElement) // swiftlint:disable:this force_cast
     }
 
+    public func focusContext(deadlineMs: Double) -> (bundleId: String, isOneLineField: Bool)? {
+        guard let frontApp = tracker.currentFrontmostApp(),
+              let bundleId = frontApp.bundleIdentifier,
+              let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
+            return nil
+        }
+
+        let role = focused.fieldInfo.role
+        return (bundleId, role == "AXTextField" || role == "AXComboBox")
+    }
+
     // Chromium's own AX tree is normally built lazily, only once Chromium
     // detects a running assistive technology by its own heuristics - which
     // a direct AXUIElementCopyAttributeValue call never trips. Setting this

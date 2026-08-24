@@ -9,7 +9,7 @@ This repository is a development fork of [Nabzx/openstream](https://github.com/N
 The current app can:
 
 - run as a macOS menu bar app
-- listen for `Cmd+Shift+D` through a native hotkey helper
+- listen for `Control+Option+D` through a native hotkey helper
 - record while the hotkey is held and transcribe after release
 - keep `whisper-server` resident instead of loading it for each dictation
 - insert text at the cursor through a separate Accessibility helper
@@ -36,7 +36,7 @@ Neither feature is available in the app yet.
 
 - Apple Silicon Mac
 - macOS 13 or newer
-- Node.js 20
+- Node.js 20 or newer
 - Xcode Command Line Tools
 - CMake, Git, and curl
 - A network connection for model and server downloads during installation
@@ -81,9 +81,9 @@ OpenStream needs three macOS permissions:
 2. Input Monitoring for the hotkey helper.
 3. Accessibility for the text-insertion helper.
 
-After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Cmd+Shift+D`, speak, and release the keys. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
+After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Control+Option+D`, speak, and release the keys. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
 
-Development builds can appear in System Settings as Electron rather than OpenStream. Permission identity across rebuilds is still being worked out.
+Source runs can be attributed to Terminal, Electron, or OpenStream in System Settings. Permission identity across rebuilds is still being worked out.
 
 ## Design
 
@@ -104,7 +104,7 @@ npm run typecheck
 npm run build
 ```
 
-The global hotkey, macOS permission prompts, microphone capture, and insertion into other applications still need a real Mac and a human check. The steps live in [docs/testing/hotkey-transcribe-manual-check.md](docs/testing/hotkey-transcribe-manual-check.md).
+The global hotkey, macOS permission prompts, microphone capture, and insertion into other applications still need a real Mac and a human check. Run [`scripts/verify-dictation-pipeline.sh`](scripts/verify-dictation-pipeline.sh); the [manual-check notes](docs/testing/hotkey-transcribe-manual-check.md) explain what it measures.
 
 ## Project status
 

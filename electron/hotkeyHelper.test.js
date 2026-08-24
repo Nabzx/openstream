@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
-const { PassThrough } = require("node:stream");
+const { PassThrough, Writable } = require("node:stream");
 const { createHotkeyHelper, DEFAULT_HOTKEY } = require("./hotkeyHelper");
 
 function fakeProcess() {
@@ -10,6 +10,19 @@ function fakeProcess() {
   process.stderr = new PassThrough();
   process.kill = () => {};
   return process;
+}
+
+function captureStream(chunks) {
+  return new Writable({
+    write(chunk, encoding, callback) {
+      chunks.push(String(chunk));
+      callback();
+    },
+  });
+}
+
+function nextTurn() {
+  return new Promise((resolve) => setImmediate(resolve));
 }
 
 test("hotkey helper NDJSON reports one key down and one key up", async () => {
@@ -23,7 +36,7 @@ test("hotkey helper NDJSON reports one key down and one key up", async () => {
   child.stdout.write('{"event":"down","ts":1710000000.25}\n');
   child.stdout.write('{"event":"up","ts":1710000001.5}\n');
 
-  await new Promise((resolve) => setImmediate(resolve));
+  await nextTurn();
   assert.deepEqual(events, ["down", "up"]);
   helper.stop();
 });
@@ -42,7 +55,7 @@ test("hotkey helper ignores non-contract output", async () => {
   child.stdout.write('{"event":"up","ts":"now"}\n');
   child.stdout.write("helper log text\n");
 
-  await new Promise((resolve) => setImmediate(resolve));
+  await nextTurn();
   assert.deepEqual(events, []);
   helper.stop();
 });
@@ -59,7 +72,12 @@ test("spawns with the configured hotkey's args, defaulting to DEFAULT_HOTKEY", (
   helper.start();
 
   assert.equal(spawned.length, 1);
-  assert.deepEqual(spawned[0].args, ["--keycode", String(DEFAULT_HOTKEY.keyCode), "--modifiers", DEFAULT_HOTKEY.modifiers.join(",")]);
+  assert.deepEqual(spawned[0].args, [
+    "--keycode",
+    String(DEFAULT_HOTKEY.keyCode),
+    "--modifiers",
+    DEFAULT_HOTKEY.modifiers.join(","),
+  ]);
   helper.stop();
 });
 
@@ -142,5 +160,56 @@ test("the superseded process's own exit event does not trigger a second restart"
   await new Promise((resolve) => setTimeout(resolve, 20));
 
   assert.equal(spawned.length, 2, "a stale exit from the superseded process must not spawn a third helper");
+  helper.stop();
+});
+
+test("hotkey helper keeps diagnostics on stderr and out of the event protocol", async () => {
+  const child = fakeProcess();
+  const stderrChunks = [];
+  const events = [];
+  const helper = createHotkeyHelper({
+    spawnProcess: () => child,
+    stderr: captureStream(stderrChunks),
+  });
+  helper.onKeyDown(() => events.push("down"));
+
+  helper.start();
+  child.stderr.write("Input Monitoring permission is missing\n");
+  child.stdout.write('{"event":"down","ts":1710000000.25}\n');
+
+  await nextTurn();
+  assert.deepEqual(events, ["down"]);
+  assert.equal(stderrChunks.join(""), "[hotkey-helper] Input Monitoring permission is missing\n");
+  helper.stop();
+});
+
+test("hotkey helper restarts after an unexpected exit and resumes its event protocol", async () => {
+  const firstChild = fakeProcess();
+  const secondChild = fakeProcess();
+  const children = [firstChild, secondChild];
+  const timers = [];
+  const events = [];
+  const helper = createHotkeyHelper({
+    spawnProcess: () => children.shift(),
+    restartDelayMs: 25,
+    setRestartTimer(callback, delay) {
+      const timer = { callback, delay };
+      timers.push(timer);
+      return timer;
+    },
+    stderr: captureStream([]),
+  });
+  helper.onKeyUp(() => events.push("up"));
+
+  helper.start();
+  firstChild.emit("exit", 1);
+
+  assert.equal(timers.length, 1);
+  assert.equal(timers[0].delay, 25);
+  timers[0].callback();
+  secondChild.stdout.write('{"event":"up","ts":1710000001.5}\n');
+
+  await nextTurn();
+  assert.deepEqual(events, ["up"]);
   helper.stop();
 });

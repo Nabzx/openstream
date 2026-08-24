@@ -9,11 +9,22 @@
   </head>
   <body data-state="recording">
     <main class="overlay" aria-live="polite">
-      <span class="recording-dot" aria-hidden="true"></span>
-      <span data-status>Recording</span>
-      <span class="sound-meter" aria-hidden="true">
-        <span class="sound-meter__level" data-sound-level></span>
-      </span>
+      <section class="recording" data-recording>
+        <span class="recording-dot" aria-hidden="true"></span>
+        <span data-status>Recording</span>
+        <span class="sound-meter" aria-hidden="true">
+          <span class="sound-meter__level" data-sound-level></span>
+        </span>
+      </section>
+      <section class="held-result" data-held-result>
+        <h1>Couldn't insert this dictation</h1>
+        <p>Your text is still here. Copy it when you're ready.</p>
+        <pre data-held-text></pre>
+        <div class="held-result__actions">
+          <button type="button" data-copy>Copy</button>
+          <button type="button" class="secondary" data-dismiss>Dismiss</button>
+        </div>
+      </section>
     </main>
     <script src="overlay.js"></script>
   </body>

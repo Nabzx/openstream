@@ -1,5 +1,6 @@
-const { app, Tray, Menu, BrowserWindow, ipcMain, nativeImage, screen } = require("electron");
+const { app, Tray, Menu, BrowserWindow, clipboard, ipcMain, nativeImage, screen } = require("electron");
 const path = require("path");
+const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
 const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
@@ -7,7 +8,9 @@ const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
+const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { runCompletedDictation } = require("./dictationCoordinator");
+const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
@@ -39,6 +42,13 @@ let overlayWin = null;
 let hotkeyStarted = false;
 let settingsStore = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
+const breakPlacement = createBreakPlacementHttpAdapter({
+  chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
+});
+
+function recordDictationDiagnostic(name, value) {
+  console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
+}
 
 function createWindow() {
   if (win) {
@@ -118,17 +128,48 @@ function createOverlayWindow() {
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
-async function transcribeAndPrint(wavBuffer) {
+function showHeldResult(text) {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.setFocusable(true);
+  overlayWin.setIgnoreMouseEvents(false);
+  overlayWin.setSize(420, 260, true);
+  overlayWin.webContents.send("held-result", text);
+  overlayWin.showInactive();
+}
+
+function hideHeldResult() {
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.hide();
+  overlayWin.setIgnoreMouseEvents(true);
+  overlayWin.setFocusable(false);
+  overlayWin.setSize(180, 52, false);
+}
+
+const heldResultController = createHeldResultController({
+  showHeldResult,
+  hideHeldResult,
+  writeClipboard: (text) => clipboard.writeText(text),
+});
+
+async function transcribeAndPrint(wavBuffer, timing) {
   const result = await runCompletedDictation({
     wavBuffer,
     transcription,
+    contextDetection: accessibilityHelper,
+    breakPlacement,
     delivery: accessibilityHelper,
     setUserVisibleState,
+    recordDiagnostic: recordDictationDiagnostic,
   });
 
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
-    console.log(`[dictation] injected via ${result.delivery.method}${result.delivery.verified ? "" : " (unverified)"}`);
+    console.log("[dictation] inserted through accessibility");
+    if (Number.isFinite(timing?.releasedAtMs)) {
+      const latencyMs = performance.now() - timing.releasedAtMs;
+      const budgetResult = latencyMs < 1000 ? "within" : "over";
+      console.log(`[dictation] release-to-insertion: ${latencyMs.toFixed(1)}ms (${budgetResult} 1000ms budget)`);
+    }
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.delivery.reason}`);
   } else if (result.status === "failed" && result.stage === "delivery") {
@@ -146,9 +187,9 @@ const pushToTalkCoordinator = createPushToTalkCoordinator({
     captureWin.webContents.send("start-recording");
     console.log("[dictation] recording - release the hotkey to stop");
   },
-  stopCapture() {
+  stopCapture(timing) {
     if (!captureWin) return;
-    captureWin.webContents.send("stop-recording");
+    captureWin.webContents.send("stop-recording", timing);
   },
   setUserVisibleState,
 });
@@ -183,13 +224,22 @@ function positionOverlayAtBottom() {
   );
 }
 
-function setUserVisibleState(state) {
+function setUserVisibleState(state, details) {
+  if (state === "held") {
+    setTrayState("idle");
+    heldResultController.hold(details.text);
+    return;
+  }
+
   setTrayState(state);
   if (!overlayWin || overlayWin.isDestroyed()) return;
 
+  if (state === "recording") {
+    heldResultController.dismiss();
+    positionOverlayAtBottom();
+  }
   overlayWin.webContents.send("dictation-state", state);
   if (state === "recording") {
-    positionOverlayAtBottom();
     overlayWin.showInactive();
     // Temporary diagnostics for the "no HUD appears" report.
     console.log(`[overlay] showInactive() called, isVisible=${overlayWin.isVisible()}, opacity=${overlayWin.getOpacity()}`);
@@ -235,15 +285,29 @@ ipcMain.on("capture-ready", (event) => {
   hotkeyHelper.start();
 });
 
-ipcMain.on("recording-complete", (event, arrayBuffer) => {
+ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
   if (!isCaptureSender(event)) return;
-  transcribeAndPrint(Buffer.from(arrayBuffer));
+  transcribeAndPrint(Buffer.from(arrayBuffer), timing);
 });
 
 ipcMain.on("sound-level", (event, level) => {
   if (!isCaptureSender(event) || !overlayWin || overlayWin.isDestroyed()) return;
   const normalizedLevel = Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0;
   overlayWin.webContents.send("sound-level", normalizedLevel);
+});
+
+function isOverlaySender(event) {
+  return overlayWin && !overlayWin.isDestroyed() && event.sender === overlayWin.webContents;
+}
+
+ipcMain.on("copy-held-result", (event) => {
+  if (!isOverlaySender(event) || !heldResultController.copy()) return;
+  overlayWin.webContents.send("held-result-copied");
+});
+
+ipcMain.on("dismiss-held-result", (event) => {
+  if (!isOverlaySender(event)) return;
+  heldResultController.dismiss();
 });
 
 ipcMain.on("recording-error", (event, message) => {
