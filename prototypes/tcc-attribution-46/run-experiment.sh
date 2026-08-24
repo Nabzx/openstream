@@ -209,9 +209,14 @@ grant_state() {
 import json,sys
 d=json.load(open(sys.argv[1]))
 ax=d["axhelper"]["result"]; hk=d["hotkeyhelper"]["result"]
-ok = ax["reportedTrusted"] and ax["functionallyTrusted"] \
-     and hk["reportedGranted"] and hk["functionallyGranted"]
+# axhelper/Accessibility is the hard requirement: it is the subject that
+# actually answers the question. Input Monitoring never produced a System
+# Settings entry in the 2026-08-24 run, so hotkeyhelper is advisory only -
+# gating on it would block a run that can still decide the question.
+ok = ax["reportedTrusted"] and ax["functionallyTrusted"]
 print("granted" if ok else "denied")
+sys.stderr.write("hotkeyhelper (advisory): reported=%s functional=%s\n"
+                 % (hk["reportedGranted"], hk["functionallyGranted"]))
 PYEOF
 }
 
@@ -331,8 +336,8 @@ GRANT_STATE="$(grant_state granted)"
 write_env GRANT_CONFIRMED "$GRANT_STATE"
 if [[ "$GRANT_STATE" != "granted" ]]; then
   printf '\n'
-  warn "MACHINE CHECK FAILED: the capture above does not show both helpers"
-  warn "granted. The two arms below would measure denied -> denied and decide"
+  warn "MACHINE CHECK FAILED: axhelper is not granted in the capture above."
+  warn "The two arms below would measure denied -> denied and decide"
   warn "nothing, so this wizard stops here rather than record a void result."
   printf '\n'
   say "Fix it, then re-run this wizard and KEEP the existing build at stage 2:"
