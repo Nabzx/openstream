@@ -19,6 +19,11 @@ func eprint(_ message: String) {
 func emit(_ event: String) {
     // No user text ever crosses this channel, so no escaping is needed here.
     print("{\"event\":\"\(event)\",\"ts\":\(Date().timeIntervalSince1970)}")
+    // stdout is fully buffered, not line-buffered, once it's a pipe rather than
+    // a tty - which is exactly what Electron's spawn() gives it. Without this,
+    // "ready"/"down"/"up" sit in the buffer indefinitely instead of reaching
+    // the parent process, so the hotkey silently does nothing.
+    fflush(stdout)
 }
 
 func parseModifiers(_ raw: String) -> CGEventFlags {
