@@ -29,10 +29,22 @@ let config = Config()
 final class AppSwitchTracker {
     private let lock = NSLock()
     private var switchedAt = Date()
+    // NSWorkspace.frontmostApplication is notification-driven internally and
+    // goes stale on a thread that never pumps a run loop - which is exactly
+    // what the main thread is, parked in readLine() and the AX calls below.
+    // Caching the value here, updated only from the run-loop-pumping thread
+    // below, is what keeps reads of it live instead of frozen at whatever
+    // was frontmost the last time this thread got a turn.
+    private var frontmost: NSRunningApplication?
 
-    func recordSwitch() {
+    init() {
+        frontmost = NSWorkspace.shared.frontmostApplication
+    }
+
+    func recordSwitch(to app: NSRunningApplication?) {
         lock.lock()
         switchedAt = Date()
+        frontmost = app
         lock.unlock()
     }
 
@@ -40,6 +52,12 @@ final class AppSwitchTracker {
         lock.lock()
         defer { lock.unlock() }
         return now.timeIntervalSince(switchedAt) * 1000
+    }
+
+    func currentFrontmost() -> NSRunningApplication? {
+        lock.lock()
+        defer { lock.unlock() }
+        return frontmost
     }
 }
 let tracker = AppSwitchTracker()
@@ -49,7 +67,10 @@ Thread {
         forName: NSWorkspace.didActivateApplicationNotification,
         object: nil,
         queue: nil
-    ) { _ in tracker.recordSwitch() }
+    ) { note in
+        let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+        tracker.recordSwitch(to: app)
+    }
     RunLoop.current.run()
 }.start()
 
@@ -205,7 +226,7 @@ func enableManualAccessibility(_ appElement: AXUIElement) {
 // focus - and so it only ever happens once: everything downstream (the
 // fallback chain below) reuses this same element rather than re-asking.
 func resolveFocusedElement(deadlineMs: Double) -> AXUIElement? {
-    guard let frontApp = NSWorkspace.shared.frontmostApplication else { return nil }
+    guard let frontApp = tracker.currentFrontmost() else { return nil }
 
     let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
     AXUIElementSetMessagingTimeout(appElement, Float(deadlineMs / 1000.0))
@@ -241,7 +262,7 @@ func decideAndInject(text: String) -> [String: Any] {
         // dark. We have no app name at all when nothing is frontmost, so
         // that case always falls through to hold below.
         if let gate = config.stableForBlindPasteMs, tracker.ageMs() >= gate,
-           let appName = NSWorkspace.shared.frontmostApplication?.localizedName {
+           let appName = tracker.currentFrontmost()?.localizedName {
             let (_, _, note) = pasteViaClipboard(text: text, verifyAgainst: nil, valueBefore: nil)
             return delivered(method: "pasted into \(appName), field unknown", verified: false, note: note)
         }
