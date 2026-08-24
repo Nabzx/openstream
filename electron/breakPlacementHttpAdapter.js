@@ -8,7 +8,7 @@ const SYSTEM_PROMPT = [
 ].join("\n");
 
 function createBreakPlacementHttpAdapter(options) {
-  const { chatCompletionsUrl, fetchImpl = fetch, requestTimeoutMs = 390 } = options;
+  const { chatCompletionsUrl, fetchImpl = fetch, requestTimeoutMs = 300 } = options;
   if (typeof chatCompletionsUrl !== "function") {
     throw new Error("Break-placement HTTP adapter requires a chatCompletionsUrl function");
   }

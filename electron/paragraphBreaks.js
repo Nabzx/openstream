@@ -11,8 +11,13 @@ function splitSentences(text) {
 function repairBreakIndices(reply, sentenceCount) {
   const raw = typeof reply === "string" ? reply.trim() : "";
   const formatValid = STRICT_REPLY.test(raw);
-  const found = [...raw.matchAll(/\d+/g)].map((match) => Number(match[0]));
-  const indices = [...new Set(found.filter((index) => index > 1 && index <= sentenceCount))].sort((a, b) => a - b);
+  const noBreaks = /\bnone\b|\bno breaks?\b/i.test(raw);
+  const found = noBreaks
+    ? []
+    : [...raw.matchAll(/(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])/g)].map((match) => Number(match[0]));
+  const indices = [...new Set(
+    found.filter((index) => Number.isInteger(index) && index > 1 && index <= sentenceCount),
+  )].sort((a, b) => a - b);
   const repairUsed = found.length > 0 && (
     indices.length !== found.length || indices.some((index, position) => index !== found[position])
   );

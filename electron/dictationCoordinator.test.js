@@ -173,7 +173,7 @@ test("repairs malformed break indices without retrying and records format and re
     breakPlacement: {
       placeParagraphBreaks: async () => {
         calls++;
-        return "Break before 1, 3, 3, and 99.";
+        return "Break before -2, 3.5, 1, 3, 3, and 99.";
       },
     },
     delivery: {
@@ -202,7 +202,7 @@ test("a break reply with no usable indices falls back to one paragraph", async (
     isOneLineField: false,
     transcript: "first sentence. second sentence. third sentence.",
     breakPlacement: {
-      placeParagraphBreaks: async () => "1, 9, 9",
+      placeParagraphBreaks: async () => "-2, 2.5, 1, 9, 9",
     },
   });
 
