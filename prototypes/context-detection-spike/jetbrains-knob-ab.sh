@@ -18,16 +18,26 @@
 #     <option name="SUPPORT_SCREEN_READERS" value="true|false" />
 # It is read at startup only, so each arm gets a full quit and cold relaunch.
 #
-# Run from the Accessibility-trusted Terminal. IntelliJ must have been launched
-# once by hand first, past the licence agreement and the first-run wizard, and
-# left with a project and a file open in the editor. That part cannot be
-# automated and is not worth trying to.
+# Run from the Accessibility-trusted Terminal. No manual first launch is needed:
+# the licence agreement and privacy policy are pre-accepted on disk (see below),
+# and each arm opens a real source file directly rather than launching the app
+# bare, which would land on the project chooser instead of an editor.
+#
+#   ~/Library/Preferences/jetbrains.privacy.policy
+#   ~/Library/Application Support/JetBrains/consentOptions/accepted
 set -u
 cd "$(dirname "$0")"
 mkdir -p logs
 
 APP="IntelliJ IDEA CE"
+SCRATCH="${SCRATCH:-$HOME/idea-prototype-scratch/Scratch.java}"
 [ -d "/Applications/$APP.app" ] || { echo "### NOT INSTALLED: $APP - nothing to test"; exit 0; }
+
+if [ ! -f "$SCRATCH" ]; then
+  mkdir -p "$(dirname "$SCRATCH")"
+  printf 'public class Scratch {\n    public static void main(String[] args) {\n    }\n}\n' > "$SCRATCH"
+  echo "### created scratch source $SCRATCH"
+fi
 
 CFGDIR=$(ls -d "$HOME/Library/Application Support/JetBrains/"IdeaIC* 2>/dev/null | tail -1)
 if [ -z "$CFGDIR" ]; then
@@ -64,9 +74,21 @@ run_arm() {  # $1 = label, $2 = true|false
   sleep 8   # swift compiles the script before it starts sampling
   echo "### probe started for arm: $label"
 
-  open -a "$APP" >/dev/null 2>&1
-  sleep 45  # cold JetBrains start is slow; do not shorten this
-  echo "### $APP relaunched cold"
+  # Open a real source file directly. Launching the app bare lands on the
+  # project chooser ("Welcome to IntelliJ IDEA"), whose focused element is an
+  # AXOutline or AXButton - a Swing dialog, not the Swing EDITOR, which is the
+  # only surface this A/B is about.
+  open -a "$APP" "$SCRATCH" >/dev/null 2>&1
+  sleep 40  # cold JetBrains start
+
+  # Opening a loose file raises a modal "Open in Project" chooser. If it is left
+  # up, the arm measures a Swing DIALOG (AXButton) instead of the Swing EDITOR,
+  # and the two arms stop being comparable - which is exactly what happened on
+  # the first attempt. Accept the default explicitly rather than hoping a later
+  # keystroke dismisses it.
+  osascript -e 'tell application "System Events" to key code 36' >/dev/null 2>&1
+  sleep 35  # project open plus indexing; do not shorten this
+  echo "### $APP relaunched cold on $SCRATCH, modal dismissed"
 
   osascript >/dev/null 2>&1 <<EOF
 tell application "$APP" to activate
