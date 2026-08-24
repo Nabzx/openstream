@@ -1,5 +1,10 @@
 const path = require("path");
-const electron = require("electron");
+let electron = null;
+try {
+  electron = require("electron");
+} catch {
+  electron = null;
+}
 
 // Dev: resources/ lives at the repo root, next to electron/.
 // Packaged: extraResources copies resources/ into Contents/Resources/resources,
@@ -10,7 +15,7 @@ const electron = require("electron");
 // resolves to the path of the Electron binary, a string, not the API object -
 // isPackaged is unreachable there, and unpacked dev behavior is exactly right.
 function resourcesRoot() {
-  const isPackaged = typeof electron === "object" && electron.app && electron.app.isPackaged;
+  const isPackaged = electron && typeof electron === "object" && electron.app && electron.app.isPackaged;
   if (isPackaged) {
     return path.join(process.resourcesPath, "resources");
   }
