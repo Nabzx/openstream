@@ -22,6 +22,7 @@ let trayIcons = null;
 let trayState = "idle";
 let captureWin = null;
 let overlayWin = null;
+let hotkeyStarted = false;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 
 function createWindow() {
@@ -91,9 +92,9 @@ function createOverlayWindow() {
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
-async function transcribeAndPrint(int16Samples) {
+async function transcribeAndPrint(wavBuffer) {
   const result = await runCompletedDictation({
-    int16Samples,
+    wavBuffer,
     transcription,
     delivery: accessibilityHelper,
     setUserVisibleState,
@@ -108,6 +109,8 @@ async function transcribeAndPrint(int16Samples) {
     console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
+  } else if (result.status === "empty") {
+    console.log("[dictation] no audio captured, skipping");
   }
 }
 
@@ -176,18 +179,29 @@ function createTray() {
   tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
 }
 
-ipcMain.on("recording-data", (event, arrayBuffer) => {
-  const buffer = Buffer.from(arrayBuffer);
-  const samples = new Int16Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 2);
-  if (samples.length === 0) {
-    console.log("[dictation] no audio captured, skipping");
-    setUserVisibleState("idle");
-    return;
-  }
-  transcribeAndPrint(samples);
+function isCaptureSender(event) {
+  return captureWin && !captureWin.isDestroyed() && event.sender === captureWin.webContents;
+}
+
+ipcMain.on("capture-ready", (event) => {
+  if (!isCaptureSender(event) || hotkeyStarted) return;
+  hotkeyStarted = true;
+  hotkeyHelper.start();
+});
+
+ipcMain.on("recording-complete", (event, arrayBuffer) => {
+  if (!isCaptureSender(event)) return;
+  transcribeAndPrint(Buffer.from(arrayBuffer));
+});
+
+ipcMain.on("sound-level", (event, level) => {
+  if (!isCaptureSender(event) || !overlayWin || overlayWin.isDestroyed()) return;
+  const normalizedLevel = Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0;
+  overlayWin.webContents.send("sound-level", normalizedLevel);
 });
 
 ipcMain.on("recording-error", (event, message) => {
+  if (!isCaptureSender(event)) return;
   console.error("[dictation] capture failed:", message);
   setUserVisibleState("idle");
 });
@@ -197,14 +211,13 @@ app.whenReady().then(() => {
     app.dock.hide();
   }
   createTray();
+  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
+  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
   createCaptureWindow();
   createOverlayWindow();
   whisperServer.start();
   rewriteModelServer.start();
   accessibilityHelper.start();
-  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
-  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
-  hotkeyHelper.start();
 });
 
 app.on("will-quit", () => {

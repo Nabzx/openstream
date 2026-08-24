@@ -6,6 +6,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld("capture", {
   onStart: (callback) => ipcRenderer.on("start-recording", callback),
   onStop: (callback) => ipcRenderer.on("stop-recording", callback),
-  sendAudio: (int16Buffer) => ipcRenderer.send("recording-data", int16Buffer),
+  sendReady: () => ipcRenderer.send("capture-ready"),
+  sendRecording: (wavBuffer) => ipcRenderer.send("recording-complete", wavBuffer),
+  sendSoundLevel: (level) => ipcRenderer.send("sound-level", level),
   sendError: (message) => ipcRenderer.send("recording-error", message),
 });
