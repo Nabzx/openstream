@@ -32,6 +32,12 @@ treated as menu key-equivalents, so nothing beeps.
   granted, its `inject` command correctly reports the frontmost app but
   holds rather than delivering - AX calls fail cleanly without the grant,
   they don't hang.
+- Since #10, the fallback chain's decision logic (`InjectionEngine` in
+  `native/accessibility-helper/Sources/AccessibilityInjection/`) has 12
+  automated tests covering every rung, the settle guard, and the blind-paste
+  gate against fakes - `swift test --package-path native/accessibility-helper`
+  (needs a full Xcode install; Command Line Tools alone are missing
+  `Testing.framework`'s runtime search path).
 - All new/changed files pass `node --check`.
 
 ## Needs a human, one time
@@ -65,6 +71,11 @@ treated as menu key-equivalents, so nothing beeps.
    element (rung 1 or a verified rung 2) rather than the bare `AXWebArea`
    #28 measured without it - either is an acceptable outcome, but the
    difference is worth noting since it's unmeasured until this step runs.
+   This is also the step #10 is actually asking for: real testing across a
+   spread of apps (Electron, terminals, Java/Swing) rather than the
+   automated coverage above, which exercises the decision logic against
+   fakes but can't confirm what a real app actually does with a paste or a
+   synthesised keystroke.
 
 If step 2/3 don't fire the OS prompts, or step 5 never prints/injects,
 check the terminal for `[whisper-server]`-, `[hotkey-helper]`- and
