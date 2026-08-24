@@ -73,7 +73,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
-- [ ] Permission state check - build script warns when a helper hash changes, app tests all three grants at launch and blocks on Accessibility / Input Monitoring (#47)
+- [ ] Permission state check - build script warns when the **Electron host bundle's** code identity changes (not the helpers': #46 measured that all three grants live on the host, so a helper hash is the wrong thing to watch), app tests all three grants at launch by **probing them functionally** (a System Settings toggle can read ON while the binary is denied) and blocks on Accessibility / Input Monitoring (#47, pending #88)
 - [ ] Settings UI complete (hotkey remapping, the user-editable break-safe app list) - **no mode rules** (#45) and **no model choice** (#30)
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
 - [ ] README demo GIF, short landing page
