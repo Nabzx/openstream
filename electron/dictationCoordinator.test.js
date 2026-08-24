@@ -290,15 +290,42 @@ test("context detection failure leaves the target application unchanged", async 
   assert.equal(deliveryCalls, 0);
 });
 
-test("held delivery preserves the complete finished text", async () => {
+test("delivery failure returns the complete finished text without retrying delivery", async () => {
+  let deliveryCalls = 0;
   const result = await runCompletedDictation({
     wavBuffer: completedWav,
     transcription: { transcribe: async () => ({ text: "hello world" }) },
-    delivery: { deliver: async () => ({ kind: "held", reason: "unverified target" }) },
+    delivery: {
+      deliver: async () => {
+        deliveryCalls++;
+        throw new Error("accessibility helper timed out");
+      },
+    },
+    logger: silentLogger(),
+  });
+
+  assert.equal(result.status, "failed");
+  assert.equal(result.stage, "delivery");
+  assert.equal(result.text, "Hello world.");
+  assert.equal(deliveryCalls, 1);
+});
+
+test("held delivery preserves the complete finished text without retrying delivery", async () => {
+  const delivered = [];
+  const result = await runCompletedDictation({
+    wavBuffer: completedWav,
+    transcription: { transcribe: async () => ({ text: "hello world" }) },
+    delivery: {
+      deliver: async (text) => {
+        delivered.push(text);
+        return { kind: "held", reason: "unverified target" };
+      },
+    },
     logger: silentLogger(),
   });
 
   assert.equal(result.status, "held");
   assert.equal(result.text, "Hello world.");
   assert.equal(result.delivery.reason, "unverified target");
+  assert.deepEqual(delivered, ["Hello world."]);
 });

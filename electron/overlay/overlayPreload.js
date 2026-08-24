@@ -7,4 +7,16 @@ contextBridge.exposeInMainWorld("openstreamOverlay", {
   onSoundLevel(callback) {
     ipcRenderer.on("sound-level", (_event, level) => callback(level));
   },
+  onHeldResult(callback) {
+    ipcRenderer.on("held-result", (_event, text) => callback(text));
+  },
+  onHeldResultCopied(callback) {
+    ipcRenderer.on("held-result-copied", () => callback());
+  },
+  copyHeldResult() {
+    ipcRenderer.send("copy-held-result");
+  },
+  dismissHeldResult() {
+    ipcRenderer.send("dismiss-held-result");
+  },
 });
