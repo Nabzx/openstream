@@ -187,6 +187,7 @@ finish() {
 TOTAL_STAGES=8
 
 PROTO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$PROTO/lib.sh"
 cd "$PROTO"
 ENV_FILE="$PROTO/logs/observations.env"
 mkdir -p "$PROTO/logs"
