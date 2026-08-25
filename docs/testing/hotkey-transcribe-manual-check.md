@@ -32,6 +32,18 @@ treated as menu key-equivalents, so nothing beeps.
   granted, its `inject` command correctly reports the frontmost app but
   holds rather than delivering - AX calls fail cleanly without the grant,
   they don't hang.
+- Since #10, the fallback chain's decision logic (`InjectionEngine` in
+  `native/accessibility-helper/Sources/AccessibilityInjection/`) has 12
+  automated tests covering every rung, the settle guard, and the blind-paste
+  gate against fakes - `swift test --package-path native/accessibility-helper`
+  (needs a full Xcode install; Command Line Tools alone are missing
+  `Testing.framework`'s runtime search path).
+- Since #116, the overlay's bottom-centering math
+  (`computeBottomCenteredPosition` in `electron/overlayPosition.js`) has 4
+  tests covering centering, the bottom margin, an offset work area (a
+  secondary display), and a custom margin - `node --test
+  electron/overlayPosition.test.js`. The actual on-screen placement still
+  needs a human; the math can't confirm it clears the real Dock.
 - All new/changed files pass `node --check`.
 
 ## Needs a human, one time
@@ -57,6 +69,11 @@ treated as menu key-equivalents, so nothing beeps.
    holding the keys) to confirm the tap is global and doesn't need the
    app focused. The text should land in whichever app is frontmost when
    you release, not the one that was frontmost when you pressed.
+7a. While holding the key, check the overlay itself (#116): it should sit
+   bottom-center of the screen, clear of the Dock, like macOS's own
+   dictation HUD - not centered on the screen or wherever it used to land.
+   On a multi-monitor setup, move the cursor to a second display before
+   pressing the key and confirm the overlay follows it there.
 8. Try a terminal window and an Electron-based editor (e.g. VS Code, Slack)
    as the target - these are exactly the cases #62 designed the fallback
    chain around. A terminal's prompt should receive a clipboard paste, not
@@ -65,6 +82,11 @@ treated as menu key-equivalents, so nothing beeps.
    element (rung 1 or a verified rung 2) rather than the bare `AXWebArea`
    #28 measured without it - either is an acceptable outcome, but the
    difference is worth noting since it's unmeasured until this step runs.
+   This is also the step #10 is actually asking for: real testing across a
+   spread of apps (Electron, terminals, Java/Swing) rather than the
+   automated coverage above, which exercises the decision logic against
+   fakes but can't confirm what a real app actually does with a paste or a
+   synthesised keystroke.
 
 If step 2/3 don't fire the OS prompts, or step 5 never prints/injects,
 check the terminal for `[whisper-server]`-, `[hotkey-helper]`- and

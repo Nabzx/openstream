@@ -128,27 +128,45 @@ dwell is auditable rather than assumed.
 whatever launched the probe**, not the probe. Terminal.app was granted during
 #28 and still holds it, so run everything from Terminal.app.
 
+Two commands cover everything. Both steal focus continuously and should be run
+on a machine nobody is using - that is a precondition, not a nicety, since a
+person using another app mid-pass is exactly what made three cells inconclusive
+in #28.
+
+```sh
+./run-all-42.sh              # ~8 min: sweep, field pass, focus retry, A/B
+./jetbrains-knob-ab.sh       # ~5 min: the IDE arms (two cold restarts)
+```
+
+The individual steps, if one needs re-running on its own:
+
 ```sh
 ./run.sh --poke              # window 1: probe polling, tee into logs/
 ./sweep-42.sh                # window 2: layer 1 over the new app set
 ./field-pass-42.sh           #           layer 2, focus into each new app
 ./focus-retry-42.sh          #           settle Safari / Notes / WhatsApp
 ./controlled-ab-42.sh        #           A/B with equal, audited dwell
-./jetbrains-knob-ab.sh       #           the third-category test
 ```
 
-`jetbrains-knob-ab.sh` drives both arms without a human by writing the knob to
-disk and cold-restarting the IDE:
+`jetbrains-knob-ab.sh` runs unattended too. It pre-accepts the licence and
+privacy policy on disk, opens a real source file (launching the IDE bare lands
+on the project chooser, whose focused element is a Swing *dialog*, not the Swing
+*editor* this is about), and dismisses the modal "Open in Project" prompt that a
+loose file raises.
+
+It tries to drive the knob from disk:
 
 ```
 ~/Library/Application Support/JetBrains/IdeaIC*/options/ide.general.xml
   <option name="SUPPORT_SCREEN_READERS" value="true|false" />
 ```
 
-The setting is read at startup only, hence the full quit and relaunch per arm.
-IntelliJ still has to be launched **once by hand** first, past the licence
-agreement and the first-run wizard, and left with a project and a file open in
-the editor. That part is not worth automating for a throwaway probe.
+**Be aware this write does not stick.** IntelliJ discards that file and rewrites
+it with its own content, and `SUPPORT_SCREEN_READERS` ends up nowhere in the
+config directory - JetBrains only persists non-default values. Both arms
+therefore run at the **default** setting (screen-reader support off). That turns
+out to be the measurement worth having, since it is the state real users are in,
+but the script's arm labels overstate what it controls. See RESULTS-42.md.
 
 ## Results
 

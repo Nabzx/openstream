@@ -24,7 +24,9 @@ APPS=(
 RETURN_TO="${RETURN_TO:-Terminal}"
 
 for app in "${APPS[@]}"; do
-  if [ ! -d "/Applications/$app.app" ]; then
+  # Apple's own apps live under /System/Applications, not /Applications - a
+  # check against /Applications alone reports Notes as "not installed".
+  if [ ! -d "/Applications/$app.app" ] && [ ! -d "/System/Applications/$app.app" ]; then
     echo "### NOT INSTALLED: $app"
     continue
   fi
