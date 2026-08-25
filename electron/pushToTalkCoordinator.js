@@ -1,4 +1,4 @@
-function createPushToTalkCoordinator({ startCapture, stopCapture, setUserVisibleState }) {
+function createPushToTalkCoordinator({ startCapture, stopCapture, setUserVisibleState, now = performance.now.bind(performance) }) {
   let recording = false;
 
   return {
@@ -12,7 +12,7 @@ function createPushToTalkCoordinator({ startCapture, stopCapture, setUserVisible
     keyUp() {
       if (!recording) return;
       recording = false;
-      stopCapture();
+      stopCapture({ releasedAtMs: now() });
       setUserVisibleState("transcribing");
     },
   };
