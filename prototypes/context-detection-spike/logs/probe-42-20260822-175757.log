@@ -1,0 +1,291 @@
+OpenStream context-detection spike (issue #28) - PROTOTYPE, throwaway
+AXIsProcessTrusted() = true
+poke AXManualAccessibility = true   interval = 0.4s
+Switch apps and click into text fields. Records print only when something changes.
+Ctrl-C to stop.
+---------------------------------------------------------------
+[5:58:00 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 68468)
+            AX trusted        : yes
+            AXManualAccess.   : success
+            window title      : AGENTS.md — openstream
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:58:12 pm] frontmost app     : Slack
+            bundle id         : com.tinyspeck.slackmacgap  (pid 8716)
+            AX trusted        : yes
+            AXManualAccess.   : success
+            window title      : Slack
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[5:58:14 pm] frontmost app     : Slack
+            bundle id         : com.tinyspeck.slackmacgap  (pid 8716)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Sign in | Slack
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Sign in | Slack
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[5:58:22 pm] frontmost app     : Hyper
+            bundle id         : co.zeit.hyper  (pid 9057)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : Hyper
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:58:34 pm] frontmost app     : IntelliJ IDEA
+            bundle id         : com.jetbrains.intellij.ce  (pid 9754)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[5:58:36 pm] frontmost app     : IntelliJ IDEA
+            bundle id         : com.jetbrains.intellij.ce  (pid 9754)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Welcome to IntelliJ IDEA
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXOutline
+            focused subrole   : <kAXErrorNoValue>
+            role description  : outline
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : yes (non-string)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[5:58:37 pm] frontmost app     : IntelliJ IDEA
+            bundle id         : com.jetbrains.intellij.ce  (pid 9754)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Welcome to IntelliJ IDEA
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXButton
+            focused subrole   : <kAXErrorNoValue>
+            role description  : button
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : no (kAXErrorNoValue)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[5:58:44 pm] frontmost app     : Safari
+            bundle id         : com.apple.Safari  (pid 44573)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[5:58:50 pm] frontmost app     : Code
+            bundle id         : com.microsoft.VSCode  (pid 68468)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : AGENTS.md — openstream
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:58:55 pm] frontmost app     : Hyper
+            bundle id         : co.zeit.hyper  (pid 9057)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Hyper
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:58:58 pm] frontmost app     : ‎WhatsApp
+            bundle id         : net.whatsapp.WhatsApp  (pid 10199)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : ‎WhatsApp
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXGroup
+            focused subrole   : iOSContentGroup
+            role description  : group
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[5:59:07 pm] frontmost app     : Terminal
+            bundle id         : com.apple.Terminal  (pid 48784)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : zazai — osascript ◂ run-all-42.sh — 80×24
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextArea
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text entry area
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (950 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:59:08 pm] frontmost app     : Slack
+            bundle id         : com.tinyspeck.slackmacgap  (pid 8716)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Sign in | Slack
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWebArea
+            focused subrole   : <kAXErrorNoValue>
+            role description  : HTML content
+            focused title     : Sign in | Slack
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[5:59:24 pm] frontmost app     : Hyper
+            bundle id         : co.zeit.hyper  (pid 9057)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Hyper
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <empty>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[5:59:42 pm] frontmost app     : IntelliJ IDEA
+            bundle id         : com.jetbrains.intellij.ce  (pid 9754)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Welcome to IntelliJ IDEA
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXButton
+            focused subrole   : <kAXErrorNoValue>
+            role description  : button
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : no (kAXErrorNoValue)
+            AXSelectedText    : no (kAXErrorNoValue)
+---------------------------------------------------------------
+[5:59:48 pm] frontmost app     : IntelliJ IDEA
+            bundle id         : com.jetbrains.intellij.ce  (pid 9754)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : New Project
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorNoValue>
+            role description  : text field
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : yes (8 chars)
+            AXSelectedText    : yes (8 chars)
+---------------------------------------------------------------
+[5:59:59 pm] frontmost app     : Safari
+            bundle id         : com.apple.Safari  (pid 44573)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : <kAXErrorNoValue>
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : <kAXErrorNoValue>
+            focused subrole   : <kAXErrorNoValue>
+            role description  : <kAXErrorNoValue>
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : <kAXErrorNoValue>
+            AXSelectedText    : <kAXErrorNoValue>
+---------------------------------------------------------------
+[6:00:05 pm] frontmost app     : Safari
+            bundle id         : com.apple.Safari  (pid 44573)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Untitled
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : <kAXErrorAttributeUnsupported>
+            role description  : text field
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[6:00:35 pm] frontmost app     : Notes
+            bundle id         : com.apple.Notes  (pid 11929)
+            AX trusted        : yes
+            AXManualAccess.   : kAXErrorAttributeUnsupported
+            window title      : Notes
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXWindow
+            focused subrole   : AXStandardWindow
+            role description  : standard window
+            focused title     : Notes
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[6:00:38 pm] frontmost app     : Notes
+            bundle id         : com.apple.Notes  (pid 11929)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : Notes
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXTextField
+            focused subrole   : AXSearchField
+            role description  : search text field
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : yes (0 chars)
+            AXSelectedText    : yes (0 chars)
+---------------------------------------------------------------
+[6:01:06 pm] frontmost app     : ‎WhatsApp
+            bundle id         : net.whatsapp.WhatsApp  (pid 10199)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : ‎WhatsApp
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXGroup
+            focused subrole   : iOSContentGroup
+            role description  : group
+            focused title     : <kAXErrorAttributeUnsupported>
+            AXValue readable  : no (kAXErrorAttributeUnsupported)
+            AXSelectedText    : no (kAXErrorAttributeUnsupported)
+---------------------------------------------------------------
+[6:01:10 pm] frontmost app     : ‎WhatsApp
+            bundle id         : net.whatsapp.WhatsApp  (pid 10199)
+            AX trusted        : yes
+            AXManualAccess.   : already poked
+            window title      : ‎WhatsApp
+            system-wide focus : <kAXErrorCannotComplete>
+            focused role      : AXStaticText
+            focused subrole   : AXSearchField
+            role description  : text
+            focused title     : <kAXErrorNoValue>
+            AXValue readable  : no (kAXErrorNoValue)
+            AXSelectedText    : yes (0 chars)
