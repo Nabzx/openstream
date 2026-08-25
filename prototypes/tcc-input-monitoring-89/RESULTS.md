@@ -1,50 +1,76 @@
 # Results (issue #89)
 
-Status: **pending human run**.
+Status: **verdict reached on 2026-08-25**.
 
-This file must contain observations from a real macOS 15 run. Do not fill a
-cell from an assumption about TCC. The System Settings list and the functional
-helper capture are separate evidence.
+This is a human-in-the-loop result from one machine. The System Settings pane
+was checked before and after each trigger arm, and the helper captured the
+permission state after each action.
 
 Machine:
-- macOS:
-- hardware:
-- signing:
+- macOS 15.6.1 (Darwin 24.6.0, build 24G90)
+- MacBook Air, Mac15,12, Apple M3, 16 GB
+- ad-hoc-signed prototype bundles
 
 ## Observation table
 
-| Arm | Pane before | Pane after trigger | Trigger call(s) confirmed | Effective state after trigger | Row appeared when |
+| Arm | Pane before | Pane after trigger | Trigger action | Effective state after trigger | Row appeared when |
 | --- | --- | --- | --- | --- | --- |
-| `accessibility-only` | unmeasured | unmeasured | unmeasured | unmeasured | unmeasured |
-| `request-only` | unmeasured | unmeasured | unmeasured | unmeasured | unmeasured |
-| `tap-only` | unmeasured | unmeasured | unmeasured | unmeasured | unmeasured |
-| `request-and-tap` | unmeasured | unmeasured | unmeasured | unmeasured | unmeasured |
+| `accessibility-only` | none | none | Accessibility request button clicked | `IOHIDCheckAccess=denied`, functional tap state false | not observed |
+| `request-only` | none | none | `IOHIDRequestAccess`-only button clicked | `IOHIDCheckAccess=denied`, functional tap state false | not observed |
+| `tap-only` | none | none | listen-only event-tap button clicked | `IOHIDCheckAccess=denied`, functional tap state false | not observed |
+| `request-and-tap` | none | none | request-then-tap button clicked | `IOHIDCheckAccess=denied`, functional tap state false | not observed |
+
+No row was switched on in any arm. The request-only timing field was entered as
+`n` rather than a timing description, but the pane was `none` both before and
+after the trigger. The accessibility arm's recorded `mone` was confirmed by
+the operator as `none`.
 
 ## API evidence
 
-Paste the relevant `hotkeyhelper` fields from each `logs/state-*.json` capture
-here. Include `responsibleExecutable`, `cdhash`, and `bundleIdentifier` when
-checking attribution.
+The latest final captures for all four arms agree:
 
 ```text
-accessibility-only:
-request-only:
-tap-only:
-request-and-tap:
+accessibility-only: reportedAccess=denied, functionallyGranted=false
+request-only:       reportedAccess=denied, functionallyGranted=false
+tap-only:           reportedAccess=denied, functionallyGranted=false
+request-and-tap:    reportedAccess=denied, functionallyGranted=false
 ```
+
+Every helper's `responsibleExecutable` was the corresponding TCCProbe host,
+not the bare helper binary. The host and helpers were ad-hoc signed, and the
+helpers had no bundle identifier.
+
+The post-action JSON captures are read-only `operation=check` snapshots. The
+trigger calls themselves were performed through the visible probe buttons; the
+wizard did not persist the button's immediate return payload. The pane
+observations and the after-action effective state are the load-bearing evidence.
 
 ## Verdict
 
-- What makes the app appear in Input Monitoring:
-- Can it be effectively granted while no row is visible:
-- Can a visible row/toggle be stale while the functional probe is denied:
-- What should the start gate tell the user:
-- What should `doctor` tell the user:
+- **What makes the app appear in Input Monitoring:** none of the four tested
+  triggers caused a row to appear on this machine: Accessibility request alone,
+  `IOHIDRequestAccess` alone, a listen-only event tap alone, or the combined
+  sequence.
+- **Can it be effectively granted while no row is visible:** not established.
+  Every no-row state observed here was also functionally denied.
+- **Can a visible row/toggle be stale while the functional probe is denied:**
+  not measured for Input Monitoring here. Issue #46 already measured the
+  analogous stale-ON problem for Accessibility.
+- **What should the start gate tell the user:** it must not assume that a row
+  exists or tell the user to switch a row that is not visible. It must use the
+  functional probe, then direct the user to the Input Monitoring pane while
+  explicitly explaining that the app may be absent.
+- **What should `doctor` tell the user:** use the same functional result as the
+  start gate and report the absence of a visible row as a distinct, unresolved
+  remediation state rather than treating it as a successful grant.
 
 ## Caveats
 
-- The result is for the recorded macOS/signing configuration only.
-- A row can appear after revisiting or refreshing System Settings; record that
-  timing rather than treating a first empty view as final.
-- A stale TCC entry from another build or bundle path invalidates an arm. Use a
-  fresh bundle ID and confirm the baseline capture before triggering it.
+- This is one run on macOS 15.6.1 with ad-hoc signing and fresh bundle IDs.
+- A row can appear after revisiting or refreshing System Settings; each arm was
+  revisited before its after-trigger observation.
+- The experiment did not produce an effective grant, so it cannot answer the
+  inverse case where a grant is effective while no row is visible.
+- The direct trigger return payload was not persisted by the UI; a follow-up
+  harness revision would save that payload if the exact API return value is
+  needed independently of the pane and post-action state.
