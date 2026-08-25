@@ -9,7 +9,7 @@ const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
-const { runCompletedDictation } = require("./dictationCoordinator");
+const { createDictationIntake } = require("./dictationCoordinator");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
@@ -49,6 +49,14 @@ const breakPlacement = createBreakPlacementHttpAdapter({
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
 }
+
+const dictationIntake = createDictationIntake({
+  transcription,
+  contextDetection: accessibilityHelper,
+  breakPlacement,
+  delivery: accessibilityHelper,
+  onDiagnostic: recordDictationDiagnostic,
+});
 
 function createWindow() {
   if (win) {
@@ -155,15 +163,14 @@ const heldResultController = createHeldResultController({
 });
 
 async function transcribeAndPrint(wavBuffer, timing) {
-  const result = await runCompletedDictation({
-    wavBuffer,
-    transcription,
-    contextDetection: accessibilityHelper,
-    breakPlacement,
-    delivery: accessibilityHelper,
-    setUserVisibleState,
-    recordDiagnostic: recordDictationDiagnostic,
-  });
+  let result;
+  try {
+    result = await dictationIntake.complete(wavBuffer);
+  } catch (error) {
+    console.error("[dictation] unexpected intake failure:", error);
+    setUserVisibleState("idle");
+    return;
+  }
 
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
@@ -173,14 +180,19 @@ async function transcribeAndPrint(wavBuffer, timing) {
       const budgetResult = latencyMs < 1000 ? "within" : "over";
       console.log(`[dictation] release-to-insertion: ${latencyMs.toFixed(1)}ms (${budgetResult} 1000ms budget)`);
     }
+    setUserVisibleState("idle");
   } else if (result.status === "held") {
-    console.log(`[dictation] injection held: ${result.delivery.reason}`);
-  } else if (result.status === "failed" && result.stage === "delivery") {
-    console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
+    console.log(`[dictation] injection held: ${result.reason}`);
+    setUserVisibleState("held", { text: result.text, reason: result.reason });
+  } else if (result.status === "failed") {
+    console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
+    setUserVisibleState("idle");
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
+    setUserVisibleState("idle");
   } else if (result.status === "empty") {
     console.log("[dictation] no audio captured, skipping");
+    setUserVisibleState("idle");
   }
 }
 
@@ -284,7 +296,7 @@ ipcMain.on("capture-ready", (event) => {
 
 ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
   if (!isCaptureSender(event)) return;
-  transcribeAndPrint(Buffer.from(arrayBuffer), timing);
+  void transcribeAndPrint(Buffer.from(arrayBuffer), timing);
 });
 
 ipcMain.on("sound-level", (event, level) => {
