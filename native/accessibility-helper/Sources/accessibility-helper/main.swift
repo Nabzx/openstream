@@ -37,9 +37,10 @@ Thread {
 }.start()
 
 let config = Config()
+let focusResolver = RealFocusResolver(tracker: tracker)
 let engine = InjectionEngine(
     config: config,
-    focusResolver: RealFocusResolver(tracker: tracker),
+    focusResolver: focusResolver,
     paster: RealClipboardPaster(restoreMs: config.restoreMs, log: eprint),
     typer: RealKeyTyper(),
     tracker: tracker,
@@ -62,9 +63,20 @@ while let line = readLine(strippingNewline: true) {
     }
 
     switch cmd {
-    case "inject":
+    case "context":
+        guard let context = focusResolver.focusContext(deadlineMs: config.axDeadlineMs) else {
+            emit(["id": id, "status": "error", "reason": "focused element unavailable"])
+            continue
+        }
+        emit([
+            "id": id,
+            "status": "ok",
+            "bundleId": context.bundleId,
+            "isOneLineField": context.isOneLineField,
+        ])
+    case "insert", "inject":
         guard let text = obj["text"] as? String, !text.isEmpty else {
-            emit(["id": id, "status": "error", "reason": "inject requires non-empty \"text\""])
+            emit(["id": id, "status": "error", "reason": "insert requires non-empty \"text\""])
             continue
         }
         var reply = engine.decide(text: text).replyFields

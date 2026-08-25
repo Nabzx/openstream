@@ -16,16 +16,21 @@ body {
 }
 
 .overlay {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  box-sizing: border-box;
+  width: 100%;
   color: #fff;
-  background: rgb(27 27 30 / 92%);
+  background: rgb(27 27 30 / 96%);
   border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 14px;
   box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
   font-size: 14px;
+}
+
+.recording {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
   font-weight: 600;
 }
 
@@ -54,6 +59,67 @@ body {
   transform: scaleX(var(--sound-level, 0));
   transform-origin: left;
   transition: transform 80ms linear;
+}
+
+.held-result {
+  display: none;
+  padding: 18px;
+}
+
+.held-result h1 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.held-result p {
+  margin: 0 0 12px;
+  color: rgb(255 255 255 / 70%);
+}
+
+.held-result pre {
+  box-sizing: border-box;
+  max-height: 120px;
+  margin: 0;
+  overflow: auto;
+  padding: 10px;
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 8px;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.held-result__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+button {
+  padding: 6px 14px;
+  color: #fff;
+  background: #0a84ff;
+  border: 0;
+  border-radius: 7px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: rgb(255 255 255 / 12%);
+}
+
+body[data-state="held"] .recording {
+  display: none;
+}
+
+body[data-state="held"] .held-result {
+  display: block;
 }
 
 body[data-state="idle"] .recording-dot {

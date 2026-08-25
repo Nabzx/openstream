@@ -109,12 +109,12 @@ window.capture.onStart(() => {
   isRecording = true;
 });
 
-window.capture.onStop(() => {
+window.capture.onStop((timing) => {
   isRecording = false;
   const wav = encodeWav(chunks);
   chunks = [];
   window.capture.sendSoundLevel(0);
-  window.capture.sendRecording(wav);
+  window.capture.sendRecording(wav, timing);
 });
 
 prepareCapture();

@@ -9,11 +9,8 @@
 // that's an STT problem, not this engine's.
 //
 // Paragraph-break *placement* (as opposed to a spoken "new paragraph",
-// which this module handles directly) is decided by the rewrite model
-// server per #45 §5, and is deliberately NOT implemented here: #14
-// (llama-server plumbing) hasn't landed and #67 (whether the model picks
-// sensible breaks at all) hasn't been validated. That's follow-up work
-// once both land, not a gap in this engine.
+// which this module handles directly) belongs to the dictation coordinator.
+// The rewrite model server returns sentence indices and never rewrites text.
 
 const STANDALONE_FILLERS = ["um", "uh", "erm", "er", "ah", "hmm", "mhm"];
 
@@ -38,8 +35,8 @@ const SPOKEN_PUNCT = [
   [/\bsemicolon\b/gi, ";"],
   [/\bopen paren(thesis)?\b/gi, "("],
   [/\bclose paren(thesis)?\b/gi, ")"],
-  [/\bdash\b/gi, "-"],
-  [/\bslash\b/gi, "/"],
+  [/[ \t]*\bdash\b[ \t]*/gi, "-"],
+  [/[ \t]*\bslash\b[ \t]*/gi, "/"],
 ];
 
 // Technical vocabulary dictation reliably mangles. A fixed list for now; the
@@ -210,9 +207,11 @@ function cleanup(text, options = {}) {
   if (!oneLineBox) {
     text = segmentSentences(text);
   }
-  text = applyVocab(text);
   text = capitalise(text);
-  text = oneLineBox ? text.replace(/\s+$/, "") : terminalPunct(text);
+  // Apply fixed casing after sentence capitalisation so names such as macOS
+  // keep their settled spelling even at the start of a dictation.
+  text = applyVocab(text);
+  text = oneLineBox ? text.replace(/\.\s*$/, "").replace(/\s+$/, "") : terminalPunct(text);
   text = text.replace(/[ \t]{2,}/g, " ");
 
   return text.trim();
