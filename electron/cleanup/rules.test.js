@@ -43,6 +43,36 @@ test("converts spoken punctuation commands", () => {
   }
 });
 
+test("converts explicit spoken emoji commands", () => {
+  const cases = [
+    ["that is great heart emoji", "That is great ❤️."],
+    ["nice one thumbs up emoji", "Nice one 👍."],
+    ["thumbs down emoji not for me", "👎 not for me."],
+    ["that is so funny laughing emoji", "That is so funny 😂."],
+    ["that movie made me cry crying emoji", "That movie made me cry 😢."],
+    ["that party was fire emoji", "That party was 🔥."],
+    ["we hit a hundred emoji nice", "We hit a 💯 nice."],
+    ["one hundred emoji all round", "💯 all round."],
+    ["smiley face emoji see you soon", "🙂 see you soon."],
+    ["smiling face emoji good morning", "🙂 good morning."],
+  ];
+
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("does not convert emoji words used as ordinary vocabulary", () => {
+  // #131's whole design: every trigger requires the explicit word "emoji",
+  // precisely because these words are common enough in ordinary narrative
+  // prose that an unmarked trigger would misfire constantly.
+  assert.equal(cleanup("my heart is racing right now"), "My heart is racing right now.");
+  assert.equal(cleanup("the fire alarm went off"), "The fire alarm went off.");
+  assert.equal(cleanup("she was laughing the whole time"), "She was laughing the whole time.");
+  assert.equal(cleanup("he gave a thumbs up gesture"), "He gave a thumbs up gesture.");
+  assert.equal(cleanup("we need a hundred dollars"), "We need a hundred dollars.");
+});
+
 test("lets whisper's own inferred punctuation win on collision", () => {
   assert.equal(cleanup("are you sure period?"), "Are you sure?");
 });

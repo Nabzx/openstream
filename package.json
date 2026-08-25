@@ -2,6 +2,9 @@
   "name": "openstream",
   "private": true,
   "version": "0.0.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "description": "Local-first voice dictation for macOS, built for developers.",
   "main": "electron/main.js",
   "scripts": {
@@ -9,12 +12,13 @@
     "dev:electron": "wait-on tcp:5173 && cross-env NODE_ENV=development electron .",
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "prepare:electron": "node node_modules/electron/install.js",
     "prepare:model-artifacts": "node scripts/prepare-model-artifacts.mjs",
     "build:whisper": "bash scripts/build-whisper.sh",
     "build:hotkey-helper": "bash scripts/build-hotkey-helper.sh",
     "build:accessibility-helper": "bash scripts/build-accessibility-helper.sh",
     "build:llama": "bash scripts/fetch-llama.sh",
-    "postinstall": "npm run prepare:model-artifacts && npm run build:hotkey-helper && npm run build:accessibility-helper",
+    "postinstall": "npm run prepare:electron && npm run prepare:model-artifacts && npm run build:hotkey-helper && npm run build:accessibility-helper",
     "start": "cross-env NODE_ENV=production electron .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run && node --test \"electron/**/*.test.js\"",
@@ -34,7 +38,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^8.2.2",
     "cross-env": "^7.0.3",
-    "electron": "^31.0.0",
+    "electron": "^43.4.1",
     "electron-builder": "^26.15.3",
     "typescript": "^5.5.2",
     "vite": "^5.3.1",

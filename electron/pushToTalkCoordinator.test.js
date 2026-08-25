@@ -6,15 +6,19 @@ test("key down starts capture and exposes recording state until key up", () => {
   const captureCommands = [];
   const states = [];
   const coordinator = createPushToTalkCoordinator({
-    startCapture: () => captureCommands.push("start"),
-    stopCapture: () => captureCommands.push("stop"),
+    startCapture: () => captureCommands.push({ command: "start" }),
+    stopCapture: (timing) => captureCommands.push({ command: "stop", timing }),
     setUserVisibleState: (state) => states.push(state),
+    now: () => 725.5,
   });
 
   coordinator.keyDown();
   coordinator.keyUp();
 
-  assert.deepEqual(captureCommands, ["start", "stop"]);
+  assert.deepEqual(captureCommands, [
+    { command: "start" },
+    { command: "stop", timing: { releasedAtMs: 725.5 } },
+  ]);
   assert.deepEqual(states, ["recording", "transcribing"]);
 });
 

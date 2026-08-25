@@ -13,7 +13,7 @@ function createTranscriptionHttpAdapter(options) {
     if (!res.ok) throw new Error(`transcription model server returned ${res.status}`);
 
     const body = await res.json();
-    return { text: (body.text || "").trim() };
+    return (body.text || "").trim();
   }
 
   return { transcribe };

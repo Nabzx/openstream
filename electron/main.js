@@ -1,14 +1,29 @@
-const { app, Tray, Menu, BrowserWindow, clipboard, ipcMain, nativeImage } = require("electron");
+const { app, Tray, Menu, BrowserWindow, clipboard, ipcMain, nativeImage, screen } = require("electron");
 const path = require("path");
+const { performance } = require("node:perf_hooks");
+const { computeBottomCenteredPosition } = require("./overlayPosition");
 const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
+const { createSettingsStore } = require("./settingsStore");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
-const { runCompletedDictation } = require("./dictationCoordinator");
+const { createDictationIntake } = require("./dictationCoordinator");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
+
+// Without this, nothing stops a second `npm start` (or a launch someone
+// forgot was already running) from spawning a whole second app: its own
+// tray icon, its own push-to-talk overlay stacked on top of the first
+// one's, its own hotkey helper racing the first for the same global
+// combo, its own model servers. Must be requested before any of that setup
+// below ever runs.
+if (!app.requestSingleInstanceLock()) {
+  console.error("[startup] another OpenStream instance is already running - quitting this one");
+  app.quit();
+  process.exit(0);
+}
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -25,6 +40,7 @@ let trayState = "idle";
 let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
+let settingsStore = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
@@ -33,6 +49,14 @@ const breakPlacement = createBreakPlacementHttpAdapter({
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
 }
+
+const dictationIntake = createDictationIntake({
+  transcription,
+  contextDetection: accessibilityHelper,
+  breakPlacement,
+  delivery: accessibilityHelper,
+  onDiagnostic: recordDictationDiagnostic,
+});
 
 function createWindow() {
   if (win) {
@@ -79,10 +103,16 @@ function createCaptureWindow() {
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
 }
 
+// The resting size for the recording/idle waveform - named so
+// hideHeldResult() below can't drift from createOverlayWindow's initial
+// size the way it did once already (merge artifact: it briefly resized
+// back to the pre-redesign 180x52 instead of this).
+const OVERLAY_RESTING_SIZE = [220, 56];
+
 function createOverlayWindow() {
   overlayWin = new BrowserWindow({
-    width: 180,
-    height: 52,
+    width: OVERLAY_RESTING_SIZE[0],
+    height: OVERLAY_RESTING_SIZE[1],
     show: false,
     frame: false,
     transparent: true,
@@ -90,6 +120,14 @@ function createOverlayWindow() {
     focusable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
+    // Real macOS frosted-glass blur, not a flat dark box - "hud" is the
+    // vibrancy material Apple's own HUD-style floating panels use.
+    // visualEffectState defaults to "follow-window", which renders the
+    // dimmer inactive appearance for a window that's never focused (this
+    // one is always shown via showInactive()) - forcing "active" keeps the
+    // vibrancy at full strength regardless.
+    vibrancy: "hud",
+    visualEffectState: "active",
     webPreferences: {
       preload: path.join(__dirname, "overlay", "overlayPreload.js"),
       contextIsolation: true,
@@ -98,6 +136,12 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Reapplied explicitly, not just passed to the constructor: on a
+  // frameless + transparent window this pairing has been unreliable at
+  // construction time on some Electron/macOS combinations, and calling
+  // setVibrancy() again once the native window actually exists is the
+  // documented workaround.
+  overlayWin.setVibrancy("hud");
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
@@ -115,7 +159,7 @@ function hideHeldResult() {
   overlayWin.hide();
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setFocusable(false);
-  overlayWin.setSize(180, 52, false);
+  overlayWin.setSize(...OVERLAY_RESTING_SIZE, false);
 }
 
 const heldResultController = createHeldResultController({
@@ -124,28 +168,37 @@ const heldResultController = createHeldResultController({
   writeClipboard: (text) => clipboard.writeText(text),
 });
 
-async function transcribeAndPrint(wavBuffer) {
-  const result = await runCompletedDictation({
-    wavBuffer,
-    transcription,
-    contextDetection: accessibilityHelper,
-    breakPlacement,
-    delivery: accessibilityHelper,
-    setUserVisibleState,
-    recordDiagnostic: recordDictationDiagnostic,
-  });
+async function transcribeAndPrint(wavBuffer, timing) {
+  let result;
+  try {
+    result = await dictationIntake.complete(wavBuffer);
+  } catch (error) {
+    console.error("[dictation] unexpected intake failure:", error);
+    setUserVisibleState("idle");
+    return;
+  }
 
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
+    if (Number.isFinite(timing?.releasedAtMs)) {
+      const latencyMs = performance.now() - timing.releasedAtMs;
+      const budgetResult = latencyMs < 1000 ? "within" : "over";
+      console.log(`[dictation] release-to-insertion: ${latencyMs.toFixed(1)}ms (${budgetResult} 1000ms budget)`);
+    }
+    setUserVisibleState("idle");
   } else if (result.status === "held") {
-    console.log(`[dictation] injection held: ${result.delivery.reason}`);
-  } else if (result.status === "failed" && result.stage === "delivery") {
-    console.error(`[dictation] injection error: ${result.delivery?.reason || result.error?.message || "unknown error"}`);
+    console.log(`[dictation] injection held: ${result.reason}`);
+    setUserVisibleState("held", { text: result.text, reason: result.reason });
+  } else if (result.status === "failed") {
+    console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
+    setUserVisibleState("idle");
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
+    setUserVisibleState("idle");
   } else if (result.status === "empty") {
     console.log("[dictation] no audio captured, skipping");
+    setUserVisibleState("idle");
   }
 }
 
@@ -155,9 +208,9 @@ const pushToTalkCoordinator = createPushToTalkCoordinator({
     captureWin.webContents.send("start-recording");
     console.log("[dictation] recording - release the hotkey to stop");
   },
-  stopCapture() {
+  stopCapture(timing) {
     if (!captureWin) return;
-    captureWin.webContents.send("stop-recording");
+    captureWin.webContents.send("stop-recording", timing);
   },
   setUserVisibleState,
 });
@@ -178,6 +231,16 @@ function setTrayState(state) {
   tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
 }
 
+// Positioned fresh on every show, not once at creation, so it follows
+// whichever display the user is actually on - #116, same spot macOS's own
+// dictation HUD uses: bottom-center, clear of the Dock.
+function positionOverlayAtBottom() {
+  const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
+  const [width, height] = overlayWin.getSize();
+  const { x, y } = computeBottomCenteredPosition(display.workArea, width, height);
+  overlayWin.setPosition(x, y);
+}
+
 function setUserVisibleState(state, details) {
   if (state === "held") {
     setTrayState("idle");
@@ -188,10 +251,16 @@ function setUserVisibleState(state, details) {
   setTrayState(state);
   if (!overlayWin || overlayWin.isDestroyed()) return;
 
-  if (state === "recording") heldResultController.dismiss();
+  if (state === "recording") {
+    heldResultController.dismiss();
+    positionOverlayAtBottom();
+  }
   overlayWin.webContents.send("dictation-state", state);
-  if (state === "recording") overlayWin.showInactive();
-  else overlayWin.hide();
+  if (state === "recording") {
+    overlayWin.showInactive();
+  } else {
+    overlayWin.hide();
+  }
 }
 
 function createTray() {
@@ -231,9 +300,9 @@ ipcMain.on("capture-ready", (event) => {
   hotkeyHelper.start();
 });
 
-ipcMain.on("recording-complete", (event, arrayBuffer) => {
+ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
   if (!isCaptureSender(event)) return;
-  transcribeAndPrint(Buffer.from(arrayBuffer));
+  void transcribeAndPrint(Buffer.from(arrayBuffer), timing);
 });
 
 ipcMain.on("sound-level", (event, level) => {
@@ -262,10 +331,32 @@ ipcMain.on("recording-error", (event, message) => {
   setUserVisibleState("idle");
 });
 
+ipcMain.handle("settings:get", () => settingsStore.get());
+
+ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
+  // setHotkey validates and throws on a malformed hotkey - ipcMain.handle
+  // turns that into a rejected promise on the renderer side automatically,
+  // and the previously-saved hotkey is left untouched (see
+  // settingsStore.js), so a bad renderer-side capture can't leave the app
+  // with no working hotkey.
+  const settings = settingsStore.setHotkey(hotkey);
+  hotkeyHelper.setHotkey(settings.hotkey);
+  return settings;
+});
+
+// A second launch attempt hits this instead of silently doing nothing (or
+// worse, silently doing everything twice) - bring the settings window
+// forward so there's visible proof this instance is the one that's running.
+app.on("second-instance", () => {
+  createWindow();
+});
+
 app.whenReady().then(() => {
   if (process.platform === "darwin") {
     app.dock.hide();
   }
+  settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
+  hotkeyHelper.setHotkey(settingsStore.get().hotkey);
   createTray();
   hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
   hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);

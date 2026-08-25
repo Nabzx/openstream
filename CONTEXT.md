@@ -22,6 +22,10 @@ _Avoid_: Partial transcript, interim result, draft, streaming text
 The panel shown while the user holds the key. It is the surface the app speaks to the user on during a dictation.
 _Avoid_: HUD, popup, indicator
 
+**Held result**:
+The finished text from a completed recording that could not be placed at the cursor. It remains in the Push-to-talk overlay so the user can copy or dismiss it. It is not a Dictation because the text did not land.
+_Avoid_: Failed dictation, lost text
+
 **Voice edit**:
 A rewrite of text the user has already selected, requested by speaking a command such as "make this a bullet list". Distinct from dictation: the user asks for it explicitly and expects to wait.
 _Avoid_: Cleanup, correction, LLM pass

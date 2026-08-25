@@ -15,50 +15,52 @@ body {
   place-items: center;
 }
 
+/* The window itself carries the real macOS vibrancy blur (see
+   createOverlayWindow's vibrancy: "hud") - this stays deliberately light
+   and mostly transparent so that blur reads through, with just enough of a
+   border and inner highlight to look like a distinct glass pane rather
+   than the blur bleeding into the desktop with no edge at all. Shared by
+   both the recording waveform and the held-result panel, since the window
+   itself resizes between the two rather than swapping windows. */
 .overlay {
   box-sizing: border-box;
   width: 100%;
-  color: #fff;
-  background: rgb(27 27 30 / 96%);
-  border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 14px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 28%);
-  font-size: 14px;
+  color: rgb(255 255 255 / 92%);
+  background: rgb(255 255 255 / 6%);
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 16px;
+  box-shadow:
+    0 8px 24px rgb(0 0 0 / 25%),
+    inset 0 1px 0 rgb(255 255 255 / 10%);
+  font-size: 13px;
 }
 
 .recording {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
+  gap: 12px;
+  padding: 10px 18px;
   font-weight: 600;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 
-.recording-dot {
+.waveform {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 20px;
   flex: 0 0 auto;
-  width: 10px;
-  height: 10px;
-  background: #ff453a;
-  border-radius: 50%;
 }
 
-.sound-meter {
-  width: 48px;
-  height: 6px;
-  overflow: hidden;
-  background: rgb(255 255 255 / 18%);
-  border-radius: 999px;
-}
-
-.sound-meter__level {
-  display: block;
-  width: 100%;
+.waveform__bar {
+  width: 3px;
   height: 100%;
-  background: #ff6961;
-  border-radius: inherit;
-  transform: scaleX(var(--sound-level, 0));
-  transform-origin: left;
-  transition: transform 80ms linear;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #7dd3fc, #0a84ff);
+  transform: scaleY(var(--level, 0.08));
+  transform-origin: center;
+  transition: transform 90ms ease-out;
 }
 
 .held-result {
@@ -120,4 +122,10 @@ body[data-state="held"] .recording {
 
 body[data-state="held"] .held-result {
   display: block;
+}
+
+body[data-state="idle"] .waveform__bar {
+  background: rgb(255 255 255 / 28%);
+  transform: scaleY(0.15);
+  transition: transform 300ms ease-out;
 }
