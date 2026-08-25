@@ -10,6 +10,18 @@ const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter")
 const { runCompletedDictation } = require("./dictationCoordinator");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
+// Without this, nothing stops a second `npm start` (or a launch someone
+// forgot was already running) from spawning a whole second app: its own
+// tray icon, its own push-to-talk overlay stacked on top of the first
+// one's, its own hotkey helper racing the first for the same global
+// combo, its own model servers. Must be requested before any of that setup
+// below ever runs.
+if (!app.requestSingleInstanceLock()) {
+  console.error("[startup] another OpenStream instance is already running - quitting this one");
+  app.quit();
+  process.exit(0);
+}
+
 const isDev = process.env.NODE_ENV === "development";
 
 const TRAY_ICON_FILES = {
@@ -234,6 +246,13 @@ ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
   const settings = settingsStore.setHotkey(hotkey);
   hotkeyHelper.setHotkey(settings.hotkey);
   return settings;
+});
+
+// A second launch attempt hits this instead of silently doing nothing (or
+// worse, silently doing everything twice) - bring the settings window
+// forward so there's visible proof this instance is the one that's running.
+app.on("second-instance", () => {
+  createWindow();
 });
 
 app.whenReady().then(() => {
