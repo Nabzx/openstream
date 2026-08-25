@@ -1,0 +1,114 @@
+<!doctype html>
+<!-- PROTOTYPE - throwaway spike for issue #89. -->
+<meta charset="utf-8" />
+<title>TCCProbe - Input Monitoring</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; margin: 0; padding: 16px 20px; }
+  h1 { font-size: 15px; margin: 0 0 2px; }
+  .sub { opacity: .7; margin: 0 0 14px; max-width: 980px; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  button { font: inherit; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 250px 1fr; gap: 10px; padding: 3px 0; border-bottom: 1px solid rgba(128,128,128,.18); }
+  .k { opacity: .6; }
+  .v { overflow-wrap: anywhere; }
+  .yes { color: #1a7f37; font-weight: 600; }
+  .no  { color: #cf222e; font-weight: 600; }
+  .card { border: 1px solid rgba(128,128,128,.3); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .card h2 { font-size: 13px; margin: 0 0 8px; }
+  pre { white-space: pre-wrap; margin: 8px 0 0; opacity: .8; }
+  .hint { opacity: .65; margin: 14px 0 0; max-width: 980px; }
+</style>
+
+<h1>Input Monitoring registration probe - PROTOTYPE, issue #89</h1>
+<p class="sub">
+  This app preserves the #46 host/helper setup and separates the possible
+  triggers. After every button, the full API state is rendered below. Watch
+  System Settings &gt; Privacy &amp; Security &gt; Input Monitoring between actions;
+  the pane itself is the evidence this probe cannot read programmatically.
+  Bundle ID <b>BUNDLE_ID_PLACEHOLDER</b>, JavaScript tag <b>JS_BUILD_TAG_PLACEHOLDER</b>.
+</p>
+
+<div class="bar">
+  <button data-operation="check">Read state only</button>
+  <button data-operation="accessibility-only">Accessibility request only</button>
+  <button data-operation="request-only">IOHIDRequestAccess only</button>
+  <button data-operation="tap-only">Listen-only event tap only</button>
+  <button data-operation="request-and-tap">Request then event tap</button>
+  <button data-act="copy">Copy report to clipboard</button>
+  <button data-act="clear">Clear</button>
+</div>
+
+<div id="out"></div>
+<p class="hint">
+  Use a fresh bundle ID for each arm so a previous grant cannot make a later
+  trigger look effective. Launch this app with <code>open</code>, not by running
+  its executable from a terminal: responsible-process attribution is part of
+  the experiment.
+</p>
+
+<script>
+  const { ipcRenderer, clipboard } = require("electron");
+  const output = document.getElementById("out");
+  const collected = [];
+  const booleanKeys = new Set([
+    "reportedTrusted", "functionallyTrusted", "reportedGranted", "requestAttempted",
+    "requestResult", "tapAttempted", "tapCreated", "adhocSigned",
+  ]);
+
+  function flatten(value, prefix = "") {
+    const rows = [];
+    for (const [key, child] of Object.entries(value || {})) {
+      const fullKey = prefix ? `${prefix}.${key}` : key;
+      if (child && typeof child === "object" && !Array.isArray(child)) rows.push(...flatten(child, fullKey));
+      else rows.push([fullKey, child]);
+    }
+    return rows;
+  }
+
+  function render(payload) {
+    collected.push(payload);
+    const card = document.createElement("div");
+    card.className = "card";
+    const title = document.createElement("h2");
+    title.textContent = `${payload.operation} @ ${new Date().toLocaleTimeString()}`;
+    card.appendChild(title);
+    for (const [key, value] of flatten(payload)) {
+      const row = document.createElement("div");
+      row.className = "row";
+      const keyElement = document.createElement("div");
+      keyElement.className = "k";
+      keyElement.textContent = key;
+      const valueElement = document.createElement("div");
+      valueElement.className = "v";
+      const leaf = key.split(".").pop();
+      if (typeof value === "boolean" && booleanKeys.has(leaf)) {
+        valueElement.innerHTML = `<span class="${value ? "yes" : "no"}">${value ? "YES" : "NO"}</span>`;
+      } else {
+        valueElement.textContent = value === null ? "null" : String(value);
+      }
+      row.append(keyElement, valueElement);
+      card.appendChild(row);
+    }
+    output.prepend(card);
+  }
+
+  document.querySelector(".bar").addEventListener("click", async (event) => {
+    const operation = event.target.dataset.operation;
+    const action = event.target.dataset.act;
+    if (action === "clear") {
+      output.innerHTML = "";
+      collected.length = 0;
+      return;
+    }
+    if (action === "copy") {
+      clipboard.writeText(JSON.stringify(collected, null, 2));
+      event.target.textContent = "Copied";
+      setTimeout(() => { event.target.textContent = "Copy report to clipboard"; }, 1200);
+      return;
+    }
+    if (operation) render(await ipcRenderer.invoke("capture", operation));
+  });
+
+  ipcRenderer.invoke("capture", "check").then(render);
+</script>

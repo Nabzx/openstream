@@ -1,0 +1,4 @@
+# PROTOTYPE - throwaway spike for issue #89.
+build/
+vendor/
+logs/
