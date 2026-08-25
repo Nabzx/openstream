@@ -21,11 +21,13 @@ The automated coverage behind the wizard also includes:
 - Four overlay-positioning tests covering centering, the bottom margin, offset work areas, and a custom margin. Run them with `node --test electron/overlayPosition.test.js`. The actual Dock clearance still needs a human check.
 - `node --check` passing for all new and changed JavaScript files.
 
+The overlay's glass/waveform redesign (`vibrancy: "hud"`, the live waveform, "Listening") has no automated coverage beyond that `node --check` and `npm run build` passing - whether the vibrancy actually renders and how the waveform looks and feels while speaking are exactly the kind of thing that needs a human on a real screen, not a headless session.
+
 The wizard checks the build, then walks through seven stages:
 
 1. Check that the Electron runtime has not been revoked by Gatekeeper, then run the automated test suite and typecheck on an Apple Silicon Mac.
 2. Start OpenStream and grant Microphone, Input Monitoring, and Accessibility permissions.
-3. Use `Control+Option+D` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it.
+3. Use `Control+Option+D` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock, and shows a real frosted-glass blur (desktop content behind it should look visibly blurred, not a flat dark box) with a waveform that audibly reacts to your voice. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it. If the overlay looks like a flat dark rectangle with no blur, check System Settings > Accessibility > Display > Reduce Transparency isn't enabled - that setting flattens all vibrancy effects system-wide.
 4. Dictate into TextEdit and confirm the finished text is inserted once.
 5. Inspect both model-server listeners and sample their TCP connections during a dictation. Ports 8178 and 8179 must stay on `127.0.0.1`.
 6. Measure three warm dictations from key release to confirmed insertion. Every measurement must be below 1000 ms.
