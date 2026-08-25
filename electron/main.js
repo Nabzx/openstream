@@ -95,10 +95,16 @@ function createCaptureWindow() {
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
 }
 
+// The resting size for the recording/idle waveform - named so
+// hideHeldResult() below can't drift from createOverlayWindow's initial
+// size the way it did once already (merge artifact: it briefly resized
+// back to the pre-redesign 180x52 instead of this).
+const OVERLAY_RESTING_SIZE = [220, 56];
+
 function createOverlayWindow() {
   overlayWin = new BrowserWindow({
-    width: 220,
-    height: 56,
+    width: OVERLAY_RESTING_SIZE[0],
+    height: OVERLAY_RESTING_SIZE[1],
     show: false,
     frame: false,
     transparent: true,
@@ -139,7 +145,7 @@ function hideHeldResult() {
   overlayWin.hide();
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setFocusable(false);
-  overlayWin.setSize(180, 52, false);
+  overlayWin.setSize(...OVERLAY_RESTING_SIZE, false);
 }
 
 const heldResultController = createHeldResultController({
