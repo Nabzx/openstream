@@ -92,6 +92,17 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+
+  // Temporary diagnostics for the "no HUD appears" report - see the PR this
+  // landed in. Confirms the overlay's own page actually loaded, since a
+  // silent load failure would otherwise look identical to a positioning bug.
+  overlayWin.webContents.on("did-finish-load", () => {
+    console.log("[overlay] page finished loading");
+  });
+  overlayWin.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
+    console.error(`[overlay] page failed to load: ${errorCode} ${errorDescription}`);
+  });
+
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
@@ -154,6 +165,10 @@ function positionOverlayAtBottom() {
   const [width, height] = overlayWin.getSize();
   const { x, y } = computeBottomCenteredPosition(display.workArea, width, height);
   overlayWin.setPosition(x, y);
+  // Temporary diagnostics for the "no HUD appears" report.
+  console.log(
+    `[overlay] positioned at (${x}, ${y}), size ${width}x${height}, workArea ${JSON.stringify(display.workArea)}`
+  );
 }
 
 function setUserVisibleState(state) {
@@ -164,6 +179,8 @@ function setUserVisibleState(state) {
   if (state === "recording") {
     positionOverlayAtBottom();
     overlayWin.showInactive();
+    // Temporary diagnostics for the "no HUD appears" report.
+    console.log(`[overlay] showInactive() called, isVisible=${overlayWin.isVisible()}, opacity=${overlayWin.getOpacity()}`);
   } else {
     overlayWin.hide();
   }
