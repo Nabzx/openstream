@@ -2,7 +2,7 @@
 
 OpenStream is a local-first voice dictation app for Apple Silicon Macs. Hold a global hotkey, speak, then release it to place the transcript in the frontmost application. Audio and model requests stay on the Mac.
 
-This repository is a development fork of [Nabzx/openstream](https://github.com/Nabzx/openstream). It now contains a runnable dictation path, an unsigned DMG build, and the start of a stricter coordinator for the next version. There is no published, signed release yet.
+This repository is a development fork of [Nabzx/openstream](https://github.com/Nabzx/openstream). It now contains a runnable dictation path, an unsigned DMG build, and a tested completed-Dictation intake module. There is no published, signed release yet.
 
 ## What works
 
@@ -17,7 +17,7 @@ The current app can:
 - show recording and transcription state in the tray, plus a small recording overlay
 - build an unsigned Apple Silicon DMG with `npm run dist`
 
-The repository also has tested rules cleanup and a TypeScript dictation coordinator. The coordinator covers context lookup, one-line fields, break-safe applications, paragraph break replies, held delivery, and failure states. That newer path is not wired into the Electron main process yet, so the runnable app still inserts the direct transcription result.
+The runnable path has tested rules cleanup and a completed-Dictation intake module. It covers Context detection, one-line fields, break-safe applications, paragraph break replies, Held results, failure outcomes, and FIFO processing of completed recordings.
 
 ## Why another dictation app
 
@@ -57,7 +57,7 @@ npm start
 - compiles the Swift hotkey and Accessibility helpers
 - downloads and verifies `llama-server` and a roughly 1 GiB SmolLM2 model
 
-The rewrite model files are prepared now, but the app does not start that server or use it during dictation.
+The rewrite model files are prepared now. The app starts that server resident and uses it only for break placement during eligible long Dictations; it never rewrites dictated words.
 
 To run the Vite renderer and Electron in development mode:
 
@@ -90,9 +90,9 @@ Source runs can be attributed to Terminal, Electron, or OpenStream in System Set
 - **Electron and React** provide the menu bar shell, hidden capture window, overlay, and renderer.
 - **The transcription model server** is a pinned `whisper.cpp` build using `ggml-base.en`. Electron supervises it for the life of the app.
 - **Rules cleanup** removes fillers, handles spoken punctuation, fixes a small technical vocabulary list, and segments long run-on text. It is deterministic and tested against a sub-millisecond budget.
-- **The rewrite model server** uses `llama-server` with SmolLM2-1.7B-Instruct. Its files and supervisor exist, but it is not connected to the app. The intended jobs are paragraph break placement and explicit voice edits, not rewriting every dictation.
+- **The rewrite model server** uses `llama-server` with SmolLM2-1.7B-Instruct. It is resident while the app runs and handles paragraph break placement; explicit voice edits are planned, not available.
 - **Native helpers** keep Input Monitoring and Accessibility in separate processes. A blocked Accessibility call cannot disable the global hotkey event tap.
-- **The dictation coordinator** defines the newer end-to-end flow and keeps model, context, delivery, and UI adapters behind one interface.
+- **The Dictation intake module** owns the completed-recording flow behind one interface. Transcription, Context detection, break placement, and delivery remain adapters; tray and Push-to-talk overlay state stays in the Electron shell.
 
 See [CONTEXT.md](CONTEXT.md) for the project's terms, [ROADMAP.md](ROADMAP.md) for the longer plan, and [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md) for the cleanup decision.
 
@@ -108,7 +108,7 @@ The global hotkey, macOS permission prompts, microphone capture, and insertion i
 
 ## Project status
 
-OpenStream is pre-alpha. The main slice works from source, but installation, permission handling, delivery recovery, context-aware cleanup, and the newer coordinator integration are unfinished. The app is not ready for everyday use or outside contributors yet.
+OpenStream is pre-alpha. The main slice works from source, but installation, permission handling, delivery recovery, and context-aware cleanup are unfinished. The app is not ready for everyday use or outside contributors yet.
 
 Upstream issue history records most of the design work. Changes specific to this fork should target `Zazai840/openstream`, not the upstream repository.
 
