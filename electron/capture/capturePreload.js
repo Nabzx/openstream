@@ -5,9 +5,9 @@ const { contextBridge, ipcRenderer } = require("electron");
 // hidden renderer to live in.
 contextBridge.exposeInMainWorld("capture", {
   onStart: (callback) => ipcRenderer.on("start-recording", callback),
-  onStop: (callback) => ipcRenderer.on("stop-recording", callback),
+  onStop: (callback) => ipcRenderer.on("stop-recording", (_event, timing) => callback(timing)),
   sendReady: () => ipcRenderer.send("capture-ready"),
-  sendRecording: (wavBuffer) => ipcRenderer.send("recording-complete", wavBuffer),
+  sendRecording: (wavBuffer, timing) => ipcRenderer.send("recording-complete", wavBuffer, timing),
   sendSoundLevel: (level) => ipcRenderer.send("sound-level", level),
   sendError: (message) => ipcRenderer.send("recording-error", message),
 });

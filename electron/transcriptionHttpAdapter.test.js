@@ -14,7 +14,7 @@ test("posts a completed WAV recording to the local transcription contract", asyn
 
   const result = await adapter.transcribe(Buffer.from("RIFF wav bytes"));
 
-  assert.deepEqual(result, { text: "hello world" });
+  assert.equal(result, "hello world");
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "http://127.0.0.1:8178/inference");
   assert.equal(calls[0].options.method, "POST");

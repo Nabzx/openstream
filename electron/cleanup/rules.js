@@ -39,6 +39,32 @@ const SPOKEN_PUNCT = [
   [/[ \t]*\bslash\b[ \t]*/gi, "/"],
 ];
 
+// Casual messaging emoji (#131). Every trigger ends in the explicit word
+// "emoji" - unlike SPOKEN_PUNCT's "period"/"comma", every word here
+// ("heart", "fire", "laughing", "hundred") is common in ordinary narrative
+// prose on its own, so an unmarked trigger would misfire constantly
+// ("my heart is racing", "the fire alarm"). Requiring "emoji" makes every
+// match a deliberate, explicit request rather than an ordinary word this
+// engine has to guess the intent of.
+//
+// Unlike a newline (SPOKEN_PUNCT), an emoji is never gated behind
+// breakSafe/oneLineBox: a literal newline can submit a form or send a chat
+// message early, which is a functional break, not just a style mismatch -
+// an emoji character carries no such risk, and requiring the explicit
+// "emoji" word already means the user opted in for this specific
+// utterance. Gating it the same way newlines are gated would be solving a
+// problem this transformation doesn't actually have.
+const SPOKEN_EMOJI = [
+  [/\b(smiley|smiling) face emoji\b/gi, "🙂"],
+  [/\bheart emoji\b/gi, "❤️"],
+  [/\bthumbs up emoji\b/gi, "👍"],
+  [/\bthumbs down emoji\b/gi, "👎"],
+  [/\blaughing emoji\b/gi, "😂"],
+  [/\bcrying emoji\b/gi, "😢"],
+  [/\bfire emoji\b/gi, "🔥"],
+  [/\b(one )?hundred emoji\b/gi, "💯"],
+];
+
 // Technical vocabulary dictation reliably mangles. A fixed list for now; the
 // codebase-vocabulary scanner (#16) is a separate, dynamic source later.
 const VOCAB = [
@@ -97,6 +123,16 @@ function applySpokenPunct(text, { allowNewlines }) {
   text = text.replace(/\.([?!])/g, "$1");
   text = text.replace(/([?!,;:])\./g, "$1");
   text = text.replace(/([.,!?;:])\1+/g, "$1");
+  return text;
+}
+
+function applySpokenEmoji(text) {
+  for (const [pattern, replacement] of SPOKEN_EMOJI) {
+    text = text.replace(pattern, replacement);
+  }
+  // Tidy doubled spacing an emoji substitution can leave behind - the
+  // trigger phrase is usually longer than the emoji it becomes.
+  text = text.replace(/[ \t]{2,}/g, " ");
   return text;
 }
 
@@ -203,6 +239,7 @@ function cleanup(text, options = {}) {
   text = stripFillers(text);
   text = collapseRepeats(text);
   text = applySpokenPunct(text, { allowNewlines });
+  text = applySpokenEmoji(text);
   text = stripLeadingFillers(text);
   if (!oneLineBox) {
     text = segmentSentences(text);
@@ -223,12 +260,14 @@ module.exports = {
   PHRASE_FILLERS,
   LEADING_FILLERS,
   SPOKEN_PUNCT,
+  SPOKEN_EMOJI,
   VOCAB,
   SENT_END,
   SENT_BOUNDARY_SPLIT,
   stripFillers,
   collapseRepeats,
   applySpokenPunct,
+  applySpokenEmoji,
   stripLeadingFillers,
   segmentSentences,
   applyVocab,
