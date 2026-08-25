@@ -97,8 +97,8 @@ function createCaptureWindow() {
 
 function createOverlayWindow() {
   overlayWin = new BrowserWindow({
-    width: 180,
-    height: 52,
+    width: 220,
+    height: 56,
     show: false,
     frame: false,
     transparent: true,
@@ -106,6 +106,14 @@ function createOverlayWindow() {
     focusable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
+    // Real macOS frosted-glass blur, not a flat dark box - "hud" is the
+    // vibrancy material Apple's own HUD-style floating panels use.
+    // visualEffectState defaults to "follow-window", which renders the
+    // dimmer inactive appearance for a window that's never focused (this
+    // one is always shown via showInactive()) - forcing "active" keeps the
+    // vibrancy at full strength regardless.
+    vibrancy: "hud",
+    visualEffectState: "active",
     webPreferences: {
       preload: path.join(__dirname, "overlay", "overlayPreload.js"),
       contextIsolation: true,
@@ -114,17 +122,6 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-
-  // Temporary diagnostics for the "no HUD appears" report - see the PR this
-  // landed in. Confirms the overlay's own page actually loaded, since a
-  // silent load failure would otherwise look identical to a positioning bug.
-  overlayWin.webContents.on("did-finish-load", () => {
-    console.log("[overlay] page finished loading");
-  });
-  overlayWin.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
-    console.error(`[overlay] page failed to load: ${errorCode} ${errorDescription}`);
-  });
-
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
@@ -218,10 +215,6 @@ function positionOverlayAtBottom() {
   const [width, height] = overlayWin.getSize();
   const { x, y } = computeBottomCenteredPosition(display.workArea, width, height);
   overlayWin.setPosition(x, y);
-  // Temporary diagnostics for the "no HUD appears" report.
-  console.log(
-    `[overlay] positioned at (${x}, ${y}), size ${width}x${height}, workArea ${JSON.stringify(display.workArea)}`
-  );
 }
 
 function setUserVisibleState(state, details) {
@@ -241,8 +234,6 @@ function setUserVisibleState(state, details) {
   overlayWin.webContents.send("dictation-state", state);
   if (state === "recording") {
     overlayWin.showInactive();
-    // Temporary diagnostics for the "no HUD appears" report.
-    console.log(`[overlay] showInactive() called, isVisible=${overlayWin.isVisible()}, opacity=${overlayWin.getOpacity()}`);
   } else {
     overlayWin.hide();
   }
