@@ -10,11 +10,16 @@
   <body data-state="recording">
     <main class="overlay" aria-live="polite">
       <section class="recording" data-recording>
-        <span class="recording-dot" aria-hidden="true"></span>
-        <span data-status>Recording</span>
-        <span class="sound-meter" aria-hidden="true">
-          <span class="sound-meter__level" data-sound-level></span>
+        <span class="waveform" aria-hidden="true">
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
+          <span class="waveform__bar" data-bar></span>
         </span>
+        <span data-status>Listening</span>
       </section>
       <section class="held-result" data-held-result>
         <h1>Couldn't insert this dictation</h1>
