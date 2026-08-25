@@ -136,6 +136,12 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Reapplied explicitly, not just passed to the constructor: on a
+  // frameless + transparent window this pairing has been unreliable at
+  // construction time on some Electron/macOS combinations, and calling
+  // setVibrancy() again once the native window actually exists is the
+  // documented workaround.
+  overlayWin.setVibrancy("hud");
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
