@@ -127,14 +127,21 @@ test("does not treat 'delete that <noun>' as a correction command", () => {
   assert.equal(cleanup("delete that branch before you push"), "Delete that branch before you push.");
 });
 
-test("self-correction: a trigger right after a finished sentence is a known limitation", () => {
-  // Reaching back into an already-finished earlier sentence isn't
-  // regex-matchable (see #127's scoping note) - the trigger phrase itself
-  // is dropped as a safe no-op rather than guessing which sentence to
-  // delete, leaving the mistaken sentence in place.
+test("#174: a trigger punctuated as its own finished sentence still discards the preceding one", () => {
   assert.equal(
     cleanup("Call the client today. Scratch that. Call them tomorrow instead."),
-    "Call the client today. Call them tomorrow instead."
+    "Call them tomorrow instead."
+  );
+});
+
+test("#174: self-correction only reaches back one clause, never further", () => {
+  // "A. B. Scratch that." means "undo B", not "undo A and B" - a second
+  // sentence boundary still stops the scan, same as before #174. Going
+  // further needs #125 (asking the rewrite model which sentence a
+  // correction means), not a regex guess.
+  assert.equal(
+    cleanup("I did the thing yesterday. Then I called them. Scratch that."),
+    "I did the thing yesterday."
   );
 });
 

@@ -140,14 +140,26 @@ const SENT_BOUNDARY_SPLIT = /(\n+|(?<=[.!?])\s+)/;
 // very plausible content in a dev-focused dictation tool - are left alone.
 //
 // Scope: only the clause in the same comma/sentence run as the trigger.
-// Reaching back across an already-finished earlier sentence ("no wait, I
-// meant the second one") isn't reliably regex-matchable; per #127 that's a
-// future #125-shaped follow-up (ask the rewrite model which sentence a
-// correction refers to). Until then, a trigger with nothing to delete in
-// its own run (e.g. it lands right after a full stop) is simply dropped as
-// a safe no-op rather than guessing which earlier sentence it means.
+// #174: the leading boundary used to only cross a comma (",?"), so "X.
+// Scratch that." (whisper punctuating the trigger as its own finished
+// sentence, at least as common as a comma) matched nothing before the
+// trigger and silently deleted just the trigger words, leaving the mistake
+// X in place - worse than a no-op, since the output looked clean. "[.!?,]?"
+// lets the same lazy scan cross one period/!/? the same way it already
+// crossed one comma, so it reaches back to the start of whichever single
+// clause precedes the trigger, full stop or not. It still can't reach past
+// a *second* boundary - "A. B. Scratch that." only deletes B, not A - see
+// the reach-back-one-clause-only test below; going further needs #125
+// (asking the rewrite model which earlier sentence a correction means).
+//
+// The trailing lookahead is unrelated and deliberately untouched: it's
+// what stops "delete that file"/"delete that branch before you push" -
+// extremely plausible dictated content in a dev tool - from being read as
+// a correction command. A trigger with more words in the same breath and
+// no pause after it is content, not a command, and that's a genuine
+// ambiguity regex can't resolve, not a bug.
 const SELF_CORRECTION =
-  /(?:^|(?<=[.!?,]\s))[^.!?,]*?,?\s*\b(?:scratch|delete) that\b(?=[.,!?]|\s*$)[.,!?]?\s*/gi;
+  /(?:^|(?<=[.!?,]\s))[^.!?,]*?[.!?,]?\s*\b(?:scratch|delete) that\b(?=[.,!?]|\s*$)[.,!?]?\s*/gi;
 
 function applySelfCorrection(text) {
   return text.replace(SELF_CORRECTION, "");

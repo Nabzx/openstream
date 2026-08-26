@@ -11,7 +11,10 @@ function createRewriteModelServer(options = {}) {
     root = resourcesRoot(),
     createSupervisor = createModelSupervisor,
   } = options;
-  const binaryPath = path.join(root, "bin", "llama-server");
+  // llama-server links its dylibs with an @loader_path rpath (see
+  // fetch-llama.sh), so it has to run from inside the directory it was
+  // extracted into, not just anywhere on disk.
+  const binaryPath = path.join(root, "bin", "llama", "llama-server");
   const modelPath = path.join(root, "models", "SmolLM2-1.7B-Instruct-Q4_K_M.gguf");
   const supervisor = createSupervisor({
     roleName: "rewrite model server",
