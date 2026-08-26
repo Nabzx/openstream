@@ -221,6 +221,48 @@ test("brace/bracket symbols don't regress paren, dash, or percent tidy-up", () =
   assert.equal(cleanup("fifty percent off"), "Fifty% off.");
 });
 
+test("spoken tab/indent inserts a literal tab, break-safe gated like new line", () => {
+  assert.equal(cleanup("say tab hello"), "Say tab hello.");
+  assert.equal(
+    cleanup("if open paren x close paren open brace new line tab return x new line close brace", {
+      breakSafe: true,
+    }),
+    "If (x) {\n\tReturn x\n}."
+  );
+  assert.equal(
+    cleanup("if open paren x close paren open brace tab return x new line close brace", {
+      breakSafe: true,
+    }),
+    "If (x) {\treturn x\n}."
+  );
+  assert.equal(cleanup("new line tab tab deeply nested", { breakSafe: true }), "Deeply nested.");
+  // Deny-by-default (#45 §3): outside a break-safe app, tab degrades to a
+  // space, same as new line/new paragraph - and that space is then trimmed
+  // from next to the braces, same as it already is next to parens.
+  assert.equal(
+    cleanup("if open paren x close paren open brace new line tab return x new line close brace"),
+    "If (x) {return x}."
+  );
+});
+
+test("does not treat ordinary uses of the word 'tab' as a command", () => {
+  // Unlike open brace/bracket, "tab" is an ordinary, very common noun -
+  // the trigger only fires at the start of a clause (start of input, or
+  // right after ./!/?/,/{/[/( or a newline), where indentation actually
+  // belongs, and where "switch to the other tab" never lands, since that
+  // phrasing always has words before "tab" in the same clause.
+  const cases = [
+    "switch to the other tab",
+    "open a new tab in chrome",
+    "i have too many tabs open",
+    "he picked up the tab for dinner",
+    "keep tabs on this for me",
+  ];
+  for (const raw of cases) {
+    assert.doesNotMatch(cleanup(raw, { breakSafe: true }), /\t/, raw);
+  }
+});
+
 test("parseNumberWords: standard English number-word grammar up to the thousands", () => {
   assert.equal(parseNumberWords("twenty"), 20);
   assert.equal(parseNumberWords("one hundred and fifty"), 150);
