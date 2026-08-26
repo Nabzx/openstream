@@ -134,6 +134,31 @@ test("one-line box overrides break-safe: still no newline", () => {
   assert.ok(!out.includes("\n"));
 });
 
+test("bullet point / new bullet start a markdown list, break-safe only", () => {
+  const out = cleanup("shopping list bullet point milk bullet point eggs", { breakSafe: true });
+  assert.equal(out, "Shopping list\n- Milk\n- Eggs.");
+
+  const outAlt = cleanup("shopping list new bullet milk new bullet eggs", { breakSafe: true });
+  assert.equal(outAlt, "Shopping list\n- Milk\n- Eggs.");
+});
+
+test("bullet point outside a break-safe app degrades to flowing prose, no dash leaks in", () => {
+  const out = cleanup("shopping list bullet point milk bullet point eggs");
+  assert.equal(out, "Shopping list milk eggs.");
+  assert.ok(!out.includes("-"));
+  assert.ok(!out.includes("\n"));
+});
+
+test("bullet point in a one-line field also degrades, even if the app is break-safe", () => {
+  const out = cleanup("milk bullet point eggs", { breakSafe: true, oneLineBox: true });
+  assert.equal(out, "Milk eggs");
+});
+
+test("bullet marker doesn't break unrelated dash/paren tidy-up", () => {
+  assert.equal(cleanup("alpha dash beta"), "Alpha-beta.");
+  assert.equal(cleanup("call open paren now close paren"), "Call (now).");
+});
+
 test("segments long run-ons on conjunctions", () => {
   const out = cleanup(samples.find((s) => s.id === "sent-3").messy);
   assert.ok(out.includes(". "), "expected at least one inserted sentence break");
