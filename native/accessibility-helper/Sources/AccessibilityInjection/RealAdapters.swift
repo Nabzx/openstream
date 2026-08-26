@@ -103,9 +103,11 @@ public final class RealAppSwitchTracker: AppSwitchTracking {
 
 public final class RealFocusResolver: FocusResolving {
     private let tracker: RealAppSwitchTracker
+    private let log: (String) -> Void
 
-    public init(tracker: RealAppSwitchTracker) {
+    public init(tracker: RealAppSwitchTracker, log: @escaping (String) -> Void = { _ in }) {
         self.tracker = tracker
+        self.log = log
     }
 
     // Resolves the focused element once per dictation. #12 folded this into
@@ -115,7 +117,10 @@ public final class RealFocusResolver: FocusResolving {
     // (InjectionEngine's fallback chain) reuses this same target rather
     // than re-asking.
     public func resolveFocusedElement(deadlineMs: Double) -> AccessibilityTarget? {
-        guard let frontApp = tracker.currentFrontmostApp() else { return nil }
+        guard let frontApp = tracker.currentFrontmostApp() else {
+            log("resolveFocusedElement: tracker has no frontmost app cached")
+            return nil
+        }
 
         let appElement = AXUIElementCreateApplication(frontApp.processIdentifier)
         AXUIElementSetMessagingTimeout(appElement, Float(deadlineMs / 1000.0))
@@ -123,15 +128,26 @@ public final class RealFocusResolver: FocusResolving {
 
         var focusedRef: CFTypeRef?
         let focusErr = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
-        guard focusErr == .success, let focusedRef = focusedRef else { return nil }
+        guard focusErr == .success, let focusedRef = focusedRef else {
+            log("resolveFocusedElement: kAXFocusedUIElementAttribute failed for " +
+                "\(frontApp.bundleIdentifier ?? "unknown bundle") (pid \(frontApp.processIdentifier)), " +
+                "AXError \(focusErr.rawValue), trusted=\(AXIsProcessTrusted())")
+            return nil
+        }
 
         return RealAXTarget(focusedRef as! AXUIElement) // swiftlint:disable:this force_cast
     }
 
     public func focusContext(deadlineMs: Double) -> (bundleId: String, isOneLineField: Bool)? {
-        guard let frontApp = tracker.currentFrontmostApp(),
-              let bundleId = frontApp.bundleIdentifier,
-              let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
+        guard let frontApp = tracker.currentFrontmostApp() else {
+            log("focusContext: tracker has no frontmost app cached")
+            return nil
+        }
+        guard let bundleId = frontApp.bundleIdentifier else {
+            log("focusContext: frontmost app \(frontApp.localizedName ?? "?") (pid \(frontApp.processIdentifier)) has no bundle identifier")
+            return nil
+        }
+        guard let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
             return nil
         }
 

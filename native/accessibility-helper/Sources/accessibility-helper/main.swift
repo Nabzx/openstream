@@ -37,7 +37,7 @@ Thread {
 }.start()
 
 let config = Config()
-let focusResolver = RealFocusResolver(tracker: tracker)
+let focusResolver = RealFocusResolver(tracker: tracker, log: eprint)
 let engine = InjectionEngine(
     config: config,
     focusResolver: focusResolver,
