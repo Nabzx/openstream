@@ -213,6 +213,14 @@ const pushToTalkCoordinator = createPushToTalkCoordinator({
     captureWin.webContents.send("stop-recording", timing);
   },
   setUserVisibleState,
+  onStuckRecording() {
+    // See #140/pushToTalkCoordinator.js: this fires only when keyUp never
+    // arrived for a whole recording. Previously that left `recording` stuck
+    // true forever with no signal at all - every press after it silently
+    // did nothing. Logging it is the diagnostic #140 needs to confirm
+    // whether this is what's actually happening in the field.
+    console.error("[dictation] keyUp never arrived - force-stopped after the safety timeout (see #140)");
+  },
 });
 
 function loadTrayIcons() {
