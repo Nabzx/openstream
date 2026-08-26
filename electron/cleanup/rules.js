@@ -46,6 +46,34 @@ const SPOKEN_PUNCT = [
   [/\bclose paren(thesis)?\b/gi, ")"],
   [/[ \t]*\bdash\b[ \t]*/gi, "-"],
   [/[ \t]*\bslash\b[ \t]*/gi, "/"],
+  // #128: symbols, same table shape as the punctuation above them. Each
+  // self-trims whitespace on whichever side it naturally attaches to in
+  // real usage, matching how open/close paren already do this
+  // asymmetrically rather than uniformly - "fifty percent" -> "50%" (no
+  // space before the mark), "dollar sign fifty" -> "$50" (none after),
+  // "at sign" attaches on both sides like dash does.
+  [/[ \t]*\bpercent\b/gi, "%"],
+  [/\bdollar sign\b[ \t]*/gi, "$"],
+  [/[ \t]*\bat sign\b[ \t]*/gi, "@"],
+  [/\bhashtag\b[ \t]*/gi, "#"],
+  // #129: code-structure symbols, exact same shape as open/close paren
+  // above - the general-punctuation tidy-up below (applySpokenPunct)
+  // already handles the surrounding-whitespace trim for both bracket
+  // types, same as it does for parens.
+  //
+  // Deliberately does not implement "tab"/"indent" (whitespace-inserting,
+  // like a newline, so it would need breakSafe-style gating - but per the
+  // issue, a literal tab only makes sense in a *code editor*, a narrower
+  // set than the general breakSafeApps list Notes/TextEdit also sit on,
+  // and this repo has no such sub-list yet) or case conversion ("snake
+  // case get user name" -> get_user_name - a pattern-based rewrite closer
+  // to applyVocab's shape than this table's literal substitution, and the
+  // issue itself asks whether it belongs in this ticket or its own).
+  // Both left as follow-ups needing their own design decision.
+  [/\bopen brace\b/gi, "{"],
+  [/\bclose brace\b/gi, "}"],
+  [/\bopen bracket\b/gi, "["],
+  [/\bclose bracket\b/gi, "]"],
 ];
 
 // Casual messaging emoji (#131). Every trigger ends in the explicit word
@@ -147,13 +175,15 @@ function applySpokenPunct(text, { allowNewlines }) {
     const isNewline = replacement === "\n" || replacement === "\n\n" || replacement === "\n- ";
     text = text.replace(pattern, isNewline && !allowNewlines ? " " : replacement);
   }
-  // Tidy the space the replaced word left behind: " ." -> "."
-  text = text.replace(/\s+([.,!?;:)])/g, "$1");
+  // Tidy the space the replaced word left behind: " ." -> "." - ] and }
+  // (#129) get the same treatment as the ) they're modelled on.
+  text = text.replace(/\s+([.,!?;:)\]}])/g, "$1");
   // (?<!\n): a dash right after a newline is #124's list marker, which
   // needs its trailing space ("- item") - unlike the hyphen use of "dash"
   // (SPOKEN_PUNCT's own pattern for that already consumes its surrounding
   // whitespace, so this tidy rule matching dash at all is redundant there).
-  text = text.replace(/(?<!\n)([(/-])\s+/g, "$1");
+  // [ and { (#129) get the same leading-side trim as the ( they're modelled on.
+  text = text.replace(/(?<!\n)([(/\-[{])\s+/g, "$1");
   // Same tidy for a newline a spoken "new line"/"new paragraph" just inserted.
   text = text.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n");
   // whisper often already punctuated the sentence, so a spoken "period" can
@@ -172,6 +202,99 @@ function applySpokenEmoji(text) {
   // Tidy doubled spacing an emoji substitution can leave behind - the
   // trigger phrase is usually longer than the emoji it becomes.
   text = text.replace(/[ \t]{2,}/g, " ");
+  return text;
+}
+
+// #128: "quote ... end quote" wraps the spoken span in "...". Unlike a
+// newline, a quotation mark carries no functional risk in any app - it
+// can't submit a form or send a message - so this is never gated behind
+// breakSafe/oneLineBox, the same reasoning SPOKEN_EMOJI already uses.
+// Non-greedy + the g flag: "quote a end quote and quote b end quote"
+// matches each pair separately rather than spanning from the first
+// "quote" to the last "end quote".
+//
+// Scoped to quoting only, not "bold ... end bold" or similar markdown
+// emphasis - #128 itself flags that literal **markdown** characters are
+// meaningful in Slack or a markdown editor but wrong in a plain-text field
+// or code file, which needs its own app-context gate this repo doesn't
+// have yet (breakSafeApps governs newline safety, a different concern).
+// Left as a follow-up rather than guessing at that gate here.
+function applyQuoteMarkers(text) {
+  return text.replace(/\bquote\b\s+(.+?)\s+\bend quote\b/gi, (_match, inner) => `"${inner}"`);
+}
+
+// #130: numeric entities. Scoped to currency only - the one category the
+// issue treats as relatively clear-cut ("unit-anchored patterns"). Phone
+// numbers/confirmation codes and dates/times are deliberately not
+// implemented here: the issue's own methodology is to measure what whisper
+// already renders correctly on real dictation samples before assuming a
+// gap exists (whisper often already emits digit sequences, not words), and
+// for dates it explicitly flags "leave it as prose, don't guess" as a
+// likely-correct outcome rather than a gap to fill. Neither of those is
+// something this change can verify without real audio samples, so both
+// are left as follow-ups rather than guessed at.
+const NUMBER_WORDS = {
+  // "a"/"an" as a number word only ever means one - "a hundred dollars",
+  // "a dollar" - the same idiom that already lets English speakers say
+  // "a hundred" instead of "one hundred".
+  a: 1, an: 1,
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+// Parses a run of spoken number words (up to the thousands) into an
+// integer, standard English number-word grammar. Returns null on anything
+// unrecognised rather than guessing - a caller only substitutes the digit
+// form when this parses cleanly.
+function parseNumberWords(phrase) {
+  const words = phrase.toLowerCase().split(/[\s-]+/).filter((word) => word && word !== "and");
+  if (words.length === 0) return null;
+
+  let total = 0;
+  let current = 0;
+  for (const word of words) {
+    if (word in NUMBER_WORDS) {
+      current += NUMBER_WORDS[word];
+    } else if (word === "hundred") {
+      current = (current || 1) * 100;
+    } else if (word === "thousand") {
+      total += (current || 1) * 1000;
+      current = 0;
+    } else {
+      return null;
+    }
+  }
+  return total + current;
+}
+
+const NUMBER_WORD_PATTERN =
+  "(?:a|an|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|" +
+  "sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|" +
+  "thousand|and)";
+const NUMBER_PHRASE_PATTERN = `${NUMBER_WORD_PATTERN}(?:[\\s-]+${NUMBER_WORD_PATTERN})*`;
+
+function applyCurrency(text) {
+  // Combined form first, so a standalone "cents" pass below can't run on a
+  // span this pass already consumed.
+  text = text.replace(
+    new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+dollars?\\s+and\\s+(${NUMBER_PHRASE_PATTERN})\\s+cents?\\b`, "gi"),
+    (match, dollarsWords, centsWords) => {
+      const dollars = parseNumberWords(dollarsWords);
+      const cents = parseNumberWords(centsWords);
+      if (dollars === null || cents === null || cents > 99) return match;
+      return `$${dollars}.${String(cents).padStart(2, "0")}`;
+    }
+  );
+  text = text.replace(new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+dollars?\\b`, "gi"), (match, words) => {
+    const dollars = parseNumberWords(words);
+    return dollars === null ? match : `$${dollars}`;
+  });
+  text = text.replace(new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+cents?\\b`, "gi"), (match, words) => {
+    const cents = parseNumberWords(words);
+    return cents === null || cents > 99 ? match : `$0.${String(cents).padStart(2, "0")}`;
+  });
   return text;
 }
 
@@ -246,11 +369,11 @@ function capitalise(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   return parts
     .map((part) => {
-      // A #124 bullet marker sits before the sentence-start letter, not on
-      // it - "- milk" should capitalise to "- Milk", not leave the marker's
-      // dash mistaken for the first character.
-      const marker = part.match(/^-\s+/);
-      const prefix = marker ? marker[0] : "";
+      // A #124 bullet marker and/or a #128 opening quote can sit before the
+      // sentence-start letter without being it - "- milk" should capitalise
+      // to "- Milk", and a quote opening a sentence ("hello) to ("Hello,
+      // not leave the marker/quote mistaken for the first character.
+      const prefix = part.match(/^(-\s+)?"?/)[0];
       const rest = part.slice(prefix.length);
       return rest && /[a-zA-Z]/.test(rest[0]) ? prefix + rest[0].toUpperCase() + rest.slice(1) : part;
     })
@@ -290,6 +413,8 @@ function cleanup(text, options = {}) {
   text = collapseRepeats(text);
   text = applySpokenPunct(text, { allowNewlines });
   text = applySpokenEmoji(text);
+  text = applyQuoteMarkers(text);
+  text = applyCurrency(text);
   text = stripLeadingFillers(text);
   if (!oneLineBox) {
     text = segmentSentences(text);
@@ -320,6 +445,9 @@ module.exports = {
   collapseRepeats,
   applySpokenPunct,
   applySpokenEmoji,
+  applyQuoteMarkers,
+  parseNumberWords,
+  applyCurrency,
   stripLeadingFillers,
   segmentSentences,
   applyVocab,
