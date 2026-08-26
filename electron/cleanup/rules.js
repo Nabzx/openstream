@@ -56,6 +56,24 @@ const SPOKEN_PUNCT = [
   [/\bdollar sign\b[ \t]*/gi, "$"],
   [/[ \t]*\bat sign\b[ \t]*/gi, "@"],
   [/\bhashtag\b[ \t]*/gi, "#"],
+  // #129: code-structure symbols, exact same shape as open/close paren
+  // above - the general-punctuation tidy-up below (applySpokenPunct)
+  // already handles the surrounding-whitespace trim for both bracket
+  // types, same as it does for parens.
+  //
+  // Deliberately does not implement "tab"/"indent" (whitespace-inserting,
+  // like a newline, so it would need breakSafe-style gating - but per the
+  // issue, a literal tab only makes sense in a *code editor*, a narrower
+  // set than the general breakSafeApps list Notes/TextEdit also sit on,
+  // and this repo has no such sub-list yet) or case conversion ("snake
+  // case get user name" -> get_user_name - a pattern-based rewrite closer
+  // to applyVocab's shape than this table's literal substitution, and the
+  // issue itself asks whether it belongs in this ticket or its own).
+  // Both left as follow-ups needing their own design decision.
+  [/\bopen brace\b/gi, "{"],
+  [/\bclose brace\b/gi, "}"],
+  [/\bopen bracket\b/gi, "["],
+  [/\bclose bracket\b/gi, "]"],
 ];
 
 // Casual messaging emoji (#131). Every trigger ends in the explicit word
@@ -135,13 +153,15 @@ function applySpokenPunct(text, { allowNewlines }) {
     const isNewline = replacement === "\n" || replacement === "\n\n" || replacement === "\n- ";
     text = text.replace(pattern, isNewline && !allowNewlines ? " " : replacement);
   }
-  // Tidy the space the replaced word left behind: " ." -> "."
-  text = text.replace(/\s+([.,!?;:)])/g, "$1");
+  // Tidy the space the replaced word left behind: " ." -> "." - ] and }
+  // (#129) get the same treatment as the ) they're modelled on.
+  text = text.replace(/\s+([.,!?;:)\]}])/g, "$1");
   // (?<!\n): a dash right after a newline is #124's list marker, which
   // needs its trailing space ("- item") - unlike the hyphen use of "dash"
   // (SPOKEN_PUNCT's own pattern for that already consumes its surrounding
   // whitespace, so this tidy rule matching dash at all is redundant there).
-  text = text.replace(/(?<!\n)([(/-])\s+/g, "$1");
+  // [ and { (#129) get the same leading-side trim as the ( they're modelled on.
+  text = text.replace(/(?<!\n)([(/\-[{])\s+/g, "$1");
   // Same tidy for a newline a spoken "new line"/"new paragraph" just inserted.
   text = text.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n");
   // whisper often already punctuated the sentence, so a spoken "period" can
