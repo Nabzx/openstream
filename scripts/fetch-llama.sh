@@ -48,7 +48,7 @@ else
   TMP_TAR="$TMP_DIR/$LLAMA_ASSET"
 
   echo "    fetching $LLAMA_ASSET"
-  curl -fL --progress-bar -o "$TMP_TAR" "$LLAMA_URL"
+  curl -fL --http1.1 --retry 3 --retry-delay 2 --progress-bar -o "$TMP_TAR" "$LLAMA_URL"
   ACTUAL_SHA256="$(sha256 "$TMP_TAR")"
   if [ "$ACTUAL_SHA256" != "$LLAMA_SHA256" ]; then
     echo "error: $LLAMA_ASSET checksum mismatch" >&2
@@ -74,7 +74,7 @@ if [ -f "$MODEL_PATH" ] && [ "$(sha256 "$MODEL_PATH")" = "$MODEL_SHA256" ]; then
 else
   rm -f "$MODEL_PATH"
   echo "    fetching from pinned revision $MODEL_REVISION (1.0 GiB)"
-  curl -fL --progress-bar -o "$MODEL_PATH" "$MODEL_URL"
+  curl -fL --http1.1 --retry 3 --retry-delay 2 --progress-bar -o "$MODEL_PATH" "$MODEL_URL"
   ACTUAL_SHA256="$(sha256 "$MODEL_PATH")"
   if [ "$ACTUAL_SHA256" != "$MODEL_SHA256" ]; then
     rm -f "$MODEL_PATH"
