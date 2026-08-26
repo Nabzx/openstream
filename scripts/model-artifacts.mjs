@@ -36,32 +36,13 @@ export const modelRoles = [
       size: "141 MiB",
     },
   },
-  {
-    role: "rewrite",
-    source: {
-      name: "llama.cpp",
-      repo: "https://github.com/ggml-org/llama.cpp.git",
-      tag: "b4331",
-      commit: "5478bbcd173e7027af7689493c7421719f5c43df",
-      directory: "vendor/llama.cpp",
-      buildDirectory: "vendor/llama.cpp/build",
-      configure: [
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DGGML_METAL=ON",
-        "-DLLAMA_BUILD_TESTS=OFF",
-      ],
-      target: "llama-server",
-      builtBinary: "vendor/llama.cpp/build/bin/llama-server",
-      binary: "resources/bin/llama-server",
-    },
-    weight: {
-      name: "SmolLM2-1.7B-Instruct-Q4_K_M.gguf",
-      url: "https://huggingface.co/bartowski/SmolLM2-1.7B-Instruct-GGUF/resolve/1f03464768bfcc0319fc50da8ff5fb20b6417ba2/SmolLM2-1.7B-Instruct-Q4_K_M.gguf",
-      sha256: "77665ea4815999596525c636fbeb56ba8b080b46ae85efef4f0d986a139834d7",
-      path: "resources/models/SmolLM2-1.7B-Instruct-Q4_K_M.gguf",
-      size: "1007 MiB",
-    },
-  },
+  // The rewrite role used to live here too, compiled from vendor/llama.cpp
+  // like whisper.cpp still is above. #14 replaced that with fetch-llama.sh
+  // downloading a prebuilt macOS arm64 release instead - upstream publishes
+  // one, unlike whisper.cpp - but this entry was never removed, so every
+  // npm install kept silently rebuilding an old, unmaintained llama.cpp
+  // checkout (tag b4331) over the top of it at the same resources/bin path.
+  // See #172.
 ];
 
 export function resolveRolePaths(role, root) {
