@@ -120,6 +120,28 @@ const VOCAB = [
 const SENT_END = /(?<=[.!?])\s+/;
 const SENT_BOUNDARY_SPLIT = /(\n+|(?<=[.!?])\s+)/;
 
+// Self-correction (#127): "scratch that"/"delete that" means the clause
+// immediately before it should be discarded, not just the trigger phrase -
+// stripping only the phrase (as PHRASE_FILLERS would) leaves both versions
+// in the output ("buy milk buy oat milk"). The lookahead requires the
+// trigger to be followed by a pause (punctuation or end of input), not more
+// words in the same breath, so "delete that file"/"delete that branch" -
+// very plausible content in a dev-focused dictation tool - are left alone.
+//
+// Scope: only the clause in the same comma/sentence run as the trigger.
+// Reaching back across an already-finished earlier sentence ("no wait, I
+// meant the second one") isn't reliably regex-matchable; per #127 that's a
+// future #125-shaped follow-up (ask the rewrite model which sentence a
+// correction refers to). Until then, a trigger with nothing to delete in
+// its own run (e.g. it lands right after a full stop) is simply dropped as
+// a safe no-op rather than guessing which earlier sentence it means.
+const SELF_CORRECTION =
+  /(?:^|(?<=[.!?,]\s))[^.!?,]*?,?\s*\b(?:scratch|delete) that\b(?=[.,!?]|\s*$)[.,!?]?\s*/gi;
+
+function applySelfCorrection(text) {
+  return text.replace(SELF_CORRECTION, "");
+}
+
 function stripFillers(text) {
   for (const phrase of PHRASE_FILLERS) {
     text = text.replace(new RegExp(`\\b${phrase}\\b[,]?\\s*`, "gi"), "");
@@ -418,10 +440,13 @@ function cleanup(text, options = {}) {
   // something the speaker said, and must go before anything else runs.
   text = text.replace(/\s*\n\s*/g, " ");
 
-  // #132: must run before collapseRepeats - a spelled word with a doubled
-  // letter ("b o o k") would otherwise have its repeated "o o" tokens
-  // collapsed before the letters are ever assembled into one word,
-  // corrupting "book" into "bok".
+  // Both #127 and #132 must run before collapseRepeats and stripFillers -
+  // #132's spelled word with a doubled letter ("b o o k") would otherwise
+  // have its repeated "o o" tokens collapsed before the letters are ever
+  // assembled into one word, corrupting "book" into "bok". The two don't
+  // interact (different trigger phrases), so order between them doesn't
+  // matter.
+  text = applySelfCorrection(text);
   text = applySpellOut(text);
   text = stripFillers(text);
   text = collapseRepeats(text);
@@ -453,6 +478,8 @@ module.exports = {
   VOCAB,
   SENT_END,
   SENT_BOUNDARY_SPLIT,
+  SELF_CORRECTION,
+  applySelfCorrection,
   stripFillers,
   collapseRepeats,
   applySpokenPunct,
