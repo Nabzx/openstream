@@ -201,6 +201,81 @@ function applyQuoteMarkers(text) {
   return text.replace(/\bquote\b\s+(.+?)\s+\bend quote\b/gi, (_match, inner) => `"${inner}"`);
 }
 
+// #130: numeric entities. Scoped to currency only - the one category the
+// issue treats as relatively clear-cut ("unit-anchored patterns"). Phone
+// numbers/confirmation codes and dates/times are deliberately not
+// implemented here: the issue's own methodology is to measure what whisper
+// already renders correctly on real dictation samples before assuming a
+// gap exists (whisper often already emits digit sequences, not words), and
+// for dates it explicitly flags "leave it as prose, don't guess" as a
+// likely-correct outcome rather than a gap to fill. Neither of those is
+// something this change can verify without real audio samples, so both
+// are left as follow-ups rather than guessed at.
+const NUMBER_WORDS = {
+  // "a"/"an" as a number word only ever means one - "a hundred dollars",
+  // "a dollar" - the same idiom that already lets English speakers say
+  // "a hundred" instead of "one hundred".
+  a: 1, an: 1,
+  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15,
+  sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+// Parses a run of spoken number words (up to the thousands) into an
+// integer, standard English number-word grammar. Returns null on anything
+// unrecognised rather than guessing - a caller only substitutes the digit
+// form when this parses cleanly.
+function parseNumberWords(phrase) {
+  const words = phrase.toLowerCase().split(/[\s-]+/).filter((word) => word && word !== "and");
+  if (words.length === 0) return null;
+
+  let total = 0;
+  let current = 0;
+  for (const word of words) {
+    if (word in NUMBER_WORDS) {
+      current += NUMBER_WORDS[word];
+    } else if (word === "hundred") {
+      current = (current || 1) * 100;
+    } else if (word === "thousand") {
+      total += (current || 1) * 1000;
+      current = 0;
+    } else {
+      return null;
+    }
+  }
+  return total + current;
+}
+
+const NUMBER_WORD_PATTERN =
+  "(?:a|an|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|" +
+  "sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|" +
+  "thousand|and)";
+const NUMBER_PHRASE_PATTERN = `${NUMBER_WORD_PATTERN}(?:[\\s-]+${NUMBER_WORD_PATTERN})*`;
+
+function applyCurrency(text) {
+  // Combined form first, so a standalone "cents" pass below can't run on a
+  // span this pass already consumed.
+  text = text.replace(
+    new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+dollars?\\s+and\\s+(${NUMBER_PHRASE_PATTERN})\\s+cents?\\b`, "gi"),
+    (match, dollarsWords, centsWords) => {
+      const dollars = parseNumberWords(dollarsWords);
+      const cents = parseNumberWords(centsWords);
+      if (dollars === null || cents === null || cents > 99) return match;
+      return `$${dollars}.${String(cents).padStart(2, "0")}`;
+    }
+  );
+  text = text.replace(new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+dollars?\\b`, "gi"), (match, words) => {
+    const dollars = parseNumberWords(words);
+    return dollars === null ? match : `$${dollars}`;
+  });
+  text = text.replace(new RegExp(`\\b(${NUMBER_PHRASE_PATTERN})\\s+cents?\\b`, "gi"), (match, words) => {
+    const cents = parseNumberWords(words);
+    return cents === null || cents > 99 ? match : `$0.${String(cents).padStart(2, "0")}`;
+  });
+  return text;
+}
+
 function stripLeadingFillers(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   const out = [];
@@ -316,6 +391,7 @@ function cleanup(text, options = {}) {
   text = applySpokenPunct(text, { allowNewlines });
   text = applySpokenEmoji(text);
   text = applyQuoteMarkers(text);
+  text = applyCurrency(text);
   text = stripLeadingFillers(text);
   if (!oneLineBox) {
     text = segmentSentences(text);
@@ -345,6 +421,8 @@ module.exports = {
   applySpokenPunct,
   applySpokenEmoji,
   applyQuoteMarkers,
+  parseNumberWords,
+  applyCurrency,
   stripLeadingFillers,
   segmentSentences,
   applyVocab,

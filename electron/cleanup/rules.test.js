@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { cleanup } = require("./rules");
+const { cleanup, parseNumberWords } = require("./rules");
 const samples = require("../../spike/llm-cleanup-latency/samples.json");
 
 test("removes standalone and phrase fillers", () => {
@@ -70,7 +70,11 @@ test("does not convert emoji words used as ordinary vocabulary", () => {
   assert.equal(cleanup("the fire alarm went off"), "The fire alarm went off.");
   assert.equal(cleanup("she was laughing the whole time"), "She was laughing the whole time.");
   assert.equal(cleanup("he gave a thumbs up gesture"), "He gave a thumbs up gesture.");
-  assert.equal(cleanup("we need a hundred dollars"), "We need a hundred dollars.");
+  // "a hundred dollars" is correctly converted to "$100" by #130's currency
+  // rule - a separate, later feature. That's the right behavior now, not a
+  // regression: this test's job is only to confirm "hundred" alone never
+  // becomes 💯 without the explicit word "emoji".
+  assert.equal(cleanup("we need a hundred dollars"), "We need $100.");
 });
 
 test("lets whisper's own inferred punctuation win on collision", () => {
@@ -180,6 +184,37 @@ test("brace/bracket symbols don't regress paren, dash, or percent tidy-up", () =
   assert.equal(cleanup("call open paren now close paren"), "Call (now).");
   assert.equal(cleanup("alpha dash beta"), "Alpha-beta.");
   assert.equal(cleanup("fifty percent off"), "Fifty% off.");
+});
+
+test("parseNumberWords: standard English number-word grammar up to the thousands", () => {
+  assert.equal(parseNumberWords("twenty"), 20);
+  assert.equal(parseNumberWords("one hundred and fifty"), 150);
+  assert.equal(parseNumberWords("two thousand five hundred"), 2500);
+  assert.equal(parseNumberWords("nineteen"), 19);
+  assert.equal(parseNumberWords("not a number"), null, "unrecognised words must not be guessed at");
+});
+
+test("converts spoken currency (#130): dollars, cents, and combined amounts", () => {
+  const cases = [
+    ["it costs twenty dollars", "It costs $20."],
+    ["it costs one hundred and fifty dollars", "It costs $150."],
+    ["it costs two thousand five hundred dollars", "It costs $2500."],
+    ["it costs twenty dollars and fifty cents", "It costs $20.50."],
+    ["that will be fifty cents", "That will be $0.50."],
+  ];
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("currency conversion doesn't misfire on ordinary number words without a currency anchor", () => {
+  assert.equal(cleanup("i have twenty of them"), "I have twenty of them.");
+  assert.equal(cleanup("i need a bit more time"), "I need a bit more time.");
+});
+
+test("\"a\"/\"an\" as a number word means one, the same idiom as ordinary English", () => {
+  assert.equal(cleanup("i only have a dollar to my name"), "I only have $1 to my name.");
+  assert.equal(cleanup("that will cost a dollar and fifty cents"), "That will cost $1.50.");
 });
 
 test("quote ... end quote wraps the spoken span, unconditionally (no break-safe gating)", () => {
