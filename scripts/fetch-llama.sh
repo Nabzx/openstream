@@ -14,11 +14,11 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-LLAMA_TAG="b10595"
+LLAMA_TAG="b10639"
 LLAMA_ASSET="llama-$LLAMA_TAG-bin-macos-arm64.tar.gz"
 LLAMA_URL="https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_TAG/$LLAMA_ASSET"
-LLAMA_SHA256="a20407d5198b0c4474b5c0c1a67fff1d09e6c5b68e7f1977e99ffc8d9f1f127c"
-LLAMA_SERVER_SHA256="9f34137ff2559c40a0fe9b130937fd745726130074173665127d863846152198"
+LLAMA_SHA256="9af0ea99b9221bd5db69c4341b442166d9697d35556708dba11ae44c85567a14"
+LLAMA_SERVER_SHA256="c32a2010dec561243448447599b7c13789022052ed59a336005758fbacf03639"
 
 # HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF - Apache 2.0, ungated (#32 rules
 # out anything gated or non-permissive).
