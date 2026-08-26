@@ -46,6 +46,16 @@ const SPOKEN_PUNCT = [
   [/\bclose paren(thesis)?\b/gi, ")"],
   [/[ \t]*\bdash\b[ \t]*/gi, "-"],
   [/[ \t]*\bslash\b[ \t]*/gi, "/"],
+  // #128: symbols, same table shape as the punctuation above them. Each
+  // self-trims whitespace on whichever side it naturally attaches to in
+  // real usage, matching how open/close paren already do this
+  // asymmetrically rather than uniformly - "fifty percent" -> "50%" (no
+  // space before the mark), "dollar sign fifty" -> "$50" (none after),
+  // "at sign" attaches on both sides like dash does.
+  [/[ \t]*\bpercent\b/gi, "%"],
+  [/\bdollar sign\b[ \t]*/gi, "$"],
+  [/[ \t]*\bat sign\b[ \t]*/gi, "@"],
+  [/\bhashtag\b[ \t]*/gi, "#"],
 ];
 
 // Casual messaging emoji (#131). Every trigger ends in the explicit word
@@ -153,6 +163,24 @@ function applySpokenEmoji(text) {
   return text;
 }
 
+// #128: "quote ... end quote" wraps the spoken span in "...". Unlike a
+// newline, a quotation mark carries no functional risk in any app - it
+// can't submit a form or send a message - so this is never gated behind
+// breakSafe/oneLineBox, the same reasoning SPOKEN_EMOJI already uses.
+// Non-greedy + the g flag: "quote a end quote and quote b end quote"
+// matches each pair separately rather than spanning from the first
+// "quote" to the last "end quote".
+//
+// Scoped to quoting only, not "bold ... end bold" or similar markdown
+// emphasis - #128 itself flags that literal **markdown** characters are
+// meaningful in Slack or a markdown editor but wrong in a plain-text field
+// or code file, which needs its own app-context gate this repo doesn't
+// have yet (breakSafeApps governs newline safety, a different concern).
+// Left as a follow-up rather than guessing at that gate here.
+function applyQuoteMarkers(text) {
+  return text.replace(/\bquote\b\s+(.+?)\s+\bend quote\b/gi, (_match, inner) => `"${inner}"`);
+}
+
 function stripLeadingFillers(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   const out = [];
@@ -224,11 +252,11 @@ function capitalise(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   return parts
     .map((part) => {
-      // A #124 bullet marker sits before the sentence-start letter, not on
-      // it - "- milk" should capitalise to "- Milk", not leave the marker's
-      // dash mistaken for the first character.
-      const marker = part.match(/^-\s+/);
-      const prefix = marker ? marker[0] : "";
+      // A #124 bullet marker and/or a #128 opening quote can sit before the
+      // sentence-start letter without being it - "- milk" should capitalise
+      // to "- Milk", and a quote opening a sentence ("hello) to ("Hello,
+      // not leave the marker/quote mistaken for the first character.
+      const prefix = part.match(/^(-\s+)?"?/)[0];
       const rest = part.slice(prefix.length);
       return rest && /[a-zA-Z]/.test(rest[0]) ? prefix + rest[0].toUpperCase() + rest.slice(1) : part;
     })
@@ -267,6 +295,7 @@ function cleanup(text, options = {}) {
   text = collapseRepeats(text);
   text = applySpokenPunct(text, { allowNewlines });
   text = applySpokenEmoji(text);
+  text = applyQuoteMarkers(text);
   text = stripLeadingFillers(text);
   if (!oneLineBox) {
     text = segmentSentences(text);
@@ -295,6 +324,7 @@ module.exports = {
   collapseRepeats,
   applySpokenPunct,
   applySpokenEmoji,
+  applyQuoteMarkers,
   stripLeadingFillers,
   segmentSentences,
   applyVocab,
