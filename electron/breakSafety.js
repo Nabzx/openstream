@@ -1,12 +1,32 @@
-const BREAK_SAFE_BUNDLE_IDS = new Set([
+// Deny-by-default: a literal line break can execute a half-typed terminal
+// command or send an unfinished chat message, so every app not explicitly
+// listed here is treated as unsafe. See #19 - this used to be a hardcoded
+// constant; it's mutable now so the settings UI can edit it, but the
+// default and the safety posture are unchanged.
+const DEFAULT_BREAK_SAFE_BUNDLE_IDS = [
   "com.apple.TextEdit",
   "com.apple.Notes",
   "md.obsidian",
   "com.microsoft.VSCode",
-]);
+];
+
+let breakSafeBundleIds = new Set(DEFAULT_BREAK_SAFE_BUNDLE_IDS);
 
 function isBreakSafeApplication(bundleId) {
-  return BREAK_SAFE_BUNDLE_IDS.has(bundleId);
+  return breakSafeBundleIds.has(bundleId);
 }
 
-module.exports = { isBreakSafeApplication };
+function setBreakSafeApplications(bundleIds) {
+  breakSafeBundleIds = new Set(bundleIds);
+}
+
+function getBreakSafeApplications() {
+  return [...breakSafeBundleIds];
+}
+
+module.exports = {
+  isBreakSafeApplication,
+  setBreakSafeApplications,
+  getBreakSafeApplications,
+  DEFAULT_BREAK_SAFE_BUNDLE_IDS,
+};
