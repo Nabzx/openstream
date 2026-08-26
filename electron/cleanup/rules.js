@@ -276,6 +276,38 @@ function applyCurrency(text) {
   return text;
 }
 
+// #132: "spell:" / "spell that:" starts a fresh letter-by-letter capture -
+// scoped to that forward-starting form only, not the alternative the issue
+// also raises (retroactively correcting the immediately preceding word).
+// The forward form is self-contained: it can only ever touch the letters
+// that follow the trigger, never risk consuming or discarding earlier
+// content it didn't mean to. Requires 2+ single-letter tokens, so a lone
+// "spell" in ordinary speech ("I can't spell that word") never misfires -
+// there's nothing after it shaped like a spelled-out sequence.
+//
+// Scoped to whisper's "clean" transcription case only - individual letters
+// coming through as single-character tokens ("j o h n"). Not implemented:
+// letter-name disambiguation ("Jay Oh Aitch Enn" instead of "J O H N"),
+// which the issue itself flags as needing its own word-to-letter table
+// this repo doesn't have yet. Also not implemented: distinguishing a
+// spelled proper noun ("John", capitalise) from a spelled confirmation
+// code ("AB3459", stays uppercase) - the issue explicitly says there's no
+// spoken signal that tells them apart, so this always capitalises as a
+// proper noun, the "almost always" case per the issue's own framing.
+// Both left as follow-ups rather than guessed at.
+function applySpellOut(text) {
+  // The separator lives inside the repeated group, not after it, so a
+  // separator can only ever be consumed when it's actually followed by
+  // another letter - otherwise a trailing "spell a b three four five nine"
+  // (mixed letters and number words, out of scope - see the comment above)
+  // would consume the space after "b" regardless, gluing what's left onto
+  // the assembled word ("Abthree...") instead of leaving it be ("Ab three...").
+  return text.replace(/\bspell(?: that)?:?\s+([a-z]\b(?:[\s-]+[a-z]\b)+)/gi, (_match, letters) => {
+    const word = letters.trim().split(/[\s-]+/).join("");
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  });
+}
+
 function stripLeadingFillers(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   const out = [];
@@ -386,6 +418,11 @@ function cleanup(text, options = {}) {
   // something the speaker said, and must go before anything else runs.
   text = text.replace(/\s*\n\s*/g, " ");
 
+  // #132: must run before collapseRepeats - a spelled word with a doubled
+  // letter ("b o o k") would otherwise have its repeated "o o" tokens
+  // collapsed before the letters are ever assembled into one word,
+  // corrupting "book" into "bok".
+  text = applySpellOut(text);
   text = stripFillers(text);
   text = collapseRepeats(text);
   text = applySpokenPunct(text, { allowNewlines });
@@ -423,6 +460,7 @@ module.exports = {
   applyQuoteMarkers,
   parseNumberWords,
   applyCurrency,
+  applySpellOut,
   stripLeadingFillers,
   segmentSentences,
   applyVocab,
