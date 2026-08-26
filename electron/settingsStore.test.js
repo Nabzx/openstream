@@ -73,3 +73,44 @@ test("a corrupt settings file falls back to defaults instead of throwing", () =>
   const store = createSettingsStore({ filePath });
   assert.deepEqual(store.get(), DEFAULT_SETTINGS);
 });
+
+test("setBreakSafeApps persists to disk and get() reflects it afterwards", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+
+  store.setBreakSafeApps(["com.apple.Terminal", "com.googlecode.iterm2"]);
+  assert.deepEqual(store.get().breakSafeApps, ["com.apple.Terminal", "com.googlecode.iterm2"]);
+
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.deepEqual(onDisk.breakSafeApps, ["com.apple.Terminal", "com.googlecode.iterm2"]);
+});
+
+test("setBreakSafeApps trims whitespace and dedupes", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setBreakSafeApps([" com.apple.Terminal ", "com.apple.Terminal"]);
+  assert.deepEqual(store.get().breakSafeApps, ["com.apple.Terminal"]);
+});
+
+test("setBreakSafeApps accepts an empty list - deny-by-default is a valid choice", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setBreakSafeApps([]);
+  assert.deepEqual(store.get().breakSafeApps, []);
+});
+
+test("rejects a non-array breakSafeApps", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setBreakSafeApps("com.apple.Terminal"), /array/);
+});
+
+test("rejects a blank bundle id", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setBreakSafeApps(["com.apple.Terminal", "  "]), /non-empty bundle id/);
+});
+
+test("an invalid setBreakSafeApps call leaves the previous value untouched", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setBreakSafeApps(["com.apple.Terminal"]);
+
+  assert.throws(() => store.setBreakSafeApps(["  "]));
+  assert.deepEqual(store.get().breakSafeApps, ["com.apple.Terminal"]);
+});
