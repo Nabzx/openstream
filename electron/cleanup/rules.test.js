@@ -252,6 +252,31 @@ test("\"a\"/\"an\" as a number word means one, the same idiom as ordinary Englis
   assert.equal(cleanup("that will cost a dollar and fifty cents"), "That will cost $1.50.");
 });
 
+test("spell:/spell that: assembles single-letter tokens into one capitalised word (#132)", () => {
+  assert.equal(cleanup("my name is spell that j o h n"), "My name is John.");
+  assert.equal(cleanup("spell: b o o k"), "Book.");
+});
+
+test("spell out preserves a doubled letter instead of collapsing it as a repeat", () => {
+  // Must run before collapseRepeats, or "o o" in a spelled "book" gets
+  // merged into a single "o" the same way an ordinary stutter would.
+  assert.equal(cleanup("spell: l e t t e r"), "Letter.");
+});
+
+test("a lone 'spell'/'spell that' with no letter sequence after it is left alone", () => {
+  assert.equal(cleanup("i cannot spell that word"), "I cannot spell that word.");
+  assert.equal(cleanup("spell a"), "Spell a.");
+});
+
+test("spell out stops cleanly at the first non-letter token instead of gluing text onto it", () => {
+  // Mixed letters and spoken digits (e.g. a confirmation code like
+  // "AB3459") isn't implemented - see the comment in applySpellOut - but
+  // it must degrade to leaving the unhandled part alone with its spacing
+  // intact, not corrupt it.
+  const out = cleanup("the code is spell a b three four five nine");
+  assert.equal(out, "The code is Ab three four five nine.");
+});
+
 test("quote ... end quote wraps the spoken span, unconditionally (no break-safe gating)", () => {
   assert.equal(cleanup("he said quote hello world end quote"), "He said \"hello world\".");
   // Not gated behind breakSafe, unlike a newline - a quote character carries
