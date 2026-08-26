@@ -26,6 +26,15 @@ const LEADING_FILLERS = [
 const SPOKEN_PUNCT = [
   [/\bnew paragraph\b/gi, "\n\n"],
   [/\bnew line\b/gi, "\n"],
+  // #124: scoped to explicit trigger phrases only, not the ordinal-word
+  // heuristic ("first," ... "second," ...) the issue leaves open - that
+  // heuristic risks misfiring on ordinary prose ("first, second, and
+  // third, I want to say thanks" is one flowing sentence, not a list), and
+  // an explicit command is unambiguous the same way #131's emoji triggers
+  // are. Also scoped to bullets only, not numbered lists - a "1. 2. 3."
+  // marker needs a running counter across matches, a different shape of
+  // transformation than this table's stateless single-token replace.
+  [/\b(bullet point|new bullet)\b/gi, "\n- "],
   [/\bfull stop\b/gi, "."],
   [/\bperiod\b/gi, "."],
   [/\bcomma\b/gi, ","],
@@ -107,14 +116,22 @@ function collapseRepeats(text) {
 
 function applySpokenPunct(text, { allowNewlines }) {
   for (const [pattern, replacement] of SPOKEN_PUNCT) {
-    // Deny-by-default (#45 §3): a spoken newline command only becomes a
-    // literal newline when the frontmost app is on the break-safe allow-list.
-    const isNewline = replacement === "\n" || replacement === "\n\n";
+    // Deny-by-default (#45 §3): a spoken newline command - including a
+    // bullet marker (#124), which is a newline too - only becomes literal
+    // when the frontmost app is on the break-safe allow-list. Same
+    // degrade-to-space fallback as new line/new paragraph: outside a
+    // break-safe app, "bullet point" just doesn't start a new line, rather
+    // than silently dropping the dash into the middle of a sentence.
+    const isNewline = replacement === "\n" || replacement === "\n\n" || replacement === "\n- ";
     text = text.replace(pattern, isNewline && !allowNewlines ? " " : replacement);
   }
   // Tidy the space the replaced word left behind: " ." -> "."
   text = text.replace(/\s+([.,!?;:)])/g, "$1");
-  text = text.replace(/([(/-])\s+/g, "$1");
+  // (?<!\n): a dash right after a newline is #124's list marker, which
+  // needs its trailing space ("- item") - unlike the hyphen use of "dash"
+  // (SPOKEN_PUNCT's own pattern for that already consumes its surrounding
+  // whitespace, so this tidy rule matching dash at all is redundant there).
+  text = text.replace(/(?<!\n)([(/-])\s+/g, "$1");
   // Same tidy for a newline a spoken "new line"/"new paragraph" just inserted.
   text = text.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n");
   // whisper often already punctuated the sentence, so a spoken "period" can
@@ -205,7 +222,17 @@ function capitalise(text) {
   text = text.replace(/\bi\b/g, "I");
   text = text.replace(/\bi'(m|ve|ll|d)\b/g, (_match, suffix) => "I'" + suffix);
   const parts = text.split(SENT_BOUNDARY_SPLIT);
-  return parts.map((part) => (part && /[a-zA-Z]/.test(part[0]) ? part[0].toUpperCase() + part.slice(1) : part)).join("");
+  return parts
+    .map((part) => {
+      // A #124 bullet marker sits before the sentence-start letter, not on
+      // it - "- milk" should capitalise to "- Milk", not leave the marker's
+      // dash mistaken for the first character.
+      const marker = part.match(/^-\s+/);
+      const prefix = marker ? marker[0] : "";
+      const rest = part.slice(prefix.length);
+      return rest && /[a-zA-Z]/.test(rest[0]) ? prefix + rest[0].toUpperCase() + rest.slice(1) : part;
+    })
+    .join("");
 }
 
 function terminalPunct(text) {
