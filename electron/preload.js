@@ -8,5 +8,6 @@ contextBridge.exposeInMainWorld("openstream", {
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
     setHotkey: (hotkey) => ipcRenderer.invoke("settings:set-hotkey", hotkey),
+    setBreakSafeApps: (apps) => ipcRenderer.invoke("settings:set-break-safe-apps", apps),
   },
 });

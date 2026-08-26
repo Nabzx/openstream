@@ -1,11 +1,13 @@
 const fs = require("fs");
 const path = require("path");
+const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 
-// Matches hotkeyHelper.js's own default (Control+Option+D, see #84) so a
-// fresh install with no settings file behaves exactly like it did before
-// this existed.
+// Matches hotkeyHelper.js's own default (Control+Option+D, see #84) and
+// breakSafety.js's own default allow-list, so a fresh install with no
+// settings file behaves exactly like it did before either was editable.
 const DEFAULT_SETTINGS = {
   hotkey: { keyCode: 2, modifiers: ["ctrl", "alt"] },
+  breakSafeApps: [...DEFAULT_BREAK_SAFE_BUNDLE_IDS],
 };
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
@@ -22,6 +24,17 @@ function validateHotkey(hotkey) {
   for (const modifier of hotkey.modifiers) {
     if (!VALID_MODIFIERS.has(modifier)) {
       throw new Error(`unknown modifier "${modifier}"`);
+    }
+  }
+}
+
+function validateBreakSafeApps(apps) {
+  if (!Array.isArray(apps)) {
+    throw new Error("breakSafeApps must be an array");
+  }
+  for (const bundleId of apps) {
+    if (typeof bundleId !== "string" || bundleId.trim().length === 0) {
+      throw new Error("each break-safe app must be a non-empty bundle id string");
     }
   }
 }
@@ -62,12 +75,21 @@ function createSettingsStore({ filePath }) {
     return settings;
   }
 
+  function setBreakSafeApps(apps) {
+    validateBreakSafeApps(apps);
+    cache = { ...load(), breakSafeApps: [...new Set(apps.map((bundleId) => bundleId.trim()))] };
+    persist();
+    const settings = get();
+    for (const listener of listeners) listener(settings);
+    return settings;
+  }
+
   function onChange(listener) {
     listeners.add(listener);
     return () => listeners.delete(listener);
   }
 
-  return { get, setHotkey, onChange };
+  return { get, setHotkey, setBreakSafeApps, onChange };
 }
 
 module.exports = { createSettingsStore, DEFAULT_SETTINGS };
