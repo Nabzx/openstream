@@ -61,19 +61,30 @@ const SPOKEN_PUNCT = [
   // already handles the surrounding-whitespace trim for both bracket
   // types, same as it does for parens.
   //
-  // Deliberately does not implement "tab"/"indent" (whitespace-inserting,
-  // like a newline, so it would need breakSafe-style gating - but per the
-  // issue, a literal tab only makes sense in a *code editor*, a narrower
-  // set than the general breakSafeApps list Notes/TextEdit also sit on,
-  // and this repo has no such sub-list yet) or case conversion ("snake
-  // case get user name" -> get_user_name - a pattern-based rewrite closer
-  // to applyVocab's shape than this table's literal substitution, and the
-  // issue itself asks whether it belongs in this ticket or its own).
-  // Both left as follow-ups needing their own design decision.
+  // Case conversion ("snake case get user name" -> get_user_name) is left
+  // out here - a pattern-based rewrite closer to applyVocab's shape than
+  // this table's literal substitution, and the issue itself asks whether
+  // it belongs in this ticket or its own.
   [/\bopen brace\b/gi, "{"],
   [/\bclose brace\b/gi, "}"],
   [/\bopen bracket\b/gi, "["],
   [/\bclose bracket\b/gi, "]"],
+  // "Tab"/"indent" insert whitespace the same way "new line" does, so they
+  // reuse the same allowNewlines gate below rather than firing
+  // unconditionally like the braces/brackets above. This reuses the
+  // general break-safe list as a first cut rather than the narrower
+  // code-editor-only sub-list the previous #129 pass flagged as an open
+  // question - that sub-list still doesn't exist, and blocking on it means
+  // never shipping "tab" at all.
+  //
+  // Unlike open brace/bracket, "tab" is an ordinary, very common noun
+  // ("switch to the other tab", "pick up the tab") - a bare \btab\b would
+  // misfire constantly. Gated to only fire right at the start of a clause
+  // (start of input, or straight after ./!/?/,/{/[/( or a newline already
+  // inserted by an earlier rule in this same pass) - where indentation
+  // actually belongs and "switch to the other tab" never lands, since that
+  // phrasing always has words before "tab" in the same clause.
+  [/(?:^|(?<=[.!?,{[(\n]))[ \t]*\b(?:tab|indent)\b[ \t]*/gi, "\t"],
 ];
 
 // Casual messaging emoji (#131). Every trigger ends in the explicit word
@@ -167,25 +178,35 @@ function collapseRepeats(text) {
 function applySpokenPunct(text, { allowNewlines }) {
   for (const [pattern, replacement] of SPOKEN_PUNCT) {
     // Deny-by-default (#45 §3): a spoken newline command - including a
-    // bullet marker (#124), which is a newline too - only becomes literal
-    // when the frontmost app is on the break-safe allow-list. Same
-    // degrade-to-space fallback as new line/new paragraph: outside a
-    // break-safe app, "bullet point" just doesn't start a new line, rather
-    // than silently dropping the dash into the middle of a sentence.
-    const isNewline = replacement === "\n" || replacement === "\n\n" || replacement === "\n- ";
+    // bullet marker (#124) and "tab"/"indent" (#129), which insert
+    // whitespace the same way - only becomes literal when the frontmost
+    // app is on the break-safe allow-list. Same degrade-to-space fallback
+    // as new line/new paragraph: outside a break-safe app, "bullet point"
+    // or "tab" just doesn't insert, rather than silently landing in the
+    // middle of a sentence.
+    const isNewline =
+      replacement === "\n" || replacement === "\n\n" || replacement === "\n- " || replacement === "\t";
     text = text.replace(pattern, isNewline && !allowNewlines ? " " : replacement);
   }
   // Tidy the space the replaced word left behind: " ." -> "." - ] and }
-  // (#129) get the same treatment as the ) they're modelled on.
-  text = text.replace(/\s+([.,!?;:)\]}])/g, "$1");
+  // (#129) get the same treatment as the ) they're modelled on. Plain
+  // spaces only, not \s generally: a "{"/"}" can legitimately sit right
+  // next to a newline or tab (#129) it was dictated alongside ("open brace
+  // new line tab ..."), and that whitespace must survive this tidy pass.
+  text = text.replace(/ +([.,!?;:)\]}])/g, "$1");
   // (?<!\n): a dash right after a newline is #124's list marker, which
   // needs its trailing space ("- item") - unlike the hyphen use of "dash"
   // (SPOKEN_PUNCT's own pattern for that already consumes its surrounding
   // whitespace, so this tidy rule matching dash at all is redundant there).
-  // [ and { (#129) get the same leading-side trim as the ( they're modelled on.
-  text = text.replace(/(?<!\n)([(/\-[{])\s+/g, "$1");
-  // Same tidy for a newline a spoken "new line"/"new paragraph" just inserted.
-  text = text.replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n");
+  // [ and { (#129) get the same leading-side trim as the ( they're modelled
+  // on. Plain spaces only, same reasoning as above.
+  text = text.replace(/(?<!\n)([(/\-[{]) +/g, "$1");
+  // Same tidy for a newline a spoken "new line"/"new paragraph" just
+  // inserted. Spaces only, not tabs: a tab (#129) right after a newline is
+  // deliberate indentation, not leftover whitespace from a replaced word -
+  // and the tab/indent rule above already trims its own surrounding
+  // whitespace inline, so it doesn't need a pass here.
+  text = text.replace(/ +\n/g, "\n").replace(/\n +/g, "\n");
   // whisper often already punctuated the sentence, so a spoken "period" can
   // land next to real punctuation. The mark whisper inferred is the more
   // specific one, so it wins on collision.
@@ -200,8 +221,10 @@ function applySpokenEmoji(text) {
     text = text.replace(pattern, replacement);
   }
   // Tidy doubled spacing an emoji substitution can leave behind - the
-  // trigger phrase is usually longer than the emoji it becomes.
-  text = text.replace(/[ \t]{2,}/g, " ");
+  // trigger phrase is usually longer than the emoji it becomes. Spaces
+  // only, not tabs: a doubled "tab tab" (#129) is a deliberate double
+  // indent, not doubled whitespace to squeeze down to one.
+  text = text.replace(/ {2,}/g, " ");
   return text;
 }
 
@@ -369,11 +392,13 @@ function capitalise(text) {
   const parts = text.split(SENT_BOUNDARY_SPLIT);
   return parts
     .map((part) => {
-      // A #124 bullet marker and/or a #128 opening quote can sit before the
-      // sentence-start letter without being it - "- milk" should capitalise
-      // to "- Milk", and a quote opening a sentence ("hello) to ("Hello,
-      // not leave the marker/quote mistaken for the first character.
-      const prefix = part.match(/^(-\s+)?"?/)[0];
+      // A #124 bullet marker, a #128 opening quote, and/or #129 indentation
+      // can sit before the sentence-start letter without being it -
+      // "- milk" should capitalise to "- Milk", a quote opening a sentence
+      // ("hello) to ("Hello, and an indented line (\treturn y) to
+      // \tReturn y - not leave the marker/quote/tab mistaken for the first
+      // character.
+      const prefix = part.match(/^\t*(-\s+)?"?/)[0];
       const rest = part.slice(prefix.length);
       return rest && /[a-zA-Z]/.test(rest[0]) ? prefix + rest[0].toUpperCase() + rest.slice(1) : part;
     })
@@ -424,7 +449,9 @@ function cleanup(text, options = {}) {
   // keep their settled spelling even at the start of a dictation.
   text = applyVocab(text);
   text = oneLineBox ? text.replace(/\.\s*$/, "").replace(/\s+$/, "") : terminalPunct(text);
-  text = text.replace(/[ \t]{2,}/g, " ");
+  // Spaces only, not [ \t]: a doubled "tab tab" (#129) is a deliberate
+  // double indent, not doubled whitespace to squeeze down to one.
+  text = text.replace(/ {2,}/g, " ");
 
   return text.trim();
 }
