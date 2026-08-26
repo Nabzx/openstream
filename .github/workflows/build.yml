@@ -6,6 +6,17 @@ on:
   push:
     branches: [main]
 
+# macOS runners are capped at 5 concurrent jobs account-wide (a GitHub
+# limit, not something this repo controls) - with several people/agents
+# pushing to different branches at once, that cap gets exhausted fast and
+# leaves later runs stuck queued or failing outright. Cancelling a run's
+# own superseded predecessor when a new commit lands on the same
+# branch/PR - the group key pairs workflow name with ref - frees its slot
+# immediately instead of holding it for a result nobody will look at.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-latest
