@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const rewriteModelServer = require("./rewriteModelServer");
 
-const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "llama-server");
+const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "llama", "llama-server");
 const MODEL_PATH = path.join(__dirname, "..", "resources", "models", "SmolLM2-1.7B-Instruct-Q4_K_M.gguf");
 const hasFetchedAssets = fs.existsSync(BIN_PATH) && fs.existsSync(MODEL_PATH);
 
@@ -26,7 +26,7 @@ test("configures the resident rewrite model server on loopback with a 2048-token
   server.stop();
 
   assert.equal(supervisorOptions.roleName, "rewrite model server");
-  assert.equal(supervisorOptions.command, "/tmp/openstream-resources/bin/llama-server");
+  assert.equal(supervisorOptions.command, "/tmp/openstream-resources/bin/llama/llama-server");
   assert.deepEqual(supervisorOptions.args, [
     "--model", "/tmp/openstream-resources/models/SmolLM2-1.7B-Instruct-Q4_K_M.gguf",
     "--host", "127.0.0.1",
