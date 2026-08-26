@@ -166,6 +166,22 @@ test("converts spoken symbols", () => {
   }
 });
 
+test("converts spoken code-structure symbols", () => {
+  const cases = [
+    ["call open brace now close brace", "Call {now}."],
+    ["call open bracket now close bracket", "Call [now]."],
+  ];
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("brace/bracket symbols don't regress paren, dash, or percent tidy-up", () => {
+  assert.equal(cleanup("call open paren now close paren"), "Call (now).");
+  assert.equal(cleanup("alpha dash beta"), "Alpha-beta.");
+  assert.equal(cleanup("fifty percent off"), "Fifty% off.");
+});
+
 test("quote ... end quote wraps the spoken span, unconditionally (no break-safe gating)", () => {
   assert.equal(cleanup("he said quote hello world end quote"), "He said \"hello world\".");
   // Not gated behind breakSafe, unlike a newline - a quote character carries
