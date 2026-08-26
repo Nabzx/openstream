@@ -103,6 +103,41 @@ test("applies technical vocabulary fixups", () => {
   }
 });
 
+test("handles spoken self-correction by discarding the preceding clause", () => {
+  const cases = [
+    ["buy milk, scratch that, buy oat milk", "Buy oat milk."],
+    ["call the doctor, delete that, call the dentist", "Call the dentist."],
+    ["scratch that, buy milk", "Buy milk."],
+    [
+      "get eggs, scratch that, get bacon, scratch that, get bread",
+      "Get bread.",
+    ],
+  ];
+
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("does not treat 'delete that <noun>' as a correction command", () => {
+  // #127's design: the trigger only fires when followed by a pause, not
+  // more words in the same breath - "delete that file"/"delete that
+  // branch" are extremely plausible dictated content in a dev tool.
+  assert.equal(cleanup("please delete that file"), "Please delete that file.");
+  assert.equal(cleanup("delete that branch before you push"), "Delete that branch before you push.");
+});
+
+test("self-correction: a trigger right after a finished sentence is a known limitation", () => {
+  // Reaching back into an already-finished earlier sentence isn't
+  // regex-matchable (see #127's scoping note) - the trigger phrase itself
+  // is dropped as a safe no-op rather than guessing which sentence to
+  // delete, leaving the mistaken sentence in place.
+  assert.equal(
+    cleanup("Call the client today. Scratch that. Call them tomorrow instead."),
+    "Call the client today. Call them tomorrow instead."
+  );
+});
+
 test("capitalises sentence starts and bare i", () => {
   assert.equal(cleanup("i think i am ready"), "I think I am ready.");
 });
