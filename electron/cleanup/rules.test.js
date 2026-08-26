@@ -154,6 +154,40 @@ test("bullet point in a one-line field also degrades, even if the app is break-s
   assert.equal(out, "Milk eggs");
 });
 
+test("converts spoken symbols", () => {
+  const cases = [
+    ["fifty percent off", "Fifty% off."],
+    ["dollar sign fifty", "$fifty."],
+    ["email me at john at sign gmail dot com", "Email me at john@gmail dot com."],
+    ["share hashtag opensource", "Share #opensource."],
+  ];
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("quote ... end quote wraps the spoken span, unconditionally (no break-safe gating)", () => {
+  assert.equal(cleanup("he said quote hello world end quote"), "He said \"hello world\".");
+  // Not gated behind breakSafe, unlike a newline - a quote character carries
+  // no functional risk in any app.
+  assert.equal(
+    cleanup("he said quote hello world end quote", { breakSafe: false }),
+    "He said \"hello world\"."
+  );
+});
+
+test("quote markers handle multiple separate pairs in one dictation", () => {
+  assert.equal(cleanup("quote hello end quote and quote goodbye end quote"), "\"Hello\" and \"goodbye\".");
+});
+
+test("a quote opening a sentence still gets its content capitalised", () => {
+  assert.equal(cleanup("quote welcome end quote to the show"), "\"Welcome\" to the show.");
+});
+
+test("an unclosed quote (no matching end quote) is left untouched rather than guessed at", () => {
+  assert.equal(cleanup("he said quote hello"), "He said quote hello.");
+});
+
 test("bullet marker doesn't break unrelated dash/paren tidy-up", () => {
   assert.equal(cleanup("alpha dash beta"), "Alpha-beta.");
   assert.equal(cleanup("call open paren now close paren"), "Call (now).");
