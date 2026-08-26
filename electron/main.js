@@ -7,6 +7,7 @@ const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
+const { setBreakSafeApplications } = require("./breakSafety");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
@@ -352,6 +353,15 @@ ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
   return settings;
 });
 
+ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
+  // Same shape as settings:set-hotkey: setBreakSafeApps validates and
+  // throws on anything malformed, so a bad renderer-side edit can't corrupt
+  // the deny-by-default allow-list breakSafety.js enforces.
+  const settings = settingsStore.setBreakSafeApps(apps);
+  setBreakSafeApplications(settings.breakSafeApps);
+  return settings;
+});
+
 // A second launch attempt hits this instead of silently doing nothing (or
 // worse, silently doing everything twice) - bring the settings window
 // forward so there's visible proof this instance is the one that's running.
@@ -365,6 +375,7 @@ app.whenReady().then(() => {
   }
   settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
   hotkeyHelper.setHotkey(settingsStore.get().hotkey);
+  setBreakSafeApplications(settingsStore.get().breakSafeApps);
   createTray();
   hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
   hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
