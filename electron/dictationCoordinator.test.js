@@ -17,6 +17,7 @@ function createIntake({
   getFocusContext,
   placeParagraphBreaks,
   deliver,
+  vocabulary,
   onDiagnostic,
 } = {}) {
   const diagnostics = [];
@@ -42,6 +43,7 @@ function createIntake({
         return { kind: "inserted" };
       }),
     },
+    vocabulary,
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
   });
 
@@ -75,6 +77,35 @@ test("completed recording is transcribed, cleaned, and delivered once", async ()
   assert.deepEqual(transcriptionCalls, [completedWav]);
   assert.equal(contextCalls.length, 1);
   assert.deepEqual(harness.delivered, ["GitHub\nJavaScript."]);
+});
+
+test("#16: the vocabulary adapter's prompt is passed to transcribe", async () => {
+  const transcriptionCalls = [];
+  const harness = createIntake({
+    transcribe: async (wavBuffer, prompt) => {
+      transcriptionCalls.push(prompt);
+      return "hello world";
+    },
+    vocabulary: { getPrompt: () => "useEffect, useState" },
+  });
+
+  await harness.intake.complete(completedWav);
+
+  assert.deepEqual(transcriptionCalls, ["useEffect, useState"]);
+});
+
+test("#16: with no vocabulary adapter configured, transcribe gets an empty prompt", async () => {
+  const transcriptionCalls = [];
+  const harness = createIntake({
+    transcribe: async (wavBuffer, prompt) => {
+      transcriptionCalls.push(prompt);
+      return "hello world";
+    },
+  });
+
+  await harness.intake.complete(completedWav);
+
+  assert.deepEqual(transcriptionCalls, [""]);
 });
 
 test("a known unsafe application never receives spoken line breaks", async () => {
