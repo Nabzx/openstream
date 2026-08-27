@@ -1,0 +1,79 @@
+[
+  {
+    "id": "en-short",
+    "bucket": "short",
+    "locale": "en-US",
+    "voice": "Samantha",
+    "spoken": "Um, can you just run the test suite again?",
+    "reference": "Can you just run the test suite again?",
+    "must_contain": ["can you", "test suite"],
+    "must_not_contain": ["um"],
+    "expected_punctuation": "?"
+  },
+  {
+    "id": "en-long",
+    "bucket": "long",
+    "locale": "en-US",
+    "voice": "Samantha",
+    "spoken": "Okay, so um here is where I landed on the architecture question. The main thing is that we have two subprocesses to supervise, and that is already kind of a lot for a menu bar app. Whisper is unavoidable, obviously we need it, but the transcription server is the one I keep going back and forth on because it holds memory resident the whole time the app is running. What I would like to do is measure it properly before we commit, and if the local model gets us most of the way there then honestly we should ship that and revisit the harder formatting cases later.",
+    "reference": "Here is where I landed on the architecture question. The main thing is that we have two subprocesses to supervise, and that is already a lot for a menu bar app. Whisper is unavoidable, obviously we need it, but the transcription server is the one I keep going back and forth on because it holds memory resident the whole time the app is running. I would like to measure it properly before we commit, and if the local model gets us most of the way there then honestly we should ship that and revisit the harder formatting cases later.",
+    "must_contain": ["two subprocesses", "measure it properly", "formatting cases"],
+    "must_not_contain": ["um", "kind of"],
+    "expected_punctuation": "."
+  },
+  {
+    "id": "en-correction",
+    "bucket": "short",
+    "locale": "en-US",
+    "voice": "Samantha",
+    "spoken": "Use the staging database, wait no, use the production database, period.",
+    "reference": "Use the production database.",
+    "must_contain": ["production database"],
+    "must_not_contain": ["staging", "wait no", "period"],
+    "expected_punctuation": "."
+  },
+  {
+    "id": "en-punctuation",
+    "bucket": "short",
+    "locale": "en-US",
+    "voice": "Samantha",
+    "spoken": "Deploy the staging build, comma, then run the migration, period.",
+    "reference": "Deploy the staging build, then run the migration.",
+    "must_contain": ["staging build", "run the migration"],
+    "must_not_contain": ["comma", "period"],
+    "expected_punctuation": ",."
+  },
+  {
+    "id": "es-short",
+    "bucket": "multilingual",
+    "locale": "es-ES",
+    "voice": "Eddy (Spanish (Spain))",
+    "spoken": "La aplicación procesa la voz localmente y coloca el texto en el campo activo.",
+    "reference": "La aplicación procesa la voz localmente y coloca el texto en el campo activo.",
+    "must_contain": ["voz localmente", "campo activo"],
+    "must_not_contain": [],
+    "expected_punctuation": "."
+  },
+  {
+    "id": "de-short",
+    "bucket": "multilingual",
+    "locale": "de-DE",
+    "voice": "Anna",
+    "spoken": "Die Anwendung verarbeitet Sprache lokal und setzt den Text in das aktive Feld.",
+    "reference": "Die Anwendung verarbeitet Sprache lokal und setzt den Text in das aktive Feld.",
+    "must_contain": ["verarbeitet Sprache", "aktive Feld"],
+    "must_not_contain": [],
+    "expected_punctuation": "."
+  },
+  {
+    "id": "fr-short",
+    "bucket": "multilingual",
+    "locale": "fr-FR",
+    "voice": "Amélie",
+    "spoken": "L’application traite la voix localement et insère le texte dans le champ actif.",
+    "reference": "L’application traite la voix localement et insère le texte dans le champ actif.",
+    "must_contain": ["voix localement", "champ actif"],
+    "must_not_contain": [],
+    "expected_punctuation": "."
+  }
+]
