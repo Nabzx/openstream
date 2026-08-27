@@ -8,6 +8,9 @@ const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const DEFAULT_SETTINGS = {
   hotkey: { keyCode: 2, modifiers: ["ctrl", "alt"] },
   breakSafeApps: [...DEFAULT_BREAK_SAFE_BUNDLE_IDS],
+  // #16: null means no project configured - vocabulary biasing is opt-in,
+  // not a default every fresh install has to notice and turn off.
+  vocabularyProjectPath: null,
 };
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
@@ -25,6 +28,13 @@ function validateHotkey(hotkey) {
     if (!VALID_MODIFIERS.has(modifier)) {
       throw new Error(`unknown modifier "${modifier}"`);
     }
+  }
+}
+
+function validateVocabularyProjectPath(projectPath) {
+  if (projectPath === null) return;
+  if (typeof projectPath !== "string" || projectPath.trim().length === 0) {
+    throw new Error("vocabularyProjectPath must be null or a non-empty string");
   }
 }
 
@@ -84,12 +94,21 @@ function createSettingsStore({ filePath }) {
     return settings;
   }
 
+  function setVocabularyProjectPath(projectPath) {
+    validateVocabularyProjectPath(projectPath);
+    cache = { ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() };
+    persist();
+    const settings = get();
+    for (const listener of listeners) listener(settings);
+    return settings;
+  }
+
   function onChange(listener) {
     listeners.add(listener);
     return () => listeners.delete(listener);
   }
 
-  return { get, setHotkey, setBreakSafeApps, onChange };
+  return { get, setHotkey, setBreakSafeApps, setVocabularyProjectPath, onChange };
 }
 
 module.exports = { createSettingsStore, DEFAULT_SETTINGS };

@@ -114,3 +114,36 @@ test("an invalid setBreakSafeApps call leaves the previous value untouched", () 
   assert.throws(() => store.setBreakSafeApps(["  "]));
   assert.deepEqual(store.get().breakSafeApps, ["com.apple.Terminal"]);
 });
+
+test("vocabularyProjectPath defaults to null", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().vocabularyProjectPath, null);
+});
+
+test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+
+  store.setVocabularyProjectPath("  /Users/me/code/myapp  ");
+  assert.equal(store.get().vocabularyProjectPath, "/Users/me/code/myapp");
+
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.equal(onDisk.vocabularyProjectPath, "/Users/me/code/myapp");
+});
+
+test("setVocabularyProjectPath(null) clears a previously-set path", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setVocabularyProjectPath("/Users/me/code/myapp");
+  store.setVocabularyProjectPath(null);
+  assert.equal(store.get().vocabularyProjectPath, null);
+});
+
+test("rejects an empty-string vocabularyProjectPath", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setVocabularyProjectPath("   "), /non-empty string/);
+});
+
+test("rejects a non-string, non-null vocabularyProjectPath", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setVocabularyProjectPath(42), /non-empty string/);
+});
