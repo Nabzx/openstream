@@ -29,18 +29,35 @@ import listbound
 from samples import SAMPLES
 from reference import REFERENCE
 
-MODELS = pathlib.Path.home() / ".cache" / "openstream-spike" / "models"
+# SmolLM2 and llama-server now land in the repo via scripts/fetch-llama.sh
+# (#14). Qwen3, the #67 alternate, is not in that script - drop it in the
+# spike cache #67 used and it gets picked up too.
+REPO = HERE.parents[1]
+CACHE = pathlib.Path.home() / ".cache" / "openstream-spike" / "models"
+LLAMA_SERVER = next(
+    (p for p in (REPO / "resources/bin/llama/llama-server",
+                 pathlib.Path("/opt/homebrew/bin/llama-server"))
+     if p.exists()),
+    pathlib.Path("llama-server"),   # last resort: whatever is on PATH
+)
 OUT = HERE / "out"
 OUT.mkdir(exist_ok=True)
 PORT = 8092
 REPS = 5
 WARMUP = 2
 
+
+def _first(*candidates):
+    return next((p for p in candidates if p.exists()), candidates[0])
+
+
 CONFIGS = {
     "smollm2-1.7b": dict(
-        path=MODELS / "smollm2-1.7b-instruct-q4_k_m.gguf", extra={}),
+        path=_first(REPO / "resources/models/smollm2-1.7b-instruct-q4_k_m.gguf",
+                    CACHE / "smollm2-1.7b-instruct-q4_k_m.gguf"),
+        extra={}),
     "qwen3-1.7b-nothink": dict(
-        path=MODELS / "Qwen3-1.7B-Q4_K_M.gguf",
+        path=CACHE / "Qwen3-1.7B-Q4_K_M.gguf",
         extra={"chat_template_kwargs": {"enable_thinking": False}}),
 }
 
@@ -97,7 +114,7 @@ class Server:
     def __enter__(self):
         t0 = time.perf_counter()
         self.proc = subprocess.Popen(
-            ["llama-server", "-m", str(self.path), "--port", str(PORT),
+            [str(LLAMA_SERVER), "-m", str(self.path), "--port", str(PORT),
              "--host", "127.0.0.1", "-c", "2048", "-ngl", "99", "--no-webui"],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         url = f"http://127.0.0.1:{PORT}/health"
