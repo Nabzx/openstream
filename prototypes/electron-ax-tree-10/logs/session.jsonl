@@ -1,0 +1,6 @@
+{"appName":"Code","axTrusted":true,"bundleId":"com.microsoft.VSCode","event":"trialStart","mechanism":"both","note":"smoke test, VS Code frontmost, focus state unknown","pid":20435,"wallTime":"2026-08-27T00:11:55Z"}
+{"event":"baseline","result":"success","wallTime":"2026-08-27T00:11:55Z"}
+{"attribute":"AXManualAccessibility","durationMs":0,"event":"setAttribute","mechanism":"axManualAccessibility","result":"success","wallTime":"2026-08-27T00:11:55Z"}
+{"attempt":1,"elapsedMs":0,"event":"pollSucceeded","focusedRole":"AXTextField","focusedSubrole":"<none>","mechanism":"axManualAccessibility","treeCappedAt":false,"treeMaxDepth":4,"treeNodeCount":5,"treeRoleSample":["AXWindow","AXGroup","AXGroup","AXGroup","AXGroup"],"wallTime":"2026-08-27T00:11:55Z"}
+{"attribute":"AXEnhancedUserInterface","durationMs":0,"event":"setAttribute","mechanism":"axEnhancedUserInterface","result":"notImplemented","wallTime":"2026-08-27T00:11:55Z"}
+{"attempt":1,"elapsedMs":0,"event":"pollSucceeded","focusedRole":"AXTextField","focusedSubrole":"<none>","mechanism":"axEnhancedUserInterface","treeCappedAt":false,"treeMaxDepth":4,"treeNodeCount":5,"treeRoleSample":["AXWindow","AXGroup","AXGroup","AXGroup","AXGroup"],"wallTime":"2026-08-27T00:11:55Z"}
