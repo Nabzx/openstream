@@ -1,6 +1,11 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
-const { splitSentences, repairBreakIndices, applyParagraphBreaks } = require("./paragraphBreaks");
+const {
+  splitSentences,
+  repairBreakIndices,
+  repairListRange,
+  renderStructuredText,
+} = require("./paragraphBreaks");
 
 function createDictationIntake(options) {
   const {
@@ -80,11 +85,20 @@ function createDictationIntake(options) {
         if (typeof reply !== "string") {
           throw new Error("break-placement adapter returned a non-string reply");
         }
-        const repair = repairBreakIndices(reply, sentences.length);
-        emitDiagnostic("paragraphBreaks.formatValid", repair.formatValid);
-        emitDiagnostic("paragraphBreaks.repairUsed", repair.repairUsed);
-        if (repair.indices.length > 0) {
-          finishedText = applyParagraphBreaks(sentences, repair.indices);
+        const breaks = repairBreakIndices(reply, sentences.length);
+        emitDiagnostic("paragraphBreaks.formatValid", breaks.formatValid);
+        emitDiagnostic("paragraphBreaks.repairUsed", breaks.repairUsed);
+        // #125: the same reply carries a list-boundary claim. It fails closed
+        // in repairListRange - a range we cannot read cleanly comes back null
+        // and the text renders as ordinary prose, never a guessed list.
+        const list = repairListRange(reply, sentences.length);
+        emitDiagnostic("listBoundaries.formatValid", list.formatValid);
+        emitDiagnostic("listBoundaries.repairUsed", list.repairUsed);
+        if (breaks.indices.length > 0 || list.range) {
+          finishedText = renderStructuredText(sentences, {
+            breakIndices: breaks.indices,
+            listRange: list.range,
+          });
         }
       } catch (error) {
         emitDiagnostic("paragraphBreaks.failure", errorMessage(error));
