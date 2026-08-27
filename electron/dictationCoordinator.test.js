@@ -217,6 +217,7 @@ test("repairs malformed break indices without retrying and records format and re
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["vocabulary.promptLength", 0],
     ["paragraphBreaks.formatValid", false],
     ["paragraphBreaks.repairUsed", true],
   ]);
