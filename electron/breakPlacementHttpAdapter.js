@@ -1,30 +1,24 @@
-// #125 widened this contract from #67's single question (paragraph breaks) to
-// two, answered on two labelled lines. The model still returns positions only,
-// never rewritten text (#45, #90). SEVERAL varied examples, not one: #67 found
-// a single worked example anchors the first break onto its own first digit;
-// varied examples stay neutral for SmolLM2 and stop Qwen3 breaking at every
-// sentence.
+// The break-placement contract, unchanged from #67: numbered sentences in,
+// sentence numbers out, never rewritten text (#45, #90). SEVERAL varied
+// examples, not one - #67 found a single worked example anchors the first
+// break onto its own first digit.
+//
+// #125 tried to widen this to a second labelled line for list boundaries
+// (BREAKS: / LIST:). The spike (spike/list-boundaries-125/) measured that on
+// SmolLM2-1.7B and it regressed break placement badly - the model emitted
+// `BREAKS: 1` on every sample, which #67's wording reliably suppressed - and
+// over-triggered lists on 5 of 6 non-lists. So the live prompt stays
+// break-only; the parser and renderer for the two-line reply are kept,
+// unit-tested and dormant, in paragraphBreaks.js, behind the coordinator's
+// listDetection flag. Turn it back on once a prompt that holds both
+// instructions exists.
 const SYSTEM_PROMPT = [
-  "You structure dictated text. You are given numbered sentences. Reply with exactly two lines and nothing else:",
-  "BREAKS: <numbers of the sentences that should START a new paragraph, comma-separated, or: none>",
-  "LIST: <one range N-M if sentences N to M are a spoken list of items, or: none>",
+  "You place paragraph breaks in dictated text. You are given numbered sentences. Reply with the numbers of the sentences that should START a new paragraph, as a comma-separated list. Examples of the reply format: `2, 5, 9` or `4` or `3, 6` or `none`",
   "Rules:",
-  "- BREAKS: break where the topic shifts, not to make paragraphs even. Never output sentence 1. Never output a number that was not given.",
-  "- LIST: only when the speaker is plainly enumerating items - things to buy, steps to follow, options to weigh. Sentences that merely open with \"first\" or \"second\" as a turn of phrase are not a list.",
-  "- When unsure, answer none. Never invent structure that was not spoken.",
-  "- Reply with ONLY the two lines. No prose, no explanation.",
-  "Examples of the reply format:",
-  "BREAKS: 2, 5",
-  "LIST: none",
-  "-",
-  "BREAKS: none",
-  "LIST: 3-6",
-  "-",
-  "BREAKS: 4",
-  "LIST: 7-10",
-  "-",
-  "BREAKS: none",
-  "LIST: none",
+  "- Break where the topic shifts, not to make paragraphs even.",
+  "- Never output sentence 1. Never output a number that was not given.",
+  "- If the text should stay as one paragraph, reply: none",
+  "- Reply with ONLY numbers or the word none. No text, no explanation.",
 ].join("\n");
 
 function createBreakPlacementHttpAdapter(options) {
@@ -44,9 +38,7 @@ function createBreakPlacementHttpAdapter(options) {
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: numberedSentences },
         ],
-        // Two short labelled lines - a handful of tokens either way. #67
-        // measured the break line alone at a median of 8 output tokens.
-        max_tokens: 48,
+        max_tokens: 32,
         temperature: 0,
         stream: false,
       }),
