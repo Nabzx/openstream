@@ -9,5 +9,11 @@ contextBridge.exposeInMainWorld("openstream", {
     get: () => ipcRenderer.invoke("settings:get"),
     setHotkey: (hotkey) => ipcRenderer.invoke("settings:set-hotkey", hotkey),
     setBreakSafeApps: (apps) => ipcRenderer.invoke("settings:set-break-safe-apps", apps),
+    setVocabularyProjectPath: (projectPath) => ipcRenderer.invoke("settings:set-vocabulary-path", projectPath),
+  },
+  vocabulary: {
+    rescan: () => ipcRenderer.invoke("vocabulary:rescan"),
+    getStatus: () => ipcRenderer.invoke("vocabulary:get-status"),
+    chooseFolder: () => ipcRenderer.invoke("vocabulary:choose-folder"),
   },
 });
