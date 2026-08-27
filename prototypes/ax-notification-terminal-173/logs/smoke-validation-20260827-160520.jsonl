@@ -1,0 +1,39 @@
+{"chain":[{"name":".probe","pid":46910},{"name":"bash","pid":46885},{"name":"bash","pid":46883},{"name":"claude.exe","pid":6689},{"name":"claude.exe","pid":6670}],"elapsedMs":1,"event":"processAncestry"}
+{"appName":"Terminal","elapsedMs":1017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":2017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":3017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":4017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":5018,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":6015,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":7016,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":8017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":9013,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":10016,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":11017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":12017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":13017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":14013,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":15012,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":16014,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":17015,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":18015,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":19017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":20014,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":21012,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":22015,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":23017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":24017,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":25016,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":26016,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Code","bundleId":"com.microsoft.VSCode","elapsedMs":26873,"event":"notificationReceived"}
+{"appName":"Code","elapsedMs":27016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Code","elapsedMs":28016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","bundleId":"com.google.Chrome","elapsedMs":28114,"event":"notificationReceived"}
+{"appName":"Google Chrome","elapsedMs":29013,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":30016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":31016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":32016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":33016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":34016,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":35016,"event":"directPoll","matchesNotificationCache":true}
+{"elapsedMs":35017,"event":"done"}
