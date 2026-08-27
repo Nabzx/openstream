@@ -39,7 +39,9 @@ function createDictationIntake(options) {
 
     let rawText;
     try {
-      const transcript = await transcription.transcribe(wavBuffer, vocabulary.getPrompt());
+      const vocabularyPrompt = vocabulary.getPrompt();
+      emitDiagnostic("vocabulary.promptLength", vocabularyPrompt.length);
+      const transcript = await transcription.transcribe(wavBuffer, vocabularyPrompt);
       if (typeof transcript !== "string") {
         throw new Error("transcription adapter returned a non-string transcript");
       }
