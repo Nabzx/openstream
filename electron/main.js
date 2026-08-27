@@ -1,4 +1,4 @@
-const { app, Tray, Menu, BrowserWindow, clipboard, ipcMain, nativeImage, screen } = require("electron");
+const { app, Tray, Menu, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, screen } = require("electron");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
@@ -11,6 +11,7 @@ const { setBreakSafeApplications } = require("./breakSafety");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
+const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 
@@ -46,6 +47,7 @@ const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServ
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
 });
+const vocabulary = createVocabularyCache();
 
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
@@ -56,6 +58,7 @@ const dictationIntake = createDictationIntake({
   contextDetection: accessibilityHelper,
   breakPlacement,
   delivery: accessibilityHelper,
+  vocabulary,
   onDiagnostic: recordDictationDiagnostic,
 });
 
@@ -362,6 +365,31 @@ ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
   return settings;
 });
 
+// #16: setting the path persists it and triggers a rescan in the same
+// round trip, so the settings window can show the resulting status (or
+// error) without a second call. A failed scan (bad path, not a git repo)
+// rejects the promise and leaves both the persisted path and the previous
+// cache as they were - see vocabularyCache.js.
+ipcMain.handle("settings:set-vocabulary-path", async (event, projectPath) => {
+  const settings = settingsStore.setVocabularyProjectPath(projectPath);
+  await vocabulary.rescan(settings.vocabularyProjectPath);
+  return { settings, status: vocabulary.getStatus() };
+});
+
+ipcMain.handle("vocabulary:rescan", async () => {
+  await vocabulary.rescan(settingsStore.get().vocabularyProjectPath);
+  return vocabulary.getStatus();
+});
+
+ipcMain.handle("vocabulary:get-status", () => vocabulary.getStatus());
+
+ipcMain.handle("vocabulary:choose-folder", async () => {
+  if (!win) return null;
+  const result = await dialog.showOpenDialog(win, { properties: ["openDirectory"] });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
 // A second launch attempt hits this instead of silently doing nothing (or
 // worse, silently doing everything twice) - bring the settings window
 // forward so there's visible proof this instance is the one that's running.
@@ -376,6 +404,15 @@ app.whenReady().then(() => {
   settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
   hotkeyHelper.setHotkey(settingsStore.get().hotkey);
   setBreakSafeApplications(settingsStore.get().breakSafeApps);
+  // Fire-and-forget: a scan failing here (bad/moved path since last run)
+  // must not block startup. It just means vocabulary biasing stays off
+  // until the user opens Settings and fixes or re-picks the path.
+  const configuredProjectPath = settingsStore.get().vocabularyProjectPath;
+  if (configuredProjectPath) {
+    vocabulary.rescan(configuredProjectPath).catch((error) => {
+      console.error("[vocabulary] initial scan failed:", error.message);
+    });
+  }
   createTray();
   hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
   hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
