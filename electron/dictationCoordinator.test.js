@@ -18,6 +18,7 @@ function createIntake({
   placeParagraphBreaks,
   deliver,
   onDiagnostic,
+  listDetection,
 } = {}) {
   const diagnostics = [];
   const delivered = [];
@@ -43,6 +44,7 @@ function createIntake({
       }),
     },
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
+    listDetection,
   });
 
   return { intake, diagnostics, delivered, breakCalls };
@@ -226,6 +228,7 @@ test("break-placement failure falls back to one paragraph without retrying", asy
 
 test("a flagged spoken list renders as bullets set off from the surrounding prose", async () => {
   const harness = createIntake({
+    listDetection: true,
     transcript: "here is my shopping list. buy milk. buy eggs. buy bread.",
     breakReply: "BREAKS: none\nLIST: 2-4",
   });
@@ -246,6 +249,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
 
 test("an out-of-range list range is clamped into the text and recorded as repaired", async () => {
   const harness = createIntake({
+    listDetection: true,
     transcript: "first sentence. second sentence. third sentence. fourth sentence.",
     breakReply: "BREAKS: none\nLIST: 2-99",
   });
@@ -266,6 +270,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
 
 test("a malformed LIST line fails closed to prose without dropping paragraph breaks", async () => {
   const harness = createIntake({
+    listDetection: true,
     transcript: "first sentence. second sentence. third sentence. fourth sentence.",
     breakReply: "BREAKS: 3\nLIST: the middle bit",
   });
@@ -280,6 +285,26 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
     ["paragraphBreaks.formatValid", true],
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", false],
+    ["listBoundaries.repairUsed", false],
+  ]);
+});
+
+test("list detection is off by default: a valid range is parsed and reported but not rendered", async () => {
+  const harness = createIntake({
+    transcript: "here is my shopping list. buy milk. buy eggs. buy bread.",
+    breakReply: "BREAKS: none\nLIST: 2-4",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "delivered",
+    text: "Here is my shopping list. Buy milk. Buy eggs. Buy bread.",
+  });
+  assert.deepEqual(harness.diagnostics, [
+    ["paragraphBreaks.formatValid", true],
+    ["paragraphBreaks.repairUsed", false],
+    ["listBoundaries.formatValid", true],
     ["listBoundaries.repairUsed", false],
   ]);
 });
