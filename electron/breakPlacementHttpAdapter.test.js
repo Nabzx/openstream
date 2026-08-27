@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 
-test("posts numbered sentences to the local break-placement contract", async () => {
+test("posts numbered sentences to the local two-line structure contract", async () => {
   const calls = [];
   const adapter = createBreakPlacementHttpAdapter({
     chatCompletionsUrl: () => "http://127.0.0.1:8179/v1/chat/completions",
@@ -10,36 +10,33 @@ test("posts numbered sentences to the local break-placement contract", async () 
       calls.push({ url, options });
       return {
         ok: true,
-        json: async () => ({ choices: [{ message: { content: "  3, 7  " } }] }),
+        json: async () => ({ choices: [{ message: { content: "BREAKS: 3, 7\nLIST: none" } }] }),
       };
     },
   });
 
   const result = await adapter.placeParagraphBreaks(["First.", "Second.", "Third."]);
 
-  assert.equal(result, "3, 7");
+  assert.equal(result, "BREAKS: 3, 7\nLIST: none");
   assert.equal(calls.length, 1);
   assert.equal(calls[0].url, "http://127.0.0.1:8179/v1/chat/completions");
   assert.equal(calls[0].options.method, "POST");
-  assert.deepEqual(JSON.parse(calls[0].options.body), {
-    messages: [
-      {
-        role: "system",
-        content: [
-          "You place paragraph breaks in dictated text. You are given numbered sentences. Reply with the numbers of the sentences that should START a new paragraph, as a comma-separated list. Examples of the reply format: `2, 5, 9` or `4` or `3, 6` or `none`",
-          "Rules:",
-          "- Break where the topic shifts, not to make paragraphs even.",
-          "- Never output sentence 1. Never output a number that was not given.",
-          "- If the text should stay as one paragraph, reply: none",
-          "- Reply with ONLY numbers or the word none. No text, no explanation.",
-        ].join("\n"),
-      },
-      { role: "user", content: "1. First.\n2. Second.\n3. Third." },
-    ],
-    max_tokens: 32,
-    temperature: 0,
-    stream: false,
-  });
+
+  const body = JSON.parse(calls[0].options.body);
+  assert.equal(body.temperature, 0);
+  assert.equal(body.stream, false);
+  assert.equal(body.max_tokens, 48);
+  assert.equal(body.messages[1].role, "user");
+  assert.equal(body.messages[1].content, "1. First.\n2. Second.\n3. Third.");
+
+  const systemPrompt = body.messages[0].content;
+  assert.equal(body.messages[0].role, "system");
+  assert.match(systemPrompt, /exactly two lines/);
+  assert.match(systemPrompt, /^BREAKS: <numbers of the sentences/m);
+  assert.match(systemPrompt, /^LIST: <one range N-M/m);
+  // #67: several varied examples, never one - a lone example anchors the
+  // first break onto its own digits.
+  assert.ok((systemPrompt.match(/^BREAKS: /gm) || []).length >= 3);
 });
 
 test("fails clearly when the rewrite model server rejects break placement", async () => {
