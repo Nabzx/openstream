@@ -8,6 +8,11 @@ function createDictationIntake(options) {
     contextDetection,
     breakPlacement,
     delivery,
+    // #16: optional on purpose - most callers (and all of history before
+    // #16) have no project vocabulary configured at all. Defaults to a
+    // no-op that biases nothing, rather than forcing every caller/test to
+    // know about vocabulary scanning.
+    vocabulary = { getPrompt: () => "" },
     onDiagnostic = () => {},
   } = options;
 
@@ -15,6 +20,7 @@ function createDictationIntake(options) {
   assertAdapter("contextDetection", contextDetection, "getFocusContext");
   assertAdapter("breakPlacement", breakPlacement, "placeParagraphBreaks");
   assertAdapter("delivery", delivery, "deliver");
+  assertAdapter("vocabulary", vocabulary, "getPrompt");
 
   let queue = Promise.resolve();
 
@@ -33,7 +39,7 @@ function createDictationIntake(options) {
 
     let rawText;
     try {
-      const transcript = await transcription.transcribe(wavBuffer);
+      const transcript = await transcription.transcribe(wavBuffer, vocabulary.getPrompt());
       if (typeof transcript !== "string") {
         throw new Error("transcription adapter returned a non-string transcript");
       }
