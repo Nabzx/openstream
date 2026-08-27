@@ -94,7 +94,7 @@ Source runs can be attributed to Terminal, Electron, or OpenStream in System Set
 - **Native helpers** keep Input Monitoring and Accessibility in separate processes. A blocked Accessibility call cannot disable the global hotkey event tap.
 - **The Dictation intake module** owns the completed-recording flow behind one interface. Transcription, Context detection, break placement, and delivery remain adapters; tray and Push-to-talk overlay state stays in the Electron shell.
 
-See [CONTEXT.md](CONTEXT.md) for the project's terms, [ROADMAP.md](ROADMAP.md) for the longer plan, and [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md) for the cleanup decision. For a full walkthrough of the architecture, the trade-offs behind it, and where the project actually stands against the roadmap, see [docs/PROGRESS.md](docs/PROGRESS.md).
+See [CONTEXT.md](CONTEXT.md) for the project's terms, [ROADMAP.md](ROADMAP.md) for the longer plan, and [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md) for the cleanup decision. For a full walkthrough of the architecture, the trade-offs behind it, and where the project actually stands against the roadmap, see [docs/progress/](docs/progress/) - a dated checkpoint per phase, most recent first: [phase-2-progress.md](docs/progress/phase-2-progress.md), [phase-1-progress.md](docs/progress/phase-1-progress.md).
 
 ## Tests
 
