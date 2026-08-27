@@ -19,6 +19,7 @@ function createIntake({
   deliver,
   vocabulary,
   onDiagnostic,
+  listDetection,
 } = {}) {
   const diagnostics = [];
   const delivered = [];
@@ -45,6 +46,7 @@ function createIntake({
     },
     vocabulary,
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
+    listDetection,
   });
 
   return { intake, diagnostics, delivered, breakCalls };
@@ -220,6 +222,8 @@ test("repairs malformed break indices without retrying and records format and re
     ["vocabulary.promptLength", 0],
     ["paragraphBreaks.formatValid", false],
     ["paragraphBreaks.repairUsed", true],
+    ["listBoundaries.formatValid", true],
+    ["listBoundaries.repairUsed", false],
   ]);
 });
 
@@ -252,6 +256,89 @@ test("break-placement failure falls back to one paragraph without retrying", asy
     text: "First sentence. Second sentence. Third sentence.",
   });
   assert.deepEqual(delivered, ["First sentence. Second sentence. Third sentence."]);
+});
+
+test("a flagged spoken list renders as bullets set off from the surrounding prose", async () => {
+  const harness = createIntake({
+    listDetection: true,
+    transcript: "here is my shopping list. buy milk. buy eggs. buy bread.",
+    breakReply: "BREAKS: none\nLIST: 2-4",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "delivered",
+    text: "Here is my shopping list.\n\n- Buy milk.\n- Buy eggs.\n- Buy bread.",
+  });
+  assert.deepEqual(harness.diagnostics, [
+    ["paragraphBreaks.formatValid", true],
+    ["paragraphBreaks.repairUsed", false],
+    ["listBoundaries.formatValid", true],
+    ["listBoundaries.repairUsed", false],
+  ]);
+});
+
+test("an out-of-range list range is clamped into the text and recorded as repaired", async () => {
+  const harness = createIntake({
+    listDetection: true,
+    transcript: "first sentence. second sentence. third sentence. fourth sentence.",
+    breakReply: "BREAKS: none\nLIST: 2-99",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "delivered",
+    text: "First sentence.\n\n- Second sentence.\n- Third sentence.\n- Fourth sentence.",
+  });
+  assert.deepEqual(harness.diagnostics, [
+    ["paragraphBreaks.formatValid", true],
+    ["paragraphBreaks.repairUsed", false],
+    ["listBoundaries.formatValid", true],
+    ["listBoundaries.repairUsed", true],
+  ]);
+});
+
+test("a malformed LIST line fails closed to prose without dropping paragraph breaks", async () => {
+  const harness = createIntake({
+    listDetection: true,
+    transcript: "first sentence. second sentence. third sentence. fourth sentence.",
+    breakReply: "BREAKS: 3\nLIST: the middle bit",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "delivered",
+    text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
+  });
+  assert.deepEqual(harness.diagnostics, [
+    ["paragraphBreaks.formatValid", true],
+    ["paragraphBreaks.repairUsed", false],
+    ["listBoundaries.formatValid", false],
+    ["listBoundaries.repairUsed", false],
+  ]);
+});
+
+test("list detection is off by default: a valid range is parsed and reported but not rendered", async () => {
+  const harness = createIntake({
+    transcript: "here is my shopping list. buy milk. buy eggs. buy bread.",
+    breakReply: "BREAKS: none\nLIST: 2-4",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "delivered",
+    text: "Here is my shopping list. Buy milk. Buy eggs. Buy bread.",
+  });
+  assert.deepEqual(harness.diagnostics, [
+    ["paragraphBreaks.formatValid", true],
+    ["paragraphBreaks.repairUsed", false],
+    ["listBoundaries.formatValid", true],
+    ["listBoundaries.repairUsed", false],
+  ]);
 });
 
 test("empty recordings do not call transcription or delivery", async () => {

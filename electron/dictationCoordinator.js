@@ -1,6 +1,11 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
-const { splitSentences, repairBreakIndices, applyParagraphBreaks } = require("./paragraphBreaks");
+const {
+  splitSentences,
+  repairBreakIndices,
+  repairListRange,
+  renderStructuredText,
+} = require("./paragraphBreaks");
 
 function createDictationIntake(options) {
   const {
@@ -14,6 +19,13 @@ function createDictationIntake(options) {
     // know about vocabulary scanning.
     vocabulary = { getPrompt: () => "" },
     onDiagnostic = () => {},
+    // #125: the spike found SmolLM2-1.7B over-triggers list detection (a list
+    // flagged on 5 of 6 non-lists) and the live prompt is break-only for now,
+    // so the model never returns a LIST line in production. The parse still
+    // runs and its diagnostics still fire - that's the telemetry a future
+    // prompt needs - but the range is only rendered when this is switched on.
+    // See spike/list-boundaries-125/FINDINGS.md.
+    listDetection = false,
   } = options;
 
   assertAdapter("transcription", transcription, "transcribe");
@@ -88,11 +100,22 @@ function createDictationIntake(options) {
         if (typeof reply !== "string") {
           throw new Error("break-placement adapter returned a non-string reply");
         }
-        const repair = repairBreakIndices(reply, sentences.length);
-        emitDiagnostic("paragraphBreaks.formatValid", repair.formatValid);
-        emitDiagnostic("paragraphBreaks.repairUsed", repair.repairUsed);
-        if (repair.indices.length > 0) {
-          finishedText = applyParagraphBreaks(sentences, repair.indices);
+        const breaks = repairBreakIndices(reply, sentences.length);
+        emitDiagnostic("paragraphBreaks.formatValid", breaks.formatValid);
+        emitDiagnostic("paragraphBreaks.repairUsed", breaks.repairUsed);
+        // #125: the reply may also carry a list-boundary claim (BREAKS: /
+        // LIST: two-line contract). repairListRange fails closed - a range we
+        // cannot read cleanly comes back null - and rendering is gated off by
+        // default until a prompt exists that the model handles (see above).
+        const list = repairListRange(reply, sentences.length);
+        emitDiagnostic("listBoundaries.formatValid", list.formatValid);
+        emitDiagnostic("listBoundaries.repairUsed", list.repairUsed);
+        const listRange = listDetection ? list.range : null;
+        if (breaks.indices.length > 0 || listRange) {
+          finishedText = renderStructuredText(sentences, {
+            breakIndices: breaks.indices,
+            listRange,
+          });
         }
       } catch (error) {
         emitDiagnostic("paragraphBreaks.failure", errorMessage(error));
