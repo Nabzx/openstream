@@ -1,0 +1,621 @@
+{
+  "meta": {
+    "machine": "Apple M1",
+    "ram_gb": 16,
+    "macos": "26.2",
+    "reps": 5,
+    "when": "2026-08-27 16:22:06",
+    "budget_seconds": 1.0,
+    "transcribe_plus_rules_130w": 0.61,
+    "break_only_67_130w": 0.12
+  },
+  "cold_start": {
+    "smollm2-1.7b": 6.66
+  },
+  "rss_mb": {
+    "smollm2-1.7b": 1441.1
+  },
+  "samples": {
+    "list-groceries": {
+      "bucket": "130",
+      "group": "list",
+      "words": 80,
+      "cleaned": "Before I forget I need to sort out the shop for the weekend we're basically out of everything. So the big things are milk we need the oat one not the dairy one then eggs a dozen should be fine bread the seeded loaf if they have it. And then coffee because we finished the last of it this morning oh. And washing up liquid the sink is a state honestly I'll go tomorrow morning before it gets busy.",
+      "sentences": [
+        "Before I forget I need to sort out the shop for the weekend we're basically out of everything.",
+        "So the big things are milk we need the oat one not the dairy one then eggs a dozen should be fine bread the seeded loaf if they have it.",
+        "And then coffee because we finished the last of it this morning oh.",
+        "And washing up liquid the sink is a state honestly I'll go tomorrow morning before it gets busy."
+      ],
+      "n_sentences": 4,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": [
+          2,
+          4
+        ]
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 3\nLIST: 2-4",
+          "seconds": 0.982,
+          "all_seconds": [
+            1.448,
+            1.053,
+            0.982,
+            0.981,
+            0.974
+          ],
+          "tokens": {
+            "prompt_tokens": 371,
+            "completion_tokens": 18
+          },
+          "breaks": {
+            "indices": [
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              2,
+              4
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 1.0,
+          "list_false_positive": false,
+          "rendered": "Before I forget I need to sort out the shop for the weekend we're basically out of everything.\n\n- So the big things are milk we need the oat one not the dairy one then eggs a dozen should be fine bread the seeded loaf if they have it.\n- And then coffee because we finished the last of it this morning oh.\n- And washing up liquid the sink is a state honestly I'll go tomorrow morning before it gets busy."
+        }
+      }
+    },
+    "list-standup": {
+      "bucket": "130",
+      "group": "list",
+      "words": 63,
+      "cleaned": "For standup my update is pretty short first thing is I finished the retry logic on the supervisor that's merged now second thing I'm halfway through the notarisation fix. But I'm blocked on the apple cert which ops is chasing and the third thing is I want to pick up the overlay flicker bug next if nobody objects that's me done.",
+      "sentences": [
+        "For standup my update is pretty short first thing is I finished the retry logic on the supervisor that's merged now second thing I'm halfway through the notarisation fix.",
+        "But I'm blocked on the apple cert which ops is chasing and the third thing is I want to pick up the overlay flicker bug next if nobody objects that's me done."
+      ],
+      "n_sentences": 2,
+      "asked": false,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {}
+    },
+    "list-packing": {
+      "bucket": "200",
+      "group": "list",
+      "words": 107,
+      "cleaned": "For the trip next week here's what still needs to go in the bag the passports obviously both of them the one that expired is in the same drawer. So double check the dates the travel adapter the european one not the us one the phone chargers all three. Because the short one always goes missing sun cream because apparently it's going to be thirty degrees. And the paperback I started because there's a four hour layover in the middle. And nothing to do also I should probably download some things to watch before we leave the house. Because the airport wifi is never worth the login.",
+      "sentences": [
+        "For the trip next week here's what still needs to go in the bag the passports obviously both of them the one that expired is in the same drawer.",
+        "So double check the dates the travel adapter the european one not the us one the phone chargers all three.",
+        "Because the short one always goes missing sun cream because apparently it's going to be thirty degrees.",
+        "And the paperback I started because there's a four hour layover in the middle.",
+        "And nothing to do also I should probably download some things to watch before we leave the house.",
+        "Because the airport wifi is never worth the login."
+      ],
+      "n_sentences": 6,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": [
+          2,
+          6
+        ]
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 3\nLIST: 2-6",
+          "seconds": 0.957,
+          "all_seconds": [
+            1.623,
+            0.933,
+            1.018,
+            0.914,
+            0.957
+          ],
+          "tokens": {
+            "prompt_tokens": 413,
+            "completion_tokens": 18
+          },
+          "breaks": {
+            "indices": [
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              2,
+              6
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 1.0,
+          "list_false_positive": false,
+          "rendered": "For the trip next week here's what still needs to go in the bag the passports obviously both of them the one that expired is in the same drawer.\n\n- So double check the dates the travel adapter the european one not the us one the phone chargers all three.\n- Because the short one always goes missing sun cream because apparently it's going to be thirty degrees.\n- And the paperback I started because there's a four hour layover in the middle.\n- And nothing to do also I should probably download some things to watch before we leave the house.\n- Because the airport wifi is never worth the login."
+        }
+      }
+    },
+    "list-deploy-steps": {
+      "bucket": "130",
+      "group": "list",
+      "words": 88,
+      "cleaned": "Here is the deploy runbook for the release. Bump the version in the package file and commit that on its own. Tag the commit and push the tag because the workflow triggers on tags not branches. Wait for the notarisation job to go green which takes about ten minutes. Then download the artefact from the release page and check it opens on a machine that has never seen it before. Only then announce it in the channel. If any step fails stop and shout rather than pushing on.",
+      "sentences": [
+        "Here is the deploy runbook for the release.",
+        "Bump the version in the package file and commit that on its own.",
+        "Tag the commit and push the tag because the workflow triggers on tags not branches.",
+        "Wait for the notarisation job to go green which takes about ten minutes.",
+        "Then download the artefact from the release page and check it opens on a machine that has never seen it before.",
+        "Only then announce it in the channel.",
+        "If any step fails stop and shout rather than pushing on."
+      ],
+      "n_sentences": 7,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": [
+          2,
+          6
+        ]
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 2, 4, 6\nLIST: 3-5",
+          "seconds": 1.3,
+          "all_seconds": [
+            1.777,
+            1.438,
+            1.3,
+            1.256,
+            1.243
+          ],
+          "tokens": {
+            "prompt_tokens": 395,
+            "completion_tokens": 24
+          },
+          "breaks": {
+            "indices": [
+              2,
+              4,
+              6
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              3,
+              5
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.6,
+          "list_false_positive": false,
+          "rendered": "Here is the deploy runbook for the release.\n\nBump the version in the package file and commit that on its own.\n\n- Tag the commit and push the tag because the workflow triggers on tags not branches.\n- Wait for the notarisation job to go green which takes about ten minutes.\n- Then download the artefact from the release page and check it opens on a machine that has never seen it before.\n\nOnly then announce it in the channel. If any step fails stop and shout rather than pushing on."
+        }
+      }
+    },
+    "list-candidates": {
+      "bucket": "200",
+      "group": "list",
+      "words": 123,
+      "cleaned": "We narrowed the model choice down to three real options and each has a catch. Smol lm two is the provisional pick and it is apache licensed. And ungated which is exactly what we need but it overshoots the memory assumption by about fourteen percent. Quen three is two hundred megs cheaper in memory and also ungated. But its latency is all over the place and the thinking mode has to be disabled by hand. The third option is to drop the model entirely and ship rules only which is free on memory but gives up paragraph breaks and list detection completely. I think we go with smol lm two but the memory number needs a proper measurement on a small machine first.",
+      "sentences": [
+        "We narrowed the model choice down to three real options and each has a catch.",
+        "Smol lm two is the provisional pick and it is apache licensed.",
+        "And ungated which is exactly what we need but it overshoots the memory assumption by about fourteen percent.",
+        "Quen three is two hundred megs cheaper in memory and also ungated.",
+        "But its latency is all over the place and the thinking mode has to be disabled by hand.",
+        "The third option is to drop the model entirely and ship rules only which is free on memory but gives up paragraph breaks and list detection completely.",
+        "I think we go with smol lm two but the memory number needs a proper measurement on a small machine first."
+      ],
+      "n_sentences": 7,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": [
+          2,
+          6
+        ]
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 2, 4, 6\nLIST: 3-7",
+          "seconds": 1.37,
+          "all_seconds": [
+            2.105,
+            1.362,
+            1.516,
+            1.37,
+            1.353
+          ],
+          "tokens": {
+            "prompt_tokens": 436,
+            "completion_tokens": 24
+          },
+          "breaks": {
+            "indices": [
+              2,
+              4,
+              6
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              3,
+              7
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.67,
+          "list_false_positive": false,
+          "rendered": "We narrowed the model choice down to three real options and each has a catch.\n\nSmol lm two is the provisional pick and it is apache licensed.\n\n- And ungated which is exactly what we need but it overshoots the memory assumption by about fourteen percent.\n- Quen three is two hundred megs cheaper in memory and also ungated.\n- But its latency is all over the place and the thinking mode has to be disabled by hand.\n- The third option is to drop the model entirely and ship rules only which is free on memory but gives up paragraph breaks and list detection completely.\n- I think we go with smol lm two but the memory number needs a proper measurement on a small machine first."
+        }
+      }
+    },
+    "inline-shop": {
+      "bucket": "130",
+      "group": "inline",
+      "words": 61,
+      "cleaned": "I'm heading past the shop on the way back does anyone need anything I'm going to grab milk eggs bread. And some of those biscuits we had last week and I think that's it unless you can think of something we should probably also get more coffee actually no there's a bag in the cupboard behind the mugs it's fine.",
+      "sentences": [
+        "I'm heading past the shop on the way back does anyone need anything I'm going to grab milk eggs bread.",
+        "And some of those biscuits we had last week and I think that's it unless you can think of something we should probably also get more coffee actually no there's a bag in the cupboard behind the mugs it's fine."
+      ],
+      "n_sentences": 2,
+      "asked": false,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {}
+    },
+    "inline-agenda": {
+      "bucket": "130",
+      "group": "inline",
+      "words": 49,
+      "cleaned": "The meeting tomorrow should be quick the agenda is really just the budget the hiring plan. And the office move nothing controversial in any of them I'll send the deck round tonight. So people can read it first and we can keep the actual call to half an hour.",
+      "sentences": [
+        "The meeting tomorrow should be quick the agenda is really just the budget the hiring plan.",
+        "And the office move nothing controversial in any of them I'll send the deck round tonight.",
+        "So people can read it first and we can keep the actual call to half an hour."
+      ],
+      "n_sentences": 3,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 3\nLIST: 2-4",
+          "seconds": 1.045,
+          "all_seconds": [
+            1.324,
+            0.932,
+            1.045,
+            1.06,
+            0.967
+          ],
+          "tokens": {
+            "prompt_tokens": 336,
+            "completion_tokens": 18
+          },
+          "breaks": {
+            "indices": [
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              2,
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.0,
+          "list_false_positive": true,
+          "rendered": "The meeting tomorrow should be quick the agenda is really just the budget the hiring plan.\n\n- And the office move nothing controversial in any of them I'll send the deck round tonight.\n- So people can read it first and we can keep the actual call to half an hour."
+        }
+      }
+    },
+    "decoy-thanks": {
+      "bucket": "130",
+      "group": "decoy",
+      "words": 66,
+      "cleaned": "Before we wrap up I just want to say a couple of things first of all genuinely thank you all for the push this week I know it was a lot. And secondly the demo went really well the client was happy so that pressure is off now let's all take the weekend properly. And come back fresh on monday there's no fire that can't wait.",
+      "sentences": [
+        "Before we wrap up I just want to say a couple of things first of all genuinely thank you all for the push this week I know it was a lot.",
+        "And secondly the demo went really well the client was happy so that pressure is off now let's all take the weekend properly.",
+        "And come back fresh on monday there's no fire that can't wait."
+      ],
+      "n_sentences": 3,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 3\nLIST: 2-6",
+          "seconds": 1.011,
+          "all_seconds": [
+            1.314,
+            1.0,
+            1.081,
+            1.011,
+            0.923
+          ],
+          "tokens": {
+            "prompt_tokens": 356,
+            "completion_tokens": 18
+          },
+          "breaks": {
+            "indices": [
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              2,
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.0,
+          "list_false_positive": true,
+          "rendered": "Before we wrap up I just want to say a couple of things first of all genuinely thank you all for the push this week I know it was a lot.\n\n- And secondly the demo went really well the client was happy so that pressure is off now let's all take the weekend properly.\n- And come back fresh on monday there's no fire that can't wait."
+        }
+      }
+    },
+    "decoy-argument": {
+      "bucket": "200",
+      "group": "decoy",
+      "words": 109,
+      "cleaned": "I've been thinking about whether we should even keep the llama-server resident. And honestly I keep going back and forth first of all it's two gigs of RAM which on an eight gig machine is a quarter of everything just gone. But then again the break placement genuinely does need it there and starting it lazily adds a second of latency to the first dictation which is exactly when people are judging whether the app is any good. So on balance I think it stays resident but I want us to measure the memory properly on a small machine before we commit to that in the release notes.",
+      "sentences": [
+        "I've been thinking about whether we should even keep the llama-server resident.",
+        "And honestly I keep going back and forth first of all it's two gigs of RAM which on an eight gig machine is a quarter of everything just gone.",
+        "But then again the break placement genuinely does need it there and starting it lazily adds a second of latency to the first dictation which is exactly when people are judging whether the app is any good.",
+        "So on balance I think it stays resident but I want us to measure the memory properly on a small machine before we commit to that in the release notes."
+      ],
+      "n_sentences": 4,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 2\nLIST: 3-4",
+          "seconds": 0.99,
+          "all_seconds": [
+            1.678,
+            1.081,
+            0.956,
+            0.99,
+            0.958
+          ],
+          "tokens": {
+            "prompt_tokens": 407,
+            "completion_tokens": 18
+          },
+          "breaks": {
+            "indices": [
+              2
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              3,
+              4
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.0,
+          "list_false_positive": true,
+          "rendered": "I've been thinking about whether we should even keep the llama-server resident.\n\nAnd honestly I keep going back and forth first of all it's two gigs of RAM which on an eight gig machine is a quarter of everything just gone.\n\n- But then again the break placement genuinely does need it there and starting it lazily adds a second of latency to the first dictation which is exactly when people are judging whether the app is any good.\n- So on balance I think it stays resident but I want us to measure the memory properly on a small machine before we commit to that in the release notes."
+        }
+      }
+    },
+    "decoy-story": {
+      "bucket": "130",
+      "group": "decoy",
+      "words": 63,
+      "cleaned": "The hotkey bug was such a saga first it looked like an event tap problem then it looked like a permissions thing then finally we worked out macOS was killing the tap. Because our callback was too slow so the fix in the end was tiny just move the work off the callback thread. But it took three days to find one line.",
+      "sentences": [
+        "The hotkey bug was such a saga first it looked like an event tap problem then it looked like a permissions thing then finally we worked out macOS was killing the tap.",
+        "Because our callback was too slow so the fix in the end was tiny just move the work off the callback thread.",
+        "But it took three days to find one line."
+      ],
+      "n_sentences": 3,
+      "asked": true,
+      "reference": {
+        "breaks": [],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 2\nLIST: 3",
+          "seconds": 0.863,
+          "all_seconds": [
+            1.247,
+            0.904,
+            0.863,
+            0.827,
+            0.811
+          ],
+          "tokens": {
+            "prompt_tokens": 351,
+            "completion_tokens": 16
+          },
+          "breaks": {
+            "indices": [
+              2
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": null,
+            "verdict": "invalid",
+            "strict": false
+          },
+          "break_match": false,
+          "list_overlap": 1.0,
+          "list_false_positive": false,
+          "rendered": "The hotkey bug was such a saga first it looked like an event tap problem then it looked like a permissions thing then finally we worked out macOS was killing the tap.\n\nBecause our callback was too slow so the fix in the end was tiny just move the work off the callback thread. But it took three days to find one line."
+        }
+      }
+    },
+    "carry-arch-1": {
+      "bucket": "130",
+      "group": "carry",
+      "words": 121,
+      "cleaned": "Here's where I've landed on the architecture question the main thing is that we've got two subprocesses to supervise. And that's already kind of a lot for a menu bar app whisper is unavoidable obviously we need it. But the llama-server is the one I keep going back and forth on. Because it holds two gigs of RAM resident the whole time the app is running. And I'm not sure that's a trade people want to make just for slightly nicer punctuation. So what I'd like to do is measure it properly before we commit. And if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later.",
+      "sentences": [
+        "Here's where I've landed on the architecture question the main thing is that we've got two subprocesses to supervise.",
+        "And that's already kind of a lot for a menu bar app whisper is unavoidable obviously we need it.",
+        "But the llama-server is the one I keep going back and forth on.",
+        "Because it holds two gigs of RAM resident the whole time the app is running.",
+        "And I'm not sure that's a trade people want to make just for slightly nicer punctuation.",
+        "So what I'd like to do is measure it properly before we commit.",
+        "And if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later."
+      ],
+      "n_sentences": 7,
+      "asked": true,
+      "reference": {
+        "breaks": [
+          3,
+          6
+        ],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 3, 6\nLIST: 2-7",
+          "seconds": 1.258,
+          "all_seconds": [
+            1.905,
+            1.19,
+            1.115,
+            1.36,
+            1.258
+          ],
+          "tokens": {
+            "prompt_tokens": 436,
+            "completion_tokens": 21
+          },
+          "breaks": {
+            "indices": [
+              3,
+              6
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              2,
+              7
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": true,
+          "list_overlap": 0.0,
+          "list_false_positive": true,
+          "rendered": "Here's where I've landed on the architecture question the main thing is that we've got two subprocesses to supervise.\n\n- And that's already kind of a lot for a menu bar app whisper is unavoidable obviously we need it.\n- But the llama-server is the one I keep going back and forth on.\n- Because it holds two gigs of RAM resident the whole time the app is running.\n- And I'm not sure that's a trade people want to make just for slightly nicer punctuation.\n- So what I'd like to do is measure it properly before we commit.\n- And if the rules-based thing gets us eighty percent of the way there then honestly we should just ship that and revisit later."
+        }
+      }
+    },
+    "carry-onboard-1": {
+      "bucket": "130",
+      "group": "carry",
+      "words": 119,
+      "cleaned": "The onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying microphone access is the standard one that pops a system dialog immediately accessibility is the one where macOS just silently denies you until the user goes into system settings. And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted. And just poll every second or so to update it because there's no callback for the accessibility one anyway.",
+      "sentences": [
+        "The onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying microphone access is the standard one that pops a system dialog immediately accessibility is the one where macOS just silently denies you until the user goes into system settings.",
+        "And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted.",
+        "And just poll every second or so to update it because there's no callback for the accessibility one anyway."
+      ],
+      "n_sentences": 3,
+      "asked": true,
+      "reference": {
+        "breaks": [
+          2
+        ],
+        "list": null
+      },
+      "runs": {
+        "smollm2-1.7b": {
+          "reply": "BREAKS: 1, 2, 3\nLIST: 1-3",
+          "seconds": 1.149,
+          "all_seconds": [
+            1.93,
+            1.085,
+            1.132,
+            1.196,
+            1.149
+          ],
+          "tokens": {
+            "prompt_tokens": 411,
+            "completion_tokens": 21
+          },
+          "breaks": {
+            "indices": [
+              2,
+              3
+            ],
+            "verdict": "repaired",
+            "strict": true
+          },
+          "list": {
+            "range": [
+              1,
+              3
+            ],
+            "verdict": "ok",
+            "strict": true
+          },
+          "break_match": false,
+          "list_overlap": 0.0,
+          "list_false_positive": true,
+          "rendered": "- The onboarding flow needs to handle three separate permission prompts and they all behave differently which is annoying microphone access is the standard one that pops a system dialog immediately accessibility is the one where macOS just silently denies you until the user goes into system settings.\n- And flips the toggle manually and then input monitoring is the one nobody remembers exists until the global hotkey doesn't fire what I think we should do is detect all three up front on first launch show a single checklist screen with a green tick next to each one as it gets granted.\n- And just poll every second or so to update it because there's no callback for the accessibility one anyway."
+        }
+      }
+    }
+  }
+}

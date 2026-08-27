@@ -69,9 +69,12 @@ that is still true in practice.
 ## Candidates
 
 Same as #67: **SmolLM2-1.7B-Instruct Q4_K_M** (provisional, ship candidate) and
-**Qwen3-1.7B Q4_K_M** (alternate, thinking disabled). Models live outside the
-repo in `~/.cache/openstream-spike/models/`; nothing here is committed except
-code and results.
+**Qwen3-1.7B Q4_K_M** (alternate, thinking disabled).
+
+SmolLM2 and `llama-server` now come from `scripts/fetch-llama.sh` (#14) into
+`resources/`, and `bench.py` picks them up there. Qwen3 is not in that script -
+drop `Qwen3-1.7B-Q4_K_M.gguf` into `~/.cache/openstream-spike/models/` (#67's
+location) to include it. Nothing here is committed except code and results.
 
 ## Stated assumptions and limits
 
@@ -90,7 +93,18 @@ code and results.
 
 ## Status
 
-**Not yet run.** `FINDINGS.md` is scaffolded with the questions and empty
-result tables, the same way #15's eval corpus was committed before it was
-scored. Run `python3 bench.py` on the reference machine with both GGUFs in
-place to fill it in.
+**Run 2026-08-27, result negative - see `FINDINGS.md`.** The two-line prompt
+regressed paragraph breaks (`BREAKS: 1` on every sample) and over-triggered
+lists (flagged on 5 of 6 non-lists). The production contract was pared back:
+live prompt reverted to #67's break-only wording, LIST parse/render kept but
+gated off (`createDictationIntake({ listDetection: false })`).
+
+To re-measure after a prompt iteration:
+
+    bash ../../scripts/fetch-llama.sh    # SmolLM2 + llama-server, once
+    python3 bench.py                     # writes out/results.json
+    python3 report.py                    # writes out/review.html
+    python3 promptcmp.py                 # A/B a new system prompt vs the shipped one
+
+The latency rows still need a **clean Metal-accelerated server** - this run's
+token generation was CPU-speed (~15 tok/s) and the numbers are unusable.
