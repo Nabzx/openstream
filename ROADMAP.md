@@ -62,11 +62,11 @@ Owns: context awareness, prose cleanup rules, break safety.
 
 Same tracks, harder problems — this is where it gets genuinely complex.
 
-- **Track A:** codebase vocabulary scanner — extract identifiers/terms from the open git repo or editor buffer, feed them into whisper.cpp as an initial prompt / bias list
+- ~~**Track A:** codebase vocabulary scanner~~ - **moved to the After-v1.0 backlog.** Built and unit-tested (#16, PR #185: `git ls-files` a configured repo, extract/rank/cap identifiers, bias whisper's per-request prompt), but deprioritised - an MVP needs plain dictation working excellently first, and this is polish, not core. The Settings UI is unhooked, not deleted; the underlying scanning/caching/pipeline wiring stays in place, ready to pick back up
 - **Track B:** `llama-server` plumbing - fetch the binary and an **Apache 2.0 / MIT, ungated** GGUF (SmolLM2-1.7B-Instruct provisionally; acquisition policy open in #52), start it, confirm a local HTTP round trip (moved here from Phase 2 by #24 and #32)
 - **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. **Correction from #45:** that server is now **resident**, started at app launch alongside the transcription model server, because it also decides break placement during ordinary dictation. The lazy-then-idle-released lifecycle #29 chose assumed it served voice edits only
 
-**Definition of done:** dictation that's measurably more accurate on your own codebase's vocabulary, plus voice-editing of existing text. Tag `v0.3`.
+**Definition of done:** voice-editing of existing text, working reliably. Tag `v0.3`.
 
 ---
 
@@ -86,3 +86,5 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 ## After v1.0
 
 Open to outside contributors. Backlog candidates: Linux/Windows ports, per-project config files, custom wake-word-free modes, team-shared vocabulary packs. Not scoped yet — revisit after launch feedback.
+
+- **Codebase vocabulary scanner** ([#16](https://github.com/Nabzx/openstream/issues/16)) - moved here from Phase 3. Built, not shipped: the scanning/caching/pipeline wiring exists and is tested (PR #185), the Settings UI is unhooked. Before re-enabling: confirm a live dictation with a configured project path actually gets the biased prompt end to end (a `vocabulary.promptLength` diagnostic exists for exactly this check and hasn't been read back yet).
