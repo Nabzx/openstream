@@ -26,6 +26,7 @@ struct Options {
     var note = ""
     var deadlineMs = 3_000
     var treeCap = 50
+    var graceMs = 3_000
 }
 
 func parseOptions() -> Options {
@@ -39,6 +40,7 @@ func parseOptions() -> Options {
         case "--note": i += 1; out.note = args[i]
         case "--deadline-ms": i += 1; out.deadlineMs = Int(args[i]) ?? out.deadlineMs
         case "--tree-cap": i += 1; out.treeCap = Int(args[i]) ?? out.treeCap
+        case "--grace-ms": i += 1; out.graceMs = Int(args[i]) ?? out.graceMs
         default: fputs("Unknown argument: \(args[i])\n", stderr); exit(2)
         }
         i += 1
@@ -169,6 +171,21 @@ func pollUntilReady(_ appElement: AXUIElement, deadlineMs: Int, log: EventLog, m
     }
     log.emit("pollTimedOut", ["mechanism": mechanism, "attempts": attempt, "deadlineMs": deadlineMs])
     print("  \(mechanism): never succeeded within \(deadlineMs)ms (\(attempt) attempts)")
+}
+
+// Grace period so the operator can switch away from Terminal (which is
+// necessarily frontmost right when this command is typed) back to the
+// actual target app before frontmostApplication is read. Without this the
+// probe would just measure Terminal every single time.
+if options.graceMs > 0 {
+    let seconds = Double(options.graceMs) / 1000.0
+    print("Switch to the target app now - measuring frontmost app in \(String(format: "%.1f", seconds))s...")
+    var remaining = seconds
+    while remaining > 0 {
+        Thread.sleep(forTimeInterval: min(1.0, remaining))
+        remaining -= 1.0
+        if remaining > 0 { print("  \(Int(ceil(remaining)))...") }
+    }
 }
 
 guard let frontApp = NSWorkspace.shared.frontmostApplication else {

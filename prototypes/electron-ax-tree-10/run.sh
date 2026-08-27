@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # PROTOTYPE — build and run one trial of the issue #10 tree-richness probe.
 #
-# Usage: click into a real editable field in the app you want to test, then:
+# Usage: run the command FIRST, then switch to and click into the target
+# app - the probe gives a 3s countdown before it reads what's frontmost, so
+# Terminal (necessarily frontmost when you hit Enter) doesn't get measured
+# instead of the app you meant to test.
 #   ./run.sh manual   "<free text note, e.g. 'VS Code, clicked into probe.swift'>"
 #   ./run.sh enhanced "<note>"
 #   ./run.sh both     "<note>"

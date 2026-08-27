@@ -25,21 +25,27 @@ None of that was collected under controlled, repeatable conditions - it was live
 
 ## Running a trial
 
-One trial = one app, one mechanism, run right after you've clicked into a real field in it:
+Type the command in a plain Terminal window first, **then** switch to the
+target app - the probe gives you a 3-second grace period (prints a
+countdown) before it reads what's frontmost, specifically so Terminal being
+frontmost at the moment you hit Enter doesn't get measured instead of the
+app you actually meant to test:
 
 ```bash
 cd prototypes/electron-ax-tree-10
 
-# click into VS Code's editor first, then:
-./run.sh manual "VS Code, clicked into editor"
-./run.sh enhanced "VS Code, clicked into editor"
+# type this, then switch to VS Code and click into its editor within 3s:
+./run.sh both "VS Code, clicked into editor"
 
-# click into Chrome's page content first, then:
+# type this, then switch to Chrome and click into a page text field within 3s:
 ./run.sh both "Chrome, clicked into a text input on a real page"
 
 # a native app as a control - should succeed immediately with no poke needed:
-./run.sh none "TextEdit, clicked into the document"
+./run.sh both "TextEdit, clicked into the document"
 ```
+
+`--grace-ms` (probe.swift, default 3000) can be changed if 3 seconds isn't
+enough time to switch and click.
 
 Every run appends one trial to `logs/session.jsonl`. Cover at minimum: VS Code and Chrome (both `manual` and `enhanced`), one native app as a control, and - if available - Slack and/or Discord as a second and third Electron data point distinct from VS Code.
 
