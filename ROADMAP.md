@@ -46,7 +46,6 @@ Owns: audio capture, STT, text delivery, packaging.
 - [ ] ~~Support multiple whisper.cpp model sizes; settings toggle for speed vs. accuracy~~ - **removed by #30.** One model, `ggml-base.en.bin`. The setting existed so low-RAM Macs could dodge the 2 GB LLM, and that LLM left the dictation path in #24; `small.en` is ~3x the work and would put long dictations past the sub-1s budget
 - [ ] Harden text injection across app types — this breaks in Electron apps, terminals, and some Java/Swing apps; needs real cross-app testing
 - [ ] Decide the injection mechanism itself, its guard against a stale target, and what the user sees when injection fails ([#62](https://github.com/Nabzx/openstream/issues/62)). The hardening item above assumes a mechanism that has never been chosen
-- [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update
 
 ### Track B — Intelligence
 Owns: context awareness, prose cleanup rules, break safety.
@@ -73,6 +72,7 @@ Same tracks, harder problems — this is where it gets genuinely complex.
 
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
+- [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update ([#11](https://github.com/Nabzx/openstream/issues/11)) - **moved here from Phase 2.** Signing/distribution choices are cheapest to keep open for as long as possible; committing to them before the app itself is ready to ship just locks in decisions early for no benefit
 - [ ] Permission state check - build script warns when the **Electron host bundle's** code identity changes (not the helpers': #46 measured that all three grants live on the host, so a helper hash is the wrong thing to watch), app tests all three grants at launch by **probing them functionally** (a System Settings toggle can read ON while the binary is denied) and blocks on Accessibility / Input Monitoring (#47, pending #88)
 - [ ] Settings UI complete (hotkey remapping, the user-editable break-safe app list) - **no mode rules** (#45) and **no model choice** (#30)
 - [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
