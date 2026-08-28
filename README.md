@@ -83,6 +83,10 @@ OpenStream needs three macOS permissions:
 
 After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Option`, speak, and release it. Existing saved combinations such as `Control+Option+D` remain usable until changed. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
 
+On launch the app checks these grants: if Accessibility or Input Monitoring is missing it opens on a **Permissions** screen with links straight to the right System Settings pane. `npm run doctor` runs the same check from the terminal.
+
+**Because OpenStream runs from source, every rebuild resets the grants** (ad-hoc signing has no stable identity, so macOS re-keys the permission to the new binary). When you re-grant, **remove the old OpenStream entry in System Settings first**, then add the new build — macOS won't let a stale entry and a fresh one coexist.
+
 Source runs can be attributed to Terminal, Electron, or OpenStream in System Settings. Permission identity across rebuilds is still being worked out.
 
 ## Design

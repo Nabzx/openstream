@@ -13,6 +13,7 @@
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "setup:git-hooks": "bash scripts/setup-git-hooks.sh",
+    "doctor": "node scripts/doctor.mjs",
     "prepare:electron": "node node_modules/electron/install.js",
     "prepare:model-artifacts": "node scripts/prepare-model-artifacts.mjs",
     "build:whisper": "bash scripts/build-whisper.sh",
