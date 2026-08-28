@@ -1,9 +1,9 @@
-// macOS virtual keycodes (Carbon Events.h kVK_ANSI_*) for the US ANSI
-// layout, keyed by the DOM KeyboardEvent.code values a renderer can
-// actually observe. Covers letters, digits and the punctuation keys next
-// to them - the plausible range for a dictation hotkey. Arrow, function
-// and other unmapped keys are rejected by captureHotkey.ts rather than
-// guessed at here.
+// macOS virtual keycodes (Carbon Events.h kVK_*) keyed by the DOM
+// KeyboardEvent.code values a renderer can actually observe. Legacy
+// combinations still use the ANSI character mappings; new captures only use
+// the logical standalone Option identity below.
+export const STANDALONE_OPTION_KEY_CODE = 58;
+
 export const DOM_CODE_TO_MAC_KEYCODE: Record<string, number> = {
   KeyA: 0, KeyB: 11, KeyC: 8, KeyD: 2, KeyE: 14, KeyF: 3, KeyG: 5, KeyH: 4,
   KeyI: 34, KeyJ: 38, KeyK: 40, KeyL: 37, KeyM: 46, KeyN: 45, KeyO: 31,
@@ -14,12 +14,14 @@ export const DOM_CODE_TO_MAC_KEYCODE: Record<string, number> = {
   Minus: 27, Equal: 24, BracketLeft: 33, BracketRight: 30, Backslash: 42,
   Semicolon: 41, Quote: 39, Comma: 43, Period: 47, Slash: 44, Backquote: 50,
   Space: 49, Tab: 48,
+  // Both physical Option keys share one logical identity for new captures.
+  AltLeft: STANDALONE_OPTION_KEY_CODE, AltRight: STANDALONE_OPTION_KEY_CODE,
 };
 
 const SYMBOL_LABELS: Record<string, string> = {
   Minus: "-", Equal: "=", BracketLeft: "[", BracketRight: "]", Backslash: "\\",
   Semicolon: ";", Quote: "'", Comma: ",", Period: ".", Slash: "/", Backquote: "`",
-  Space: "Space", Tab: "Tab",
+  Space: "Space", Tab: "Tab", AltLeft: "Option", AltRight: "Option",
 };
 
 function labelForDomCode(code: string): string {

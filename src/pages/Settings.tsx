@@ -59,7 +59,7 @@ export default function Settings() {
   return (
     <main className="page">
       {/* HotkeySettings renders its own headed `.setting` section - it's
-          kept as-is until the shortcut work settles (#215), then restyled
+          kept as-is until the one-key shortcut work settles (#216), then restyled
           into the card system like the rest of this page. */}
       <HotkeySettings />
 

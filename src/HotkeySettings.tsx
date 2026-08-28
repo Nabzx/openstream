@@ -47,7 +47,7 @@ export default function HotkeySettings() {
   }, [recording]);
 
   const buttonLabel = recording
-    ? "Press a key combo…"
+    ? "Press Option…"
     : shortcutChangePending
       ? "Checking shortcut…"
       : "Change shortcut";
@@ -57,8 +57,8 @@ export default function HotkeySettings() {
       <h2>Push-to-talk shortcut</h2>
       <p className="setting-current">{shortcut ? formatHotkey(shortcut) : "Loading…"}</p>
       <p className="setting-guidance">
-        OpenStream cannot reliably detect conflicts with macOS or other apps. If a shortcut does not work, choose another
-        shortcut.
+        OpenStream cannot reliably detect whether macOS or another app also uses Option. If it does not work, choose
+        another shortcut.
       </p>
       <button
         onClick={() => {

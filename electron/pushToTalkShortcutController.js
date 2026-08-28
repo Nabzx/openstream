@@ -1,5 +1,5 @@
 const { createHotkeyHelper } = require("./hotkeyHelper");
-const { validateShortcut } = require("./settingsStore");
+const { validateNewShortcut } = require("./settingsStore");
 
 const UNAVAILABLE_MESSAGE = "Shortcut unavailable. Choose another shortcut.";
 const INTERNAL_FAILURE_MESSAGE = "Unable to change the Push-to-talk shortcut.";
@@ -103,7 +103,7 @@ function createPushToTalkShortcutController({
 
   async function replaceInternal(candidateShortcut) {
     try {
-      validateShortcut(candidateShortcut);
+      validateNewShortcut(candidateShortcut);
     } catch {
       return unsupportedResult();
     }
