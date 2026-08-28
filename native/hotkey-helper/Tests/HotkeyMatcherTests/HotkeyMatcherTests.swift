@@ -121,6 +121,71 @@ final class HotkeyMatcherTests: XCTestCase {
         }
     }
 
+    func testStandaloneCommandAcceptsEitherSideAndSurvivesOtherModifierChanges() {
+        var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneCommandKeyCode, flags: [])
+
+        XCTAssertEqual(
+            matcher.handle(HotkeyEvent(keyCode: 55, type: .flagsChanged, flags: [.command])),
+            .down
+        )
+        XCTAssertNil(
+            matcher.handle(HotkeyEvent(keyCode: 56, type: .flagsChanged, flags: [.command, .shift]))
+        )
+        XCTAssertNil(matcher.handle(HotkeyEvent(keyCode: 56, type: .flagsChanged, flags: [.command])))
+        XCTAssertEqual(matcher.handle(HotkeyEvent(keyCode: 54, type: .flagsChanged)), .up)
+    }
+
+    func testStandaloneControlAcceptsEitherPhysicalControlKey() {
+        var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneControlKeyCode, flags: [])
+
+        XCTAssertEqual(
+            matcher.handle(HotkeyEvent(keyCode: 62, type: .flagsChanged, flags: [.control])),
+            .down
+        )
+        XCTAssertEqual(matcher.handle(HotkeyEvent(keyCode: 62, type: .flagsChanged)), .up)
+    }
+
+    func testStandaloneFnUsesTheSecondaryFunctionFlag() {
+        var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneFnKeyCode, flags: [])
+
+        XCTAssertEqual(
+            matcher.handle(
+                HotkeyEvent(
+                    keyCode: HotkeyMatcher.standaloneFnKeyCode,
+                    type: .flagsChanged,
+                    flags: [.secondaryFunction]
+                )
+            ),
+            .down
+        )
+        XCTAssertNil(
+            matcher.handle(
+                HotkeyEvent(
+                    keyCode: HotkeyMatcher.standaloneFnKeyCode,
+                    type: .flagsChanged,
+                    flags: [.secondaryFunction]
+                )
+            )
+        )
+        XCTAssertEqual(
+            matcher.handle(HotkeyEvent(keyCode: HotkeyMatcher.standaloneFnKeyCode, type: .flagsChanged)),
+            .up
+        )
+    }
+
+    func testStandaloneCapsLockRequiresAUsableKeyPair() {
+        var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneCapsLockKeyCode, flags: [])
+
+        XCTAssertNil(matcher.handle(HotkeyEvent(keyCode: 57, type: .keyUp)))
+        XCTAssertNil(matcher.handle(HotkeyEvent(keyCode: 57, type: .keyDown, flags: [.shift])))
+        XCTAssertEqual(matcher.handle(HotkeyEvent(keyCode: 57, type: .keyDown)), .down)
+        XCTAssertNil(
+            matcher.handle(HotkeyEvent(keyCode: 57, type: .keyDown, isAutorepeat: true))
+        )
+        XCTAssertEqual(matcher.handle(HotkeyEvent(keyCode: 57, type: .keyUp, flags: [.shift])), .up)
+        XCTAssertNil(matcher.handle(HotkeyEvent(keyCode: 57, type: .keyUp)))
+    }
+
     func testStandaloneOptionRejectsAnAdditionalModifierOnPress() {
         var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneOptionKeyCode, flags: [])
 
@@ -134,9 +199,7 @@ final class HotkeyMatcherTests: XCTestCase {
             )
         )
         XCTAssertNil(
-            matcher.handle(
-                HotkeyEvent(keyCode: HotkeyMatcher.standaloneOptionKeyCode, type: .flagsChanged, flags: [.command])
-            )
+            matcher.handle(HotkeyEvent(keyCode: HotkeyMatcher.standaloneOptionKeyCode, type: .flagsChanged, flags: [.command]))
         )
     }
 

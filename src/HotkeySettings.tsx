@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { captureHotkeyFromEvent, type StoredHotkey } from "./hotkey/captureHotkey";
 import { formatHotkey } from "./hotkey/keycodeMap";
 
-export const SHORTCUT_CAPTURE_PROMPT = "Press Option or F1–F19…";
+export const SHORTCUT_CAPTURE_PROMPT = "Press Option, Command, Control, Fn, Caps Lock, or F1–F19…";
 export const SHORTCUT_GUIDANCE =
-  "F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. OpenStream cannot reliably detect whether macOS or another app also uses a key.";
+  "F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. Choose one standalone key: Option, Command, Control, Fn, or Caps Lock. OpenStream cannot reliably detect whether macOS or another app also uses a key. Fn and Caps Lock may not produce a usable event on every keyboard.";
 
 export default function HotkeySettings() {
   const [shortcut, setShortcut] = useState<StoredHotkey | null>(null);

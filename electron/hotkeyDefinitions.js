@@ -1,4 +1,8 @@
 const STANDALONE_OPTION_KEY_CODE = 58;
+const STANDALONE_COMMAND_KEY_CODE = 55;
+const STANDALONE_CONTROL_KEY_CODE = 59;
+const STANDALONE_FN_KEY_CODE = 63;
+const STANDALONE_CAPS_LOCK_KEY_CODE = 57;
 
 const FUNCTION_KEY_CODES = Object.freeze({
   F1: 122,
@@ -22,16 +26,25 @@ const FUNCTION_KEY_CODES = Object.freeze({
   F19: 80,
 });
 const FUNCTION_KEY_CODE_SET = new Set(Object.values(FUNCTION_KEY_CODES));
+const STANDALONE_KEY_CODES = new Set([
+  STANDALONE_OPTION_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  ...FUNCTION_KEY_CODE_SET,
+]);
 
 function hasNoModifiers(shortcut) {
   return Array.isArray(shortcut?.modifiers) && shortcut.modifiers.length === 0;
 }
 
+function isStandaloneShortcut(shortcut) {
+  return Number.isInteger(shortcut?.keyCode) && STANDALONE_KEY_CODES.has(shortcut.keyCode) && hasNoModifiers(shortcut);
+}
+
 function isStandaloneOptionShortcut(shortcut) {
-  return (
-    shortcut?.keyCode === STANDALONE_OPTION_KEY_CODE &&
-    hasNoModifiers(shortcut)
-  );
+  return isStandaloneShortcut(shortcut) && shortcut.keyCode === STANDALONE_OPTION_KEY_CODE;
 }
 
 function isFunctionKeyShortcut(shortcut) {
@@ -39,12 +52,17 @@ function isFunctionKeyShortcut(shortcut) {
 }
 
 function isSupportedSingleKeyShortcut(shortcut) {
-  return isStandaloneOptionShortcut(shortcut) || isFunctionKeyShortcut(shortcut);
+  return isStandaloneShortcut(shortcut) || isFunctionKeyShortcut(shortcut);
 }
 
 module.exports = {
   STANDALONE_OPTION_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_CAPS_LOCK_KEY_CODE,
   FUNCTION_KEY_CODES,
+  isStandaloneShortcut,
   isStandaloneOptionShortcut,
   isFunctionKeyShortcut,
   isSupportedSingleKeyShortcut,
