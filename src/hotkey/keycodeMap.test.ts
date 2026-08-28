@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatHotkey, hotkeyParts, labelForMacKeyCode, macKeyCodeForDomCode } from "./keycodeMap";
+import {
+  formatHotkey,
+  hotkeyParts,
+  labelForMacKeyCode,
+  macKeyCodeForDomCode,
+  STANDALONE_OPTION_KEY_CODE,
+} from "./keycodeMap";
 
 describe("macKeyCodeForDomCode", () => {
   it("maps a letter key to its macOS virtual keycode", () => {
@@ -10,6 +16,11 @@ describe("macKeyCodeForDomCode", () => {
 
   it("maps a digit key", () => {
     expect(macKeyCodeForDomCode("Digit1")).toBe(18);
+  });
+
+  it("maps either physical Option key to one logical identity", () => {
+    expect(macKeyCodeForDomCode("AltLeft")).toBe(STANDALONE_OPTION_KEY_CODE);
+    expect(macKeyCodeForDomCode("AltRight")).toBe(STANDALONE_OPTION_KEY_CODE);
   });
 
   it("returns undefined for an unmapped key", () => {
@@ -23,6 +34,10 @@ describe("labelForMacKeyCode", () => {
     expect(labelForMacKeyCode(2)).toBe("D");
   });
 
+  it("labels the standalone Option identity", () => {
+    expect(labelForMacKeyCode(STANDALONE_OPTION_KEY_CODE)).toBe("Option");
+  });
+
   it("falls back to a numbered placeholder for an unmapped keycode", () => {
     expect(labelForMacKeyCode(999)).toBe("#999");
   });
@@ -33,12 +48,16 @@ describe("formatHotkey", () => {
     expect(formatHotkey({ keyCode: 2, modifiers: ["cmd", "ctrl"] })).toBe("⌃⌘D");
   });
 
-  it("formats the current default (Control+Option+D)", () => {
+  it("formats a legacy Control+Option+D combination", () => {
     expect(formatHotkey({ keyCode: 2, modifiers: ["ctrl", "alt"] })).toBe("⌃⌥D");
   });
 
   it("formats a single modifier", () => {
     expect(formatHotkey({ keyCode: 49, modifiers: ["cmd"] })).toBe("⌘Space");
+  });
+
+  it("formats standalone Option with its human-readable name", () => {
+    expect(formatHotkey({ keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] })).toBe("Option");
   });
 });
 

@@ -2,21 +2,14 @@ const { spawn } = require("child_process");
 const readline = require("readline");
 const path = require("path");
 const { resourcesRoot } = require("./paths");
+const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
 
 const BIN_PATH = path.join(resourcesRoot(), "bin", "hotkey-helper");
 
-// Keycode 2 is 'D' on the ANSI layout - matches settingsStore.js's
-// DEFAULT_SETTINGS, so a fresh install with no settings file behaves
-// exactly as it always has. The helper only knows keycodes, not accelerator
-// strings, so the mapping lives here.
-//
-// Control+Option, not Cmd+Shift: this tap is listen-only (see main.swift),
-// so the keystroke still reaches whatever app is focused. A Cmd-combo that
-// doesn't match a menu item makes AppKit play the system alert beep, which
-// then gets captured at the start of the recording and Whisper hallucinates
-// as "[Music]". Control+Option isn't treated as a menu key-equivalent, so
-// nothing beeps.
-const DEFAULT_HOTKEY = { keyCode: 2, modifiers: ["ctrl", "alt"] };
+// The native helper uses keycode 58 as the logical standalone Option
+// identity. Its modifier-state event can represent either physical Option
+// key, so a fresh install can use Option without choosing a side.
+const DEFAULT_HOTKEY = { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] };
 
 const RESTART_DELAY_MS = 1000;
 const READY_TIMEOUT_MS = 5000;

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const { PassThrough, Writable } = require("node:stream");
 const { createHotkeyHelper, DEFAULT_HOTKEY } = require("./hotkeyHelper");
+const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
 
 function fakeProcess() {
   const process = new EventEmitter();
@@ -131,12 +132,8 @@ test("spawns with the configured hotkey's args, defaulting to DEFAULT_HOTKEY", (
   helper.start();
 
   assert.equal(spawned.length, 1);
-  assert.deepEqual(spawned[0].args, [
-    "--keycode",
-    String(DEFAULT_HOTKEY.keyCode),
-    "--modifiers",
-    DEFAULT_HOTKEY.modifiers.join(","),
-  ]);
+  assert.deepEqual(DEFAULT_HOTKEY, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
+  assert.deepEqual(spawned[0].args, ["--keycode", String(STANDALONE_OPTION_KEY_CODE), "--modifiers", ""]);
   helper.stop();
 });
 

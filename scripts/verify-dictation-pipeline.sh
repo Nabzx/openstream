@@ -314,7 +314,7 @@ say "Both model servers are listening."
 stage "Check global push-to-talk feedback"
 open -a TextEdit
 step "Click inside a new TextEdit document. Keep OpenStream unfocused."
-step "Hold Control+Option+D and speak for two or three seconds."
+step "Hold Option and speak for two or three seconds."
 step "While holding the keys, confirm the tray shows recording, the overlay is visible, and its sound meter moves with your voice."
 step "Release the keys and confirm the tray shows transcribing before returning to idle."
 if confirm "Did the global hotkey, real microphone, tray, overlay, and sound meter all work?"; then
@@ -329,7 +329,7 @@ open -a TextEdit
 say "Use this unique three-sentence phrase:"
 note "Atomic amber river. Local models stay home. This text appears one time."
 step "Place the cursor on an empty line in TextEdit."
-step "Hold Control+Option+D, dictate the phrase, then release."
+step "Hold Option, dictate the phrase, then release."
 step "Wait for insertion. Do not paste or type any correction."
 if confirm "Did one finished block appear exactly once, with no provisional text or later revision?"; then
   INSERTION_RESULT="pass"
@@ -375,7 +375,7 @@ stage "Measure the dictation latency budget"
 LATENCY_LINE_START=$(wc -l < "$LOG_FILE")
 say "Run three warm dictations in TextEdit. Wait for each insertion before starting the next."
 for run in 1 2 3; do
-  step "Dictation $run of 3: hold Control+Option+D, speak one sentence, release, and wait for insertion."
+  step "Dictation $run of 3: hold Option, speak one sentence, release, and wait for insertion."
   pause "Press Enter after dictation $run arrives."
 done
 while IFS= read -r value; do

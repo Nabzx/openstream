@@ -9,7 +9,7 @@ This repository is a development fork of [Nabzx/openstream](https://github.com/N
 The current app can:
 
 - run as a macOS menu bar app
-- listen for `Control+Option+D` through a native hotkey helper
+- listen for standalone `Option` through a native hotkey helper
 - record while the hotkey is held and transcribe after release
 - keep `whisper-server` resident instead of loading it for each dictation
 - insert text at the cursor through a separate Accessibility helper
@@ -81,7 +81,7 @@ OpenStream needs three macOS permissions:
 2. Input Monitoring for the hotkey helper.
 3. Accessibility for the text-insertion helper.
 
-After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Control+Option+D`, speak, and release the keys. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
+After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Option`, speak, and release it. Existing saved combinations such as `Control+Option+D` remain usable until changed. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
 
 Source runs can be attributed to Terminal, Electron, or OpenStream in System Settings. Permission identity across rebuilds is still being worked out.
 

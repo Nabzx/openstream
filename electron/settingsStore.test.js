@@ -4,6 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { createSettingsStore, DEFAULT_SETTINGS } = require("./settingsStore");
+const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
 
 function tempFilePath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "openstream-settings-")), "settings.json");
@@ -14,7 +15,12 @@ test("returns defaults when no settings file exists yet", () => {
   assert.deepEqual(store.get(), DEFAULT_SETTINGS);
 });
 
-test("setHotkey persists to disk and get() reflects it afterwards", () => {
+test("fresh settings default to standalone Option", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.deepEqual(store.get().hotkey, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
+});
+
+test("setHotkey persists a legacy combination to disk", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });
 
@@ -53,15 +59,24 @@ test("a partial disk write leaves the cached and saved shortcut unchanged", () =
   assert.deepEqual(JSON.parse(fs.readFileSync(filePath, "utf8")).hotkey, { keyCode: 2, modifiers: ["ctrl", "alt"] });
 });
 
-test("rejects a hotkey with no modifiers", () => {
+test("persists standalone Option", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+
+  store.setShortcut({ keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
+  assert.deepEqual(store.get().hotkey, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
+});
+
+test("rejects an unsupported standalone key", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
-  assert.throws(() => store.setHotkey({ keyCode: 2, modifiers: [] }), /non-empty/);
+  assert.throws(() => store.setHotkey({ keyCode: 2, modifiers: [] }), /Unsupported key/);
 });
 
 test("rejects an unknown modifier", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   assert.throws(() => store.setHotkey({ keyCode: 2, modifiers: ["fn"] }), /unknown modifier/);
 });
+
 
 test("rejects a non-integer keyCode", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
@@ -85,6 +100,18 @@ test("onChange fires with the new settings after a successful setHotkey", () => 
 
   assert.equal(seen.length, 1);
   assert.deepEqual(seen[0].hotkey, { keyCode: 3, modifiers: ["cmd"] });
+});
+
+test("loads an existing legacy combination without rewriting it", () => {
+  const filePath = tempFilePath();
+  const saved = { ...DEFAULT_SETTINGS, hotkey: { keyCode: 2, modifiers: ["ctrl", "alt"] } };
+  fs.writeFileSync(filePath, JSON.stringify(saved, null, 2));
+  const before = fs.readFileSync(filePath, "utf8");
+
+  const store = createSettingsStore({ filePath });
+
+  assert.deepEqual(store.get().hotkey, saved.hotkey);
+  assert.equal(fs.readFileSync(filePath, "utf8"), before);
 });
 
 test("a corrupt settings file falls back to defaults instead of throwing", () => {

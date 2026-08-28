@@ -1,5 +1,6 @@
 import CoreGraphics
 import Foundation
+import HotkeyMatcher
 
 // Push-to-talk hotkey helper, per issue #5.
 //
@@ -26,23 +27,23 @@ func emit(_ event: String) {
     fflush(stdout)
 }
 
-func parseModifiers(_ raw: String) -> CGEventFlags {
-    var flags: CGEventFlags = []
+func parseModifiers(_ raw: String) -> HotkeyFlags {
+    var flags: HotkeyFlags = []
     for name in raw.split(separator: ",") {
         switch name.trimmingCharacters(in: .whitespaces) {
-        case "cmd": flags.insert(.maskCommand)
-        case "shift": flags.insert(.maskShift)
-        case "alt", "option": flags.insert(.maskAlternate)
-        case "ctrl", "control": flags.insert(.maskControl)
+        case "cmd": flags.insert(.command)
+        case "shift": flags.insert(.shift)
+        case "alt", "option": flags.insert(.alternate)
+        case "ctrl", "control": flags.insert(.control)
         default: eprint("hotkey-helper: ignoring unknown modifier \"\(name)\"")
         }
     }
     return flags
 }
 
-func parseArgs() -> (keyCode: Int64, flags: CGEventFlags) {
-    var keyCode: Int64 = 2 // 'D' on the ANSI layout - matches CommandOrControl+Shift+D
-    var flags: CGEventFlags = [.maskCommand, .maskShift]
+func parseArgs() -> (keyCode: Int64, flags: HotkeyFlags) {
+    var keyCode = HotkeyMatcher.standaloneOptionKeyCode
+    var flags: HotkeyFlags = []
 
     let args = CommandLine.arguments
     var i = 1
@@ -62,10 +63,19 @@ func parseArgs() -> (keyCode: Int64, flags: CGEventFlags) {
     return (keyCode, flags)
 }
 
-let (targetKeyCode, targetFlags) = parseArgs()
-let relevantFlagsMask: CGEventFlags = [.maskCommand, .maskShift, .maskAlternate, .maskControl]
+let configuration = parseArgs()
+var matcher = HotkeyMatcher(keyCode: configuration.keyCode, flags: configuration.flags)
 
 var tap: CFMachPort?
+
+func hotkeyFlags(for flags: CGEventFlags) -> HotkeyFlags {
+    var result: HotkeyFlags = []
+    if flags.contains(.maskCommand) { result.insert(.command) }
+    if flags.contains(.maskShift) { result.insert(.shift) }
+    if flags.contains(.maskAlternate) { result.insert(.alternate) }
+    if flags.contains(.maskControl) { result.insert(.control) }
+    return result
+}
 
 func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
     if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
@@ -78,20 +88,26 @@ func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent, refc
         return Unmanaged.passRetained(event)
     }
 
-    guard type == .keyDown || type == .keyUp else {
+    guard type == .keyDown || type == .keyUp || type == .flagsChanged else {
         return Unmanaged.passRetained(event)
     }
 
-    // Key repeat resends keyDown for as long as the key is held - only the
-    // first down and the eventual up are a press/release pair.
-    if type == .keyDown && event.getIntegerValueField(.keyboardEventAutorepeat) != 0 {
-        return Unmanaged.passRetained(event)
+    let eventType: HotkeyEventType
+    switch type {
+    case .keyDown: eventType = .keyDown
+    case .keyUp: eventType = .keyUp
+    case .flagsChanged: eventType = .flagsChanged
+    default: return Unmanaged.passRetained(event)
     }
 
-    let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-    let flags = event.flags.intersection(relevantFlagsMask)
-    if keyCode == targetKeyCode && flags == targetFlags {
-        emit(type == .keyDown ? "down" : "up")
+    let hotkeyEvent = HotkeyEvent(
+        keyCode: event.getIntegerValueField(.keyboardEventKeycode),
+        type: eventType,
+        flags: hotkeyFlags(for: event.flags),
+        isAutorepeat: event.getIntegerValueField(.keyboardEventAutorepeat) != 0
+    )
+    if let signal = matcher.handle(hotkeyEvent) {
+        emit(signal == .down ? "down" : "up")
     }
 
     return Unmanaged.passRetained(event)
@@ -102,7 +118,10 @@ if !CGPreflightListenEventAccess() {
     _ = CGRequestListenEventAccess()
 }
 
-let eventMask: CGEventMask = (1 << CGEventType.keyDown.rawValue) | (1 << CGEventType.keyUp.rawValue)
+let eventMask: CGEventMask =
+    (1 << CGEventType.keyDown.rawValue) |
+    (1 << CGEventType.keyUp.rawValue) |
+    (1 << CGEventType.flagsChanged.rawValue)
 
 guard let createdTap = CGEvent.tapCreate(
     tap: .cgSessionEventTap,

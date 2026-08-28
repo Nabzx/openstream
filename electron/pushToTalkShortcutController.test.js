@@ -1,9 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
+const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
 
 const OLD_HOTKEY = { keyCode: 2, modifiers: ["ctrl", "alt"] };
-const NEW_HOTKEY = { keyCode: 49, modifiers: ["cmd"] };
+const NEW_HOTKEY = { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] };
 
 function fakeSettingsStore({ failFor = null } = {}) {
   let hotkey = { ...OLD_HOTKEY, modifiers: [...OLD_HOTKEY.modifiers] };
@@ -172,14 +173,19 @@ test("leaves persistence untouched when a ready candidate cannot become active",
   assert.deepEqual(settings.writes, []);
 });
 
-test("rejects malformed candidates without starting a helper", async () => {
+test("rejects legacy combinations and unsupported standalone keys without starting a helper", async () => {
   const settings = fakeSettingsStore();
   const factory = fakeHelperFactory();
   const controller = createController(settings, factory);
 
-  const result = await controller.replace({ keyCode: 2, modifiers: [] });
+  for (const candidate of [
+    { keyCode: 2, modifiers: ["ctrl"] },
+    { keyCode: 56, modifiers: [] },
+  ]) {
+    const result = await controller.replace(candidate);
+    assert.deepEqual(result, { ok: false, kind: "unsupported", message: "Unsupported key" });
+  }
 
-  assert.deepEqual(result, { ok: false, kind: "unsupported", message: "Unsupported key" });
   assert.equal(factory.helpers.length, 1);
   assert.deepEqual(settings.get().hotkey, OLD_HOTKEY);
 });

@@ -2,7 +2,7 @@
 
 Issue [#105](https://github.com/Nabzx/openstream/issues/105) covers the macOS boundaries that CI cannot drive: global key events, a real microphone, menu bar and overlay feedback, and insertion into another application.
 
-The default hotkey is `Control+Option+D`. Issue #84 replaced `Cmd+Shift+D` because the listen-only Command shortcut played the system alert beep in apps without a matching menu item. Whisper could transcribe that beep as "[Music]".
+The fresh-install default is standalone `Option`. Existing saved combinations remain active for backward compatibility. The helper is listen-only, so the selected key continues through macOS and the focused application.
 
 ## Run the wizard
 
@@ -27,7 +27,7 @@ The wizard checks the build, then walks through seven stages:
 
 1. Check that the Electron runtime has not been revoked by Gatekeeper, then run the automated test suite and typecheck on an Apple Silicon Mac.
 2. Start OpenStream and grant Microphone, Input Monitoring, and Accessibility permissions.
-3. Use `Control+Option+D` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock, and shows a real frosted-glass blur (desktop content behind it should look visibly blurred, not a flat dark box) with a waveform that audibly reacts to your voice. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it. If the overlay looks like a flat dark rectangle with no blur, check System Settings > Accessibility > Display > Reduce Transparency isn't enabled - that setting flattens all vibrancy effects system-wide.
+3. Use standalone `Option` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock, and shows a real frosted-glass blur (desktop content behind it should look visibly blurred, not a flat dark box) with a waveform that audibly reacts to your voice. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it. If the overlay looks like a flat dark rectangle with no blur, check System Settings > Accessibility > Display > Reduce Transparency isn't enabled - that setting flattens all vibrancy effects system-wide.
 4. Dictate into TextEdit and confirm the finished text is inserted once.
 5. Inspect both model-server listeners and sample their TCP connections during a dictation. Ports 8178 and 8179 must stay on `127.0.0.1`.
 6. Measure three warm dictations from key release to confirmed insertion. Every measurement must be below 1000 ms.

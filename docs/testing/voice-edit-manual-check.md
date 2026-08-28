@@ -10,7 +10,7 @@ in place across different app types.
 ## Prerequisites
 
 OpenStream running with Accessibility, Input Monitoring and Microphone granted, both
-model servers up. Default hotkey `Control+Option+D`.
+model servers up. Fresh-install default hotkey `Option` (existing saved combinations remain supported).
 
 ## Checks
 

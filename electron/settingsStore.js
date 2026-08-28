@@ -1,12 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
+const { STANDALONE_OPTION_KEY_CODE, isStandaloneOptionShortcut } = require("./hotkeyDefinitions");
 
-// Matches hotkeyHelper.js's own default (Control+Option+D, see #84) and
-// breakSafety.js's own default allow-list, so a fresh install with no
-// settings file behaves exactly like it did before either was editable.
+// Matches hotkeyHelper.js's standalone Option default and breakSafety.js's
+// own default allow-list. Existing settings are read as-is below so this
+// only affects a fresh install with no settings file.
 const DEFAULT_SETTINGS = {
-  hotkey: { keyCode: 2, modifiers: ["ctrl", "alt"] },
+  hotkey: { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] },
   breakSafeApps: [...DEFAULT_BREAK_SAFE_BUNDLE_IDS],
   // #16: null means no project configured - vocabulary biasing is opt-in,
   // not a default every fresh install has to notice and turn off.
@@ -27,16 +28,23 @@ function validateShortcut(shortcut) {
   if (!shortcut || typeof shortcut.keyCode !== "number" || !Number.isInteger(shortcut.keyCode) || shortcut.keyCode < 0) {
     throw new Error("shortcut.keyCode must be a non-negative integer");
   }
-  if (!Array.isArray(shortcut.modifiers) || shortcut.modifiers.length === 0) {
-    // A shortcut with no modifiers would fire on every ordinary keystroke of
-    // that key - the native helper only ever taps global combos deliberately.
-    throw new Error("shortcut.modifiers must be a non-empty array");
+  if (!Array.isArray(shortcut.modifiers)) {
+    throw new Error("shortcut.modifiers must be an array");
   }
+  if (shortcut.modifiers.length === 0 && !isStandaloneOptionShortcut(shortcut)) {
+    throw new Error("Unsupported key");
+  }
+
   for (const modifier of shortcut.modifiers) {
     if (!VALID_MODIFIERS.has(modifier)) {
       throw new Error(`unknown modifier "${modifier}"`);
     }
   }
+}
+
+function validateNewShortcut(shortcut) {
+  validateShortcut(shortcut);
+  if (!isStandaloneOptionShortcut(shortcut)) throw new Error("Unsupported key");
 }
 
 function validateVocabularyProjectPath(projectPath) {
@@ -179,5 +187,6 @@ module.exports = {
   createSettingsStore,
   DEFAULT_SETTINGS,
   validateShortcut,
+  validateNewShortcut,
   validateHotkey: validateShortcut,
 };
