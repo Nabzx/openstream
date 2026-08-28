@@ -8,6 +8,7 @@ const {
   ipcMain,
   nativeImage,
   screen,
+  shell,
   systemPreferences,
 } = require("electron");
 const fs = require("fs");
@@ -30,6 +31,7 @@ const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
 const { sanitizeWindowBounds, WINDOW_STATE_DEFAULTS } = require("./windowState");
+const { evaluatePermissions, SETTINGS_URLS } = require("./permissions");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
 // forgot was already running) from spawning a whole second app: its own
@@ -437,13 +439,23 @@ function loadTrayIcons() {
   }
 }
 
+let permissionsBlocked = false;
+
 function setTrayState(state) {
   if (!trayIcons[state]) {
     throw new Error(`Unknown tray state: ${state}`);
   }
   trayState = state;
   tray.setImage(trayIcons[state]);
-  tray.setToolTip(state === "idle" ? "OpenStream" : `OpenStream — ${state}`);
+  const base = state === "idle" ? "OpenStream" : `OpenStream — ${state}`;
+  tray.setToolTip(permissionsBlocked ? `${base} (permissions needed)` : base);
+}
+
+// #47: reflected in the tray tooltip so a degraded app is visible without
+// the window open. No separate warning icon yet.
+function updateTrayForPermissions(verdict) {
+  permissionsBlocked = !verdict.ok;
+  if (tray) setTrayState(trayState);
 }
 
 // Positioned fresh on every show, not once at creation, so it follows
@@ -573,19 +585,35 @@ ipcMain.handle("app:set-login-item", (event, enabled) => {
   return app.getLoginItemSettings().openAtLogin;
 });
 
+// #47: the permission verdict. Accessibility + Input Monitoring come from
+// the accessibility helper (which sees the grant as the Electron host that
+// owns it does); Microphone from Electron. A helper that can't answer
+// leaves those two "unknown", which `evaluatePermissions` treats as
+// blocking - we can't confirm push-to-talk will work.
+async function checkPermissions() {
+  const fromHelper = await accessibilityHelper.getPermissions();
+  return evaluatePermissions({
+    accessibility: fromHelper ? fromHelper.accessibility : false,
+    inputMonitoring: fromHelper ? fromHelper.inputMonitoring : "unknown",
+    microphone: systemPreferences.getMediaAccessStatus("microphone"),
+  });
+}
+
+ipcMain.handle("app:check-permissions", checkPermissions);
+
+ipcMain.handle("app:open-privacy-settings", (event, key) => {
+  const url = SETTINGS_URLS[key];
+  if (url) shell.openExternal(url);
+});
+
 ipcMain.handle("app:get-health", async () => {
-  const [transcription, rewrite] = await Promise.all([
+  const [transcription, rewrite, permissions] = await Promise.all([
     probeHttp(whisperServer.healthUrl()),
     probeHttp(rewriteModelServer.healthUrl()),
+    checkPermissions(),
   ]);
   return {
-    // isTrustedAccessibilityClient(false) reports without prompting.
-    accessibility: systemPreferences.isTrustedAccessibilityClient(false),
-    microphone: systemPreferences.getMediaAccessStatus("microphone"),
-    // macOS exposes no status API for Input Monitoring - the hotkey
-    // helper only finds out when it does or doesn't receive events.
-    // Left as "unknown" until issue #47 wires a functional probe.
-    inputMonitoring: "unknown",
+    permissions: permissions.grants,
     transcriptionModel: transcription ? "ready" : "starting",
     rewriteModel: rewrite ? "ready" : "starting",
   };
@@ -684,7 +712,21 @@ app.whenReady().then(() => {
   rewriteModelServer.start();
   accessibilityHelper.start();
 
-  if (isFirstLaunch) createWindow();
+  // #47: if a hard grant is missing, the app silently does nothing on every
+  // push-to-talk - so open the window on the Permissions view and say so,
+  // rather than leaving the user to wonder. Under source-only distribution
+  // every rebuild re-breaks the grant, so this is a normal recurring state,
+  // not just a first-run one.
+  checkPermissions()
+    .then((verdict) => {
+      updateTrayForPermissions(verdict);
+      if (!verdict.ok) openWindowTo("permissions");
+      else if (isFirstLaunch) createWindow();
+    })
+    .catch((error) => {
+      console.error("[permissions] startup check failed:", error);
+      if (isFirstLaunch) createWindow();
+    });
 });
 
 app.on("will-quit", () => {

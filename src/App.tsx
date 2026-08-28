@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { coercePage, type Page } from "./nav";
+import { coercePage, TAB_PAGES, type Page, type TabPage } from "./nav";
 import { HomeIcon, SettingsIcon } from "./components/Icons";
 import Home from "./pages/Home";
 import Settings from "./pages/Settings";
+import Permissions from "./pages/Permissions";
 
-const TABS: { page: Page; label: string; Icon: (props: { className?: string }) => JSX.Element }[] = [
-  { page: "home", label: "Home", Icon: HomeIcon },
-  { page: "settings", label: "Settings", Icon: SettingsIcon },
-];
+const TAB_META: Record<TabPage, { label: string; Icon: (props: { className?: string }) => JSX.Element }> = {
+  home: { label: "Home", Icon: HomeIcon },
+  settings: { label: "Settings", Icon: SettingsIcon },
+};
 
 export default function App() {
   const [page, setPage] = useState<Page>("home");
@@ -20,20 +21,25 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="toolbar">
-        {TABS.map(({ page: tabPage, label, Icon }) => (
-          <button
-            key={tabPage}
-            type="button"
-            className="navtab"
-            aria-current={page === tabPage ? "page" : undefined}
-            onClick={() => setPage(tabPage)}
-          >
-            <Icon />
-            {label}
-          </button>
-        ))}
+        {TAB_PAGES.map((tabPage) => {
+          const { label, Icon } = TAB_META[tabPage];
+          return (
+            <button
+              key={tabPage}
+              type="button"
+              className="navtab"
+              aria-current={page === tabPage ? "page" : undefined}
+              onClick={() => setPage(tabPage)}
+            >
+              <Icon />
+              {label}
+            </button>
+          );
+        })}
       </nav>
-      {page === "home" ? <Home onOpenSettings={() => setPage("settings")} /> : <Settings />}
+      {page === "settings" && <Settings />}
+      {page === "permissions" && <Permissions onDone={() => setPage("home")} />}
+      {page === "home" && <Home navigate={(next) => setPage(next)} />}
     </div>
   );
 }

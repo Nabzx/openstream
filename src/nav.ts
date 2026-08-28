@@ -2,9 +2,14 @@
 // shell and its test share one source of truth, and so a `navigate`
 // message from the main process can be validated before it's trusted.
 
-export type Page = "home" | "settings";
+// "permissions" is a reachable view but not a toolbar tab - the app
+// navigates to it (from the tray, from Home) when a grant is missing.
+export type Page = "home" | "settings" | "permissions";
 
-export const PAGES: readonly Page[] = ["home", "settings"] as const;
+export const PAGES = ["home", "settings", "permissions"] as const;
+
+export const TAB_PAGES = ["home", "settings"] as const;
+export type TabPage = (typeof TAB_PAGES)[number];
 
 export const DEFAULT_PAGE: Page = "home";
 

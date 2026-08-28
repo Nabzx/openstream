@@ -10,13 +10,25 @@ export type SetShortcutResult =
   | { ok: true; settings: StoredSettings }
   | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
 
-export type MediaAccessStatus = "granted" | "denied" | "restricted" | "not-determined" | "unknown";
 export type ModelHealth = "ready" | "starting";
 
+// #47. accessibility: granted | missing. inputMonitoring: granted | missing
+// | unknown (IOHIDCheckAccess couldn't tell). microphone: granted | missing
+// | pending (macOS will prompt on first capture).
+export type GrantState = "granted" | "missing" | "unknown" | "pending";
+
+export type PermissionKey = "accessibility" | "inputMonitoring" | "microphone";
+
+export type PermissionVerdict = {
+  ok: boolean;
+  grants: Record<PermissionKey, GrantState>;
+  blocking: PermissionKey[];
+  warnings: PermissionKey[];
+  details: { key: PermissionKey; label: string; state: GrantState; settingsUrl: string }[];
+};
+
 export type AppHealth = {
-  accessibility: boolean;
-  microphone: MediaAccessStatus;
-  inputMonitoring: "unknown";
+  permissions: Record<PermissionKey, GrantState>;
   transcriptionModel: ModelHealth;
   rewriteModel: ModelHealth;
 };
@@ -39,6 +51,8 @@ declare global {
         getHealth(): Promise<AppHealth>;
         getLoginItem(): Promise<boolean>;
         setLoginItem(enabled: boolean): Promise<boolean>;
+        checkPermissions(): Promise<PermissionVerdict>;
+        openPrivacySettings(key: PermissionKey): Promise<void>;
       };
       settings: {
         get(): Promise<StoredSettings>;
