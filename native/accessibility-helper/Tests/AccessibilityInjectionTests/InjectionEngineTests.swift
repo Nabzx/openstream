@@ -12,6 +12,7 @@ struct InjectionEngineTests {
 
     func makeEngine(
         focusTarget: AccessibilityTarget?,
+        missesBeforeSuccess: Int = 0,
         pasteResult: PasteResult = PasteResult(delivered: true, verified: false, note: ""),
         trackerAge: @escaping () -> Double = { 10_000 },
         appName: String? = "TestApp"
@@ -22,7 +23,7 @@ struct InjectionEngineTests {
         let tracker = FakeTracker(age: trackerAge, appName: appName)
         let engine = InjectionEngine(
             config: config,
-            focusResolver: FakeFocusResolver(target: focusTarget),
+            focusResolver: FakeFocusResolver(target: focusTarget, missesBeforeSuccess: missesBeforeSuccess),
             paster: paster,
             typer: typer,
             tracker: tracker,
@@ -159,6 +160,42 @@ struct InjectionEngineTests {
             return
         }
         #expect(note.contains("typed blind"), "note was: \(note)")
+    }
+
+    // MARK: - Rung 0: focus resolution retry (#227)
+
+    @Test func retriesFocusResolutionWhenTheAXTreeWasBrieflyNotReady() {
+        // The Electron/#28 case: AXManualAccessibility was just set and the
+        // first read misses, but the tree comes good a beat later. Before
+        // #227 this dropped straight to blind-paste-or-hold.
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true)
+        )
+        let (engine, time, paster, _) = makeEngine(focusTarget: target, missesBeforeSuccess: 2)
+
+        let outcome = engine.decide(text: "hello")
+
+        #expect(outcome == .delivered(method: "wrote into the field", verified: true, note: "inserted at the caret, clipboard untouched"))
+        #expect(target.writtenText == "hello")
+        #expect(paster.callCount == 0, "rung 1 should have succeeded once the retry resolved the field")
+        #expect(time.elapsedMs <= config.axInjectBudgetMs, "the retry must stay inside its budget")
+    }
+
+    @Test func focusRetryGivesUpAtTheBudgetAndFallsBackAsBefore() {
+        // Never resolves: the retry must not spin past its budget, and the
+        // fallback (blind paste into a known, stable app) is unchanged.
+        let (engine, time, paster, _) = makeEngine(
+            focusTarget: nil,
+            missesBeforeSuccess: 999,
+            pasteResult: PasteResult(delivered: true, verified: false, note: "sent, but nothing confirmed it landed"),
+            appName: "SomeApp"
+        )
+
+        let outcome = engine.decide(text: "hello")
+
+        #expect(outcome == .delivered(method: "pasted into SomeApp, field unknown", verified: false, note: "sent, but nothing confirmed it landed"))
+        #expect(paster.callCount == 1)
+        #expect(time.elapsedMs >= config.axInjectBudgetMs, "should have waited out the whole budget before giving up")
     }
 
     // MARK: - Rung 0 / 1b: focus never resolved
