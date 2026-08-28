@@ -58,15 +58,19 @@ Owns: context awareness, prose cleanup rules, break safety.
 
 ---
 
-## Phase 3 — v0.3: Deepen (target: 3-4 weeks)
+## Phase 3 — v0.3: Deepen — **done, tagged `v0.3`**
 
-Same tracks, harder problems — this is where it gets genuinely complex.
+Same tracks, harder problems — this is where it got genuinely complex.
 
-- ~~**Track A:** codebase vocabulary scanner~~ - **moved to the After-v1.0 backlog.** Built and unit-tested (#16, PR #185: `git ls-files` a configured repo, extract/rank/cap identifiers, bias whisper's per-request prompt), but deprioritised - an MVP needs plain dictation working excellently first, and this is polish, not core. The Settings UI is unhooked, not deleted; the underlying scanning/caching/pipeline wiring stays in place, ready to pick back up
-- **Track B:** `llama-server` plumbing - fetch the binary and an **Apache 2.0 / MIT, ungated** GGUF (SmolLM2-1.7B-Instruct provisionally; acquisition policy open in #52), start it, confirm a local HTTP round trip (moved here from Phase 2 by #24 and #32)
-- **Track B:** voice-driven editing — select existing text anywhere, speak a command ("make this a bullet list", "snake_case that"), send it to the **rewrite model server** to rewrite the selection in place. **Correction from #45:** that server is now **resident**, started at app launch alongside the transcription model server, because it also decides break placement during ordinary dictation. The lazy-then-idle-released lifecycle #29 chose assumed it served voice edits only
+- ~~**Track A:** codebase vocabulary scanner~~ - **moved to the After-v1.0 backlog.** Built and unit-tested (#16, PR #185), but deprioritised - an MVP needs plain dictation working excellently first. The Settings UI is unhooked, not deleted; the scanning/caching/pipeline wiring stays in place.
+- **Track B:** `llama-server` plumbing - **done** (folded into the break-placement work already shipped in Phase 2).
+- **Track B:** voice-driven editing — **shipped as a deterministic spoken-command transform layer** (#17, PR #225). The [#222](https://github.com/Nabzx/openstream/issues/222) spike measured SmolLM2-1.7B failing to follow a rewrite instruction reliably (returned the selection unchanged 6-7/15, or with an example did the wrong transform), and the commands it *did* handle - case conversions, wraps - are pure string transforms that need no model. So v0.3 ships those deterministically, no rewrite model call; semantic commands ("shorter", "fix grammar") are deferred behind a better model in the rewrite role (#222, → Phase 4).
+- **Track B:** #173 (IDE-terminal app-switch tracking) — **fixed** (#226). The notification observer was on a run loop the helper never pumps; replaced with a direct poll.
+- **Pulled forward from Phase 4:** the desktop app UI — a resizable, navigable window (Home + Settings, toolbar tabs, a design-token layer, an application menu, regular Dock app). Designed on the [#206](https://github.com/Nabzx/openstream/issues/206) map, built in #212/#220.
 
-**Definition of done:** voice-editing of existing text, working reliably. Tag `v0.3`.
+**Definition of done:** voice editing of existing text, working — the deterministic subset ships. **Manual verification** (the voice-edit matrix, IDE-terminal dictation, the end-to-end dictation pass) is deliberately deferred to a single pre-launch pass ([#228](https://github.com/Nabzx/openstream/issues/228)) rather than gating the tag. `v0.3` tagged at the feature-complete point.
+
+See [docs/progress/phase-3-progress.md](docs/progress/phase-3-progress.md) for the full checkpoint.
 
 ---
 
