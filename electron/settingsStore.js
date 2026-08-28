@@ -15,16 +15,20 @@ const DEFAULT_SETTINGS = {
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
 
-function validateHotkey(hotkey) {
-  if (!hotkey || typeof hotkey.keyCode !== "number" || !Number.isInteger(hotkey.keyCode) || hotkey.keyCode < 0) {
-    throw new Error("hotkey.keyCode must be a non-negative integer");
+function errorMessage(error) {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function validateShortcut(shortcut) {
+  if (!shortcut || typeof shortcut.keyCode !== "number" || !Number.isInteger(shortcut.keyCode) || shortcut.keyCode < 0) {
+    throw new Error("shortcut.keyCode must be a non-negative integer");
   }
-  if (!Array.isArray(hotkey.modifiers) || hotkey.modifiers.length === 0) {
-    // A hotkey with no modifiers would fire on every ordinary keystroke of
+  if (!Array.isArray(shortcut.modifiers) || shortcut.modifiers.length === 0) {
+    // A shortcut with no modifiers would fire on every ordinary keystroke of
     // that key - the native helper only ever taps global combos deliberately.
-    throw new Error("hotkey.modifiers must be a non-empty array");
+    throw new Error("shortcut.modifiers must be a non-empty array");
   }
-  for (const modifier of hotkey.modifiers) {
+  for (const modifier of shortcut.modifiers) {
     if (!VALID_MODIFIERS.has(modifier)) {
       throw new Error(`unknown modifier "${modifier}"`);
     }
@@ -67,40 +71,52 @@ function createSettingsStore({ filePath }) {
     return cache;
   }
 
-  function persist() {
+  function persist(settings) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(cache, null, 2));
+    fs.writeFileSync(filePath, JSON.stringify(settings, null, 2));
+  }
+
+  function notify(settings) {
+    for (const listener of listeners) {
+      try {
+        listener(settings);
+      } catch (error) {
+        console.error(`[settings] change listener failed: ${errorMessage(error)}`);
+      }
+    }
+  }
+
+  function commit(nextSettings) {
+    persist(nextSettings);
+    cache = nextSettings;
+    const settings = get();
+    notify(settings);
+    return settings;
   }
 
   function get() {
     return { ...load() };
   }
 
+  function setShortcut(shortcut) {
+    validateShortcut(shortcut);
+    return commit({ ...load(), hotkey: shortcut });
+  }
+
+  // Keep the old method name for callers that use the pre-transaction store
+  // directly. The persisted field remains `hotkey` for the same reason.
   function setHotkey(hotkey) {
-    validateHotkey(hotkey);
-    cache = { ...load(), hotkey };
-    persist();
-    const settings = get();
-    for (const listener of listeners) listener(settings);
-    return settings;
+    return setShortcut(hotkey);
   }
 
   function setBreakSafeApps(apps) {
     validateBreakSafeApps(apps);
-    cache = { ...load(), breakSafeApps: [...new Set(apps.map((bundleId) => bundleId.trim()))] };
-    persist();
-    const settings = get();
-    for (const listener of listeners) listener(settings);
-    return settings;
+    return commit({ ...load(), breakSafeApps: [...new Set(apps.map((bundleId) => bundleId.trim()))] });
   }
 
   function setVocabularyProjectPath(projectPath) {
     validateVocabularyProjectPath(projectPath);
-    cache = { ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() };
-    persist();
-    const settings = get();
-    for (const listener of listeners) listener(settings);
-    return settings;
+    return commit({ ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() });
   }
 
   function onChange(listener) {
@@ -108,7 +124,12 @@ function createSettingsStore({ filePath }) {
     return () => listeners.delete(listener);
   }
 
-  return { get, setHotkey, setBreakSafeApps, setVocabularyProjectPath, onChange };
+  return { get, setShortcut, setHotkey, setBreakSafeApps, setVocabularyProjectPath, onChange };
 }
 
-module.exports = { createSettingsStore, DEFAULT_SETTINGS };
+module.exports = {
+  createSettingsStore,
+  DEFAULT_SETTINGS,
+  validateShortcut,
+  validateHotkey: validateShortcut,
+};

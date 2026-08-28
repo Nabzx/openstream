@@ -39,6 +39,10 @@ body {
   opacity: 1;
 }
 
+.setting-guidance {
+  margin-bottom: 0.5rem !important;
+}
+
 .setting-error {
   color: #d64545;
   font-size: 0.8rem;

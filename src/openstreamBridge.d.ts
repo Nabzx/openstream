@@ -6,6 +6,10 @@ export type StoredSettings = {
   vocabularyProjectPath: string | null;
 };
 
+export type SetShortcutResult =
+  | { ok: true; settings: StoredSettings }
+  | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
+
 export type VocabularyStatus = {
   path: string | null;
   termCount: number;
@@ -22,7 +26,7 @@ declare global {
     openstream: {
       settings: {
         get(): Promise<StoredSettings>;
-        setHotkey(hotkey: StoredHotkey): Promise<StoredSettings>;
+        setShortcut(shortcut: StoredHotkey): Promise<SetShortcutResult>;
         setBreakSafeApps(apps: string[]): Promise<StoredSettings>;
         setVocabularyProjectPath(
           projectPath: string | null

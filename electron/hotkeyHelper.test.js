@@ -33,12 +33,71 @@ test("hotkey helper NDJSON reports one key down and one key up", async () => {
   helper.onKeyUp(() => events.push("up"));
 
   helper.start();
+  child.stdout.write('{"event":"ready","ts":1710000000}\n');
   child.stdout.write('{"event":"down","ts":1710000000.25}\n');
   child.stdout.write('{"event":"up","ts":1710000001.5}\n');
 
   await nextTurn();
   assert.deepEqual(events, ["down", "up"]);
   helper.stop();
+});
+
+test("hotkey helper waits for the native ready event before becoming ready", async () => {
+  const child = fakeProcess();
+  const helper = createHotkeyHelper({ spawnProcess: () => child });
+
+  const ready = helper.start();
+  assert.equal(helper.isReady(), false);
+  child.stdout.write('{"event":"ready","ts":1710000000.25}\n');
+
+  await ready;
+  assert.equal(helper.isReady(), true);
+  helper.stop();
+});
+
+test("a candidate helper rejects when spawning fails", async () => {
+  const helper = createHotkeyHelper({
+    restartOnFailure: false,
+    spawnProcess: () => {
+      throw new Error("binary missing");
+    },
+  });
+
+  await assert.rejects(helper.start(), /failed to start: binary missing/);
+});
+
+test("a candidate helper rejects when it exits before reporting ready", async () => {
+  const child = fakeProcess();
+  const helper = createHotkeyHelper({ restartOnFailure: false, spawnProcess: () => child });
+
+  const ready = helper.start();
+  child.emit("exit", 1);
+
+  await assert.rejects(ready, /exited before reporting ready/);
+  assert.equal(helper.isRunning(), false);
+});
+
+test("a candidate helper rejects when readiness times out", async () => {
+  const child = fakeProcess();
+  const timers = [];
+  const helper = createHotkeyHelper({
+    restartOnFailure: false,
+    spawnProcess: () => child,
+    readyTimeoutMs: 250,
+    setReadyTimer(callback, delay) {
+      const timer = { callback, delay };
+      timers.push(timer);
+      return timer;
+    },
+    clearReadyTimer() {},
+  });
+
+  const ready = helper.start();
+  assert.equal(timers[0].delay, 250);
+  timers[0].callback();
+
+  await assert.rejects(ready, /did not report ready within 250ms/);
+  assert.equal(helper.isRunning(), false);
 });
 
 test("hotkey helper ignores non-contract output", async () => {
@@ -175,6 +234,7 @@ test("hotkey helper keeps diagnostics on stderr and out of the event protocol", 
 
   helper.start();
   child.stderr.write("Input Monitoring permission is missing\n");
+  child.stdout.write('{"event":"ready","ts":1710000000}\n');
   child.stdout.write('{"event":"down","ts":1710000000.25}\n');
 
   await nextTurn();
@@ -202,11 +262,14 @@ test("hotkey helper restarts after an unexpected exit and resumes its event prot
   helper.onKeyUp(() => events.push("up"));
 
   helper.start();
+  firstChild.stdout.write('{"event":"ready","ts":1710000000.25}\n');
+  await nextTurn();
   firstChild.emit("exit", 1);
 
   assert.equal(timers.length, 1);
   assert.equal(timers[0].delay, 25);
   timers[0].callback();
+  secondChild.stdout.write('{"event":"ready","ts":1710000001.25}\n');
   secondChild.stdout.write('{"event":"up","ts":1710000001.5}\n');
 
   await nextTurn();

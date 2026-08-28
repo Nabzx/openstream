@@ -14,6 +14,7 @@ const { createDictationIntake } = require("./dictationCoordinator");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
+const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
 // forgot was already running) from spawning a whole second app: its own
@@ -43,6 +44,7 @@ let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
 let settingsStore = null;
+let pushToTalkShortcut = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
@@ -307,9 +309,11 @@ function isCaptureSender(event) {
 }
 
 ipcMain.on("capture-ready", (event) => {
-  if (!isCaptureSender(event) || hotkeyStarted) return;
+  if (!isCaptureSender(event) || hotkeyStarted || !pushToTalkShortcut) return;
   hotkeyStarted = true;
-  hotkeyHelper.start();
+  void pushToTalkShortcut.start().catch((error) => {
+    console.error("[hotkey-helper] active shortcut could not start:", error.message);
+  });
 });
 
 ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
@@ -345,19 +349,19 @@ ipcMain.on("recording-error", (event, message) => {
 
 ipcMain.handle("settings:get", () => settingsStore.get());
 
-ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
-  // setHotkey validates and throws on a malformed hotkey - ipcMain.handle
-  // turns that into a rejected promise on the renderer side automatically,
-  // and the previously-saved hotkey is left untouched (see
-  // settingsStore.js), so a bad renderer-side capture can't leave the app
-  // with no working hotkey.
-  const settings = settingsStore.setHotkey(hotkey);
-  hotkeyHelper.setHotkey(settings.hotkey);
-  return settings;
+ipcMain.handle("settings:set-shortcut", (event, shortcut) => {
+  if (!pushToTalkShortcut) {
+    return {
+      ok: false,
+      kind: "internal-failure",
+      message: "Unable to change the Push-to-talk shortcut.",
+    };
+  }
+  return pushToTalkShortcut.replace(shortcut);
 });
 
 ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
-  // Same shape as settings:set-hotkey: setBreakSafeApps validates and
+  // Same shape as settings:set-shortcut: setBreakSafeApps validates and
   // throws on anything malformed, so a bad renderer-side edit can't corrupt
   // the deny-by-default allow-list breakSafety.js enforces.
   const settings = settingsStore.setBreakSafeApps(apps);
@@ -402,7 +406,13 @@ app.whenReady().then(() => {
     app.dock.hide();
   }
   settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
-  hotkeyHelper.setHotkey(settingsStore.get().hotkey);
+  pushToTalkShortcut = createPushToTalkShortcutController({
+    settingsStore,
+    createHelper: hotkeyHelper.createHotkeyHelper,
+    onKeyDown: pushToTalkCoordinator.keyDown,
+    onKeyUp: pushToTalkCoordinator.keyUp,
+    onDiagnostic: (message) => console.error(`[hotkey-helper] ${message}`),
+  });
   setBreakSafeApplications(settingsStore.get().breakSafeApps);
   // Fire-and-forget: a scan failing here (bad/moved path since last run)
   // must not block startup. It just means vocabulary biasing stays off
@@ -414,8 +424,6 @@ app.whenReady().then(() => {
     });
   }
   createTray();
-  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
-  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
   createCaptureWindow();
   createOverlayWindow();
   whisperServer.start();
@@ -424,7 +432,7 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
-  hotkeyHelper.stop();
+  pushToTalkShortcut?.stop();
   accessibilityHelper.stop();
   whisperServer.stop();
   rewriteModelServer.stop();

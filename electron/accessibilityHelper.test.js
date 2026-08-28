@@ -197,6 +197,7 @@ test("a blocked accessibility request does not starve hotkey events", async () =
 
   const context = accessibility.getFocusContext();
   await nextTurn();
+  hotkeyChild.stdout.write('{"event":"ready","ts":1710000000}\n');
   hotkeyChild.stdout.write('{"event":"down","ts":1710000000.25}\n');
   hotkeyChild.stdout.write('{"event":"up","ts":1710000001.5}\n');
   await nextTurn();
