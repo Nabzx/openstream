@@ -1,0 +1,338 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Voice-edit fidelity review — #222</title>
+<style>
+  body { font: 14px/1.5 -apple-system, system-ui, sans-serif; margin: 24px; color: #1d1d1f; background: #fff; }
+  h1 { font-size: 18px; } .meta { color: #6e6e73; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border: 1px solid #ddd; padding: 10px; vertical-align: top; text-align: left; }
+  th { background: #f7f7f8; width: 26%; }
+  pre { white-space: pre-wrap; margin: 4px 0; font: 12px/1.45 ui-monospace, Menlo, monospace; background: #f5f5f7; padding: 8px; border-radius: 6px; }
+  .id { font-weight: 700; } .cat { color: #6e6e73; font-size: 12px; }
+  .instr { margin: 4px 0; font-style: italic; }
+  .expect, .check { font-size: 12px; color: #3a3a3c; margin-top: 6px; }
+  .sel { background: #eef; }
+  .variant { font-size: 12px; color: #6e6e73; margin-bottom: 2px; }
+  b.u { color: #c0392b; } b.g { color: #9a6100; }
+  .sum td { text-align: center; }
+</style>
+<h1>Voice-edit fidelity review — issue #222</h1>
+<div class="meta">Ran 2026-08-28T15:58:48.073Z against http://127.0.0.1:8199/v1/chat/completions. Judge each cell: did it apply the instruction, and <em>only</em> the instruction?</div>
+<table class="sum">
+  <tr><th>variant</th><th>cases</th><th>returned unchanged</th><th>guard-rejected</th><th>latency min–median–max</th></tr>
+  <tr><td>zero-shot</td><td>15</td><td>6</td><td>0</td><td>370–861–2269 ms</td></tr><tr><td>strict</td><td>15</td><td>7</td><td>0</td><td>266–1018–2539 ms</td></tr><tr><td>one-shot</td><td>15</td><td>1</td><td>0</td><td>456–926–2802 ms</td></tr>
+</table>
+<p></p>
+<table><tr>
+      <th>
+        <div class="id">core-bullets-commalist</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“make this a bullet list”</div>
+        <pre class="sel">Buy milk, eggs, bread and coffee. Also pick up a birthday card.</pre>
+        <div class="expect"><b>only acceptable change:</b> Same items, one per line, each with a bullet marker. No items added or dropped.</div>
+        <div class="check"><b>probes:</b> applies a structural transform at all</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 861ms · <b class="u">unchanged</b></div>
+          <pre>Buy milk, eggs, bread and coffee. Also pick up a birthday card.</pre>
+        </td><td>
+          <div class="variant">strict · 851ms · <b class="u">unchanged</b></div>
+          <pre>Buy milk, eggs, bread and coffee. Also pick up a birthday card.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1786ms</div>
+          <pre>- Buy milk
+- Eggs
+- Bread
+- Coffee
+- Pick up a birthday card</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-bullets-sentences</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“turn this into a bullet list”</div>
+        <pre class="sel">The build compiles the two engines from pinned commits. It downloads both models from pinned revisions. Every file is SHA-256 verified.</pre>
+        <div class="expect"><b>only acceptable change:</b> Three bullets, one per sentence, wording preserved.</div>
+        <div class="check"><b>probes:</b> one bullet per idea, no rewording</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 1867ms · <b class="u">unchanged</b></div>
+          <pre>The build compiles the two engines from pinned commits. It downloads both models from pinned revisions. Every file is SHA-256 verified.</pre>
+        </td><td>
+          <div class="variant">strict · 1753ms · <b class="u">unchanged</b></div>
+          <pre>The build compiles the two engines from pinned commits. It downloads both models from pinned revisions. Every file is SHA-256 verified.</pre>
+        </td><td>
+          <div class="variant">one-shot · 2802ms</div>
+          <pre>- Build compiles the two engines from pinned commits
+- Downloads both models from pinned revisions
+- Every file is SHA-256 verified</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-shorter</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“make this shorter”</div>
+        <pre class="sel">I just wanted to quickly follow up on the thing we were talking about earlier today, because I think it might actually be quite important for us to sort out before the end of the week if at all possible.</pre>
+        <div class="expect"><b>only acceptable change:</b> Noticeably shorter, same core ask (follow up, important, sort out before end of week).</div>
+        <div class="check"><b>probes:</b> shortens without losing the ask</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 2269ms</div>
+          <pre>I just wanted to follow up on the thing we were talking about earlier today, because I think it might actually be quite important for us to sort out before the end of the week if at all possible.</pre>
+        </td><td>
+          <div class="variant">strict · 2539ms · <b class="u">unchanged</b></div>
+          <pre>I just wanted to quickly follow up on the thing we were talking about earlier today, because I think it might actually be quite important for us to sort out before the end of the week if at all possible.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1199ms</div>
+          <pre>- Follow up on earlier discussion
+- Important for us to sort out before week end</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-fix-grammar</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“fix the grammar”</div>
+        <pre class="sel">Me and him was going to the shops but we dont has enough time.</pre>
+        <div class="expect"><b>only acceptable change:</b> Grammatical version, same meaning: 'He and I were going to the shops but we don't have enough time.'</div>
+        <div class="check"><b>probes:</b> corrects errors only</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 1072ms</div>
+          <pre>Me and him were going to the shops, but we didn't have enough time.</pre>
+        </td><td>
+          <div class="variant">strict · 1172ms</div>
+          <pre>Me and him were going to the shops, but we didn't have enough time.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1100ms</div>
+          <pre>- I and he were going to the shops, but we didn't have enough time.</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-snake-case</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“snake case that”</div>
+        <pre class="sel">getUserProfileData</pre>
+        <div class="expect"><b>only acceptable change:</b> get_user_profile_data</div>
+        <div class="check"><b>probes:</b> exact identifier transform</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 397ms</div>
+          <pre>get_user_profile_data</pre>
+        </td><td>
+          <div class="variant">strict · 426ms</div>
+          <pre>get_user_profile_data</pre>
+        </td><td>
+          <div class="variant">one-shot · 456ms</div>
+          <pre>get_user_profile_data</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-camel-case</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“make this camel case”</div>
+        <pre class="sel">user profile display name</pre>
+        <div class="expect"><b>only acceptable change:</b> userProfileDisplayName</div>
+        <div class="check"><b>probes:</b> exact identifier transform</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 370ms</div>
+          <pre>userProfileDisplayName</pre>
+        </td><td>
+          <div class="variant">strict · 266ms</div>
+          <pre>userProfileDisplayName</pre>
+        </td><td>
+          <div class="variant">one-shot · 458ms</div>
+          <pre>user_profile_display_name</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-numbered-list</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“make this a numbered list”</div>
+        <pre class="sel">First open the settings window. Then pick a new shortcut. Finally relaunch the app.</pre>
+        <div class="expect"><b>only acceptable change:</b> Three numbered steps, wording preserved.</div>
+        <div class="check"><b>probes:</b> numbered structure, no rewording</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 1520ms</div>
+          <pre>1. First open the settings window.
+2. Then pick a new shortcut.
+3. Finally relaunch the app.</pre>
+        </td><td>
+          <div class="variant">strict · 1545ms</div>
+          <pre>1. First open the settings window.
+2. Then pick a new shortcut.
+3. Finally relaunch the app.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1174ms</div>
+          <pre>- First open the settings window
+- Then pick a new shortcut
+- Finally relaunch the app</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">core-capitalise</div>
+        <div class="cat">tested-core</div>
+        <div class="instr">“capitalise the first letter of each word”</div>
+        <pre class="sel">local first voice dictation for macos</pre>
+        <div class="expect"><b>only acceptable change:</b> Local First Voice Dictation For Macos</div>
+        <div class="check"><b>probes:</b> casing only</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 459ms</div>
+          <pre>Local First Voice Dictation for MacOS</pre>
+        </td><td>
+          <div class="variant">strict · 447ms</div>
+          <pre>Local First Voice Dictation for MacOS</pre>
+        </td><td>
+          <div class="variant">one-shot · 478ms</div>
+          <pre>Local First Voice Dictation for MacOS</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">preserve-hedge</div>
+        <div class="cat">preservation</div>
+        <div class="instr">“fix the grammar”</div>
+        <pre class="sel">I think this approach are the best one, but we should probaly check.</pre>
+        <div class="expect"><b>only acceptable change:</b> Grammar fixed; 'I think' and the tentativeness kept: 'I think this approach is the best one, but we should probably check.'</div>
+        <div class="check"><b>probes:</b> does not drop the hedge (the #24 failure)</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 846ms</div>
+          <pre>I think this approach is the best one, but we should probably check.</pre>
+        </td><td>
+          <div class="variant">strict · 859ms</div>
+          <pre>I think this approach is the best one, but we should probably check.</pre>
+        </td><td>
+          <div class="variant">one-shot · 926ms</div>
+          <pre>- I think this approach is the best one, but we should probably check.</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">preserve-number-name</div>
+        <div class="cat">preservation</div>
+        <div class="instr">“make this shorter”</div>
+        <pre class="sel">According to the report that Priya sent over on Tuesday, the latency dropped by 43 milliseconds after the change was deployed to the fleet.</pre>
+        <div class="expect"><b>only acceptable change:</b> Shorter; keeps 'Priya', 'Tuesday', '43 milliseconds'.</div>
+        <div class="check"><b>probes:</b> keeps specific facts</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 1154ms</div>
+          <pre>According to Priya's report, the latency dropped by 43 milliseconds after the change was deployed.</pre>
+        </td><td>
+          <div class="variant">strict · 1145ms</div>
+          <pre>According to Priya's report, the latency dropped by 43 milliseconds after the change was deployed.</pre>
+        </td><td>
+          <div class="variant">one-shot · 518ms</div>
+          <pre>- Latency dropped by 43 milliseconds</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">adv-make-better</div>
+        <div class="cat">adversarial</div>
+        <div class="instr">“make this better”</div>
+        <pre class="sel">The meeting is at 3pm in room 2.</pre>
+        <div class="expect"><b>only acceptable change:</b> A vague instruction on an already-clear sentence - minimal or no change is the faithful answer.</div>
+        <div class="check"><b>probes:</b> does not over-rewrite on a vague command</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 699ms · <b class="u">unchanged</b></div>
+          <pre>The meeting is at 3pm in room 2.</pre>
+        </td><td>
+          <div class="variant">strict · 674ms · <b class="u">unchanged</b></div>
+          <pre>The meeting is at 3pm in room 2.</pre>
+        </td><td>
+          <div class="variant">one-shot · 768ms</div>
+          <pre>- The meeting is at 3pm in room 2</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">adv-question</div>
+        <div class="cat">adversarial</div>
+        <div class="instr">“what does this mean”</div>
+        <pre class="sel">The settle guard refuses to trust a target until the frontmost app has been stable for 400ms.</pre>
+        <div class="expect"><b>only acceptable change:</b> This is a question, not an edit - the right behaviour is to return the text unchanged or signal that it is not an edit, NOT to answer the question.</div>
+        <div class="check"><b>probes:</b> does not answer a question in place of editing</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 1296ms · <b class="u">unchanged</b></div>
+          <pre>The settle guard refuses to trust a target until the frontmost app has been stable for 400ms.</pre>
+        </td><td>
+          <div class="variant">strict · 1636ms · <b class="u">unchanged</b></div>
+          <pre>The settle guard refuses to trust a target until the frontmost app has been stable for 400ms.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1304ms · <b class="u">unchanged</b></div>
+          <pre>The settle guard refuses to trust a target until the frontmost app has been stable for 400ms.</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">adv-improve-comment</div>
+        <div class="cat">adversarial</div>
+        <div class="instr">“improve this”</div>
+        <pre class="sel">// loop over the items and add each one to the set</pre>
+        <div class="expect"><b>only acceptable change:</b> Vague command on a fine comment - minimal change; must stay a comment, must not become code or prose.</div>
+        <div class="check"><b>probes:</b> stays in-kind, minimal change</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 677ms · <b class="u">unchanged</b></div>
+          <pre>// loop over the items and add each one to the set</pre>
+        </td><td>
+          <div class="variant">strict · 1018ms · <b class="u">unchanged</b></div>
+          <pre>// loop over the items and add each one to the set</pre>
+        </td><td>
+          <div class="variant">one-shot · 891ms</div>
+          <pre>// Iterate over the items and add each one to the set</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">adv-leave-alone</div>
+        <div class="cat">adversarial</div>
+        <div class="instr">“leave this exactly as it is”</div>
+        <pre class="sel">Nothing about this sentence needs to change.</pre>
+        <div class="expect"><b>only acceptable change:</b> Returned verbatim.</div>
+        <div class="check"><b>probes:</b> does not rewrite when told not to</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 477ms · <b class="u">unchanged</b></div>
+          <pre>Nothing about this sentence needs to change.</pre>
+        </td><td>
+          <div class="variant">strict · 639ms · <b class="u">unchanged</b></div>
+          <pre>Nothing about this sentence needs to change.</pre>
+        </td><td>
+          <div class="variant">one-shot · 524ms</div>
+          <pre>- Nothing about this sentence needs to change.</pre>
+        </td>
+    </tr>
+<tr>
+      <th>
+        <div class="id">adv-out-of-scope</div>
+        <div class="cat">adversarial</div>
+        <div class="instr">“translate this to French”</div>
+        <pre class="sel">The window remembers its size and position.</pre>
+        <div class="expect"><b>only acceptable change:</b> Out of the intended command surface. Either complies (documented) or returns unchanged - but must not add commentary about it.</div>
+        <div class="check"><b>probes:</b> handles an off-surface command without chatter</div>
+      </th>
+      <td>
+          <div class="variant">zero-shot · 910ms</div>
+          <pre>La fenêtre réfère à sa taille et à sa position.</pre>
+        </td><td>
+          <div class="variant">strict · 1134ms</div>
+          <pre>La fenêtre réfère à sa taille et à sa position.</pre>
+        </td><td>
+          <div class="variant">one-shot · 1262ms</div>
+          <pre>La fenêtre récompende sa taille et sa position.</pre>
+        </td>
+    </tr></table>
