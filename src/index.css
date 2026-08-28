@@ -471,3 +471,34 @@ button {
   font-size: 12px;
   margin: 6px 2px 0;
 }
+
+/* Kept for HotkeySettings.tsx, which still uses the pre-shell classes -
+   its restyle to the card system waits on the shortcut work landing
+   (#215). Everything else on the Settings page uses the tokens above. */
+.setting {
+  margin-top: 1rem;
+}
+
+.setting h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.setting-current {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+}
+
+.setting-guidance {
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.setting-error {
+  color: var(--err);
+  font-size: 12px;
+  margin-top: 0.5rem;
+}

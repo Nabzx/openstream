@@ -10,6 +10,9 @@ contextBridge.exposeInMainWorld("openstreamOverlay", {
   onHeldResult(callback) {
     ipcRenderer.on("held-result", (_event, text) => callback(text));
   },
+  onVoiceEditMessage(callback) {
+    ipcRenderer.on("voice-edit-message", (_event, text) => callback(text));
+  },
   onHeldResultCopied(callback) {
     ipcRenderer.on("held-result-copied", () => callback());
   },

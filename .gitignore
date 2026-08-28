@@ -29,3 +29,7 @@ vendor/
 
 # Claude Code local worktrees and session state
 .claude/
+
+# Python spike scratch
+__pycache__/
+*.pyc

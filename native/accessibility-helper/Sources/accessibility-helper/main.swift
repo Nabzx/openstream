@@ -82,6 +82,25 @@ while let line = readLine(strippingNewline: true) {
         var reply = engine.decide(text: text).replyFields
         reply["id"] = id
         emit(reply)
+    case "selection":
+        // #17: a get-only read of the focused field's current selection,
+        // used at push-to-talk key-down to tell a voice edit from an
+        // ordinary dictation. No settle guard, no injection.
+        guard let context = focusResolver.selectionContext(deadlineMs: config.axDeadlineMs) else {
+            emit(["id": id, "status": "error", "reason": "focused element unavailable"])
+            continue
+        }
+        if context.selectedText.isEmpty {
+            emit(["id": id, "status": "empty"])
+            continue
+        }
+        emit([
+            "id": id,
+            "status": "ok",
+            "text": context.selectedText,
+            "bundleId": context.bundleId,
+            "isOneLineField": context.isOneLineField,
+        ])
     default:
         emit(["id": id, "status": "error", "reason": "unknown command \"\(cmd)\""])
     }

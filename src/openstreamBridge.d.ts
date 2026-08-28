@@ -6,6 +6,10 @@ export type StoredSettings = {
   vocabularyProjectPath: string | null;
 };
 
+export type SetShortcutResult =
+  | { ok: true; settings: StoredSettings }
+  | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
+
 export type MediaAccessStatus = "granted" | "denied" | "restricted" | "not-determined" | "unknown";
 export type ModelHealth = "ready" | "starting";
 
@@ -38,7 +42,7 @@ declare global {
       };
       settings: {
         get(): Promise<StoredSettings>;
-        setHotkey(hotkey: StoredHotkey): Promise<StoredSettings>;
+        setShortcut(shortcut: StoredHotkey): Promise<SetShortcutResult>;
         setBreakSafeApps(apps: string[]): Promise<StoredSettings>;
         setVocabularyProjectPath(
           projectPath: string | null

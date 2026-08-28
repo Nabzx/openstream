@@ -120,6 +120,14 @@ body[data-state="held"] .recording {
   display: none;
 }
 
+/* #17: voice-edit states reuse the recording strip for a text-only line -
+   "Editing…" while the command transcribes, then a brief message if it
+   wasn't applied. No waveform. */
+body[data-state="editing"] .waveform,
+body[data-state="edit-message"] .waveform {
+  display: none;
+}
+
 body[data-state="held"] .held-result {
   display: block;
 }

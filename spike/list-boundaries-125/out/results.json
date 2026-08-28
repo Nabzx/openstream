@@ -4,16 +4,16 @@
     "ram_gb": 16,
     "macos": "26.2",
     "reps": 5,
-    "when": "2026-08-27 16:22:06",
+    "when": "2026-08-28 17:02:05",
     "budget_seconds": 1.0,
     "transcribe_plus_rules_130w": 0.61,
     "break_only_67_130w": 0.12
   },
   "cold_start": {
-    "smollm2-1.7b": 6.66
+    "smollm2-1.7b": 7.6
   },
   "rss_mb": {
-    "smollm2-1.7b": 1441.1
+    "smollm2-1.7b": 1430.6
   },
   "samples": {
     "list-groceries": {
@@ -39,13 +39,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 3\nLIST: 2-4",
-          "seconds": 0.982,
+          "seconds": 1.105,
           "all_seconds": [
-            1.448,
-            1.053,
-            0.982,
-            0.981,
-            0.974
+            1.827,
+            1.002,
+            1.105,
+            1.185,
+            1.07
           ],
           "tokens": {
             "prompt_tokens": 371,
@@ -115,13 +115,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 3\nLIST: 2-6",
-          "seconds": 0.957,
+          "seconds": 1.014,
           "all_seconds": [
-            1.623,
-            0.933,
-            1.018,
-            0.914,
-            0.957
+            1.806,
+            1.002,
+            0.986,
+            1.042,
+            1.014
           ],
           "tokens": {
             "prompt_tokens": 413,
@@ -175,13 +175,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 2, 4, 6\nLIST: 3-5",
-          "seconds": 1.3,
+          "seconds": 1.319,
           "all_seconds": [
-            1.777,
-            1.438,
-            1.3,
-            1.256,
-            1.243
+            1.866,
+            1.319,
+            1.289,
+            1.26,
+            1.363
           ],
           "tokens": {
             "prompt_tokens": 395,
@@ -237,13 +237,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 2, 4, 6\nLIST: 3-7",
-          "seconds": 1.37,
+          "seconds": 1.357,
           "all_seconds": [
-            2.105,
+            2.136,
+            1.357,
+            1.345,
             1.362,
-            1.516,
-            1.37,
-            1.353
+            1.265
           ],
           "tokens": {
             "prompt_tokens": 436,
@@ -309,13 +309,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 3\nLIST: 2-4",
-          "seconds": 1.045,
+          "seconds": 0.986,
           "all_seconds": [
-            1.324,
-            0.932,
-            1.045,
-            1.06,
-            0.967
+            1.304,
+            1.093,
+            0.986,
+            0.94,
+            0.924
           ],
           "tokens": {
             "prompt_tokens": 336,
@@ -362,13 +362,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 3\nLIST: 2-6",
-          "seconds": 1.011,
+          "seconds": 1.039,
           "all_seconds": [
-            1.314,
-            1.0,
-            1.081,
-            1.011,
-            0.923
+            1.367,
+            0.977,
+            1.214,
+            1.039,
+            0.973
           ],
           "tokens": {
             "prompt_tokens": 356,
@@ -416,13 +416,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 2\nLIST: 3-4",
-          "seconds": 0.99,
+          "seconds": 0.993,
           "all_seconds": [
-            1.678,
-            1.081,
-            0.956,
-            0.99,
-            0.958
+            1.681,
+            0.993,
+            0.972,
+            0.934,
+            1.182
           ],
           "tokens": {
             "prompt_tokens": 407,
@@ -469,13 +469,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 2\nLIST: 3",
-          "seconds": 0.863,
+          "seconds": 0.93,
           "all_seconds": [
-            1.247,
-            0.904,
-            0.863,
-            0.827,
-            0.811
+            1.311,
+            0.93,
+            0.898,
+            1.168,
+            0.926
           ],
           "tokens": {
             "prompt_tokens": 351,
@@ -526,13 +526,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 3, 6\nLIST: 2-7",
-          "seconds": 1.258,
+          "seconds": 1.195,
           "all_seconds": [
-            1.905,
-            1.19,
-            1.115,
-            1.36,
-            1.258
+            2.045,
+            1.113,
+            1.195,
+            1.184,
+            1.376
           ],
           "tokens": {
             "prompt_tokens": 436,
@@ -582,13 +582,13 @@
       "runs": {
         "smollm2-1.7b": {
           "reply": "BREAKS: 1, 2, 3\nLIST: 1-3",
-          "seconds": 1.149,
+          "seconds": 1.42,
           "all_seconds": [
-            1.93,
-            1.085,
-            1.132,
-            1.196,
-            1.149
+            2.077,
+            1.456,
+            1.281,
+            1.249,
+            1.42
           ],
           "tokens": {
             "prompt_tokens": 411,

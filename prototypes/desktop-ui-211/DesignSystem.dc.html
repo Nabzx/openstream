@@ -1,0 +1,165 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; -webkit-font-smoothing: antialiased; background: #f5f5f7; color: #1d1d1f; }
+    a { color: #007aff; } a:hover { color: #0063cc; }
+
+    .sheet { padding: 30px 34px 40px; display: flex; flex-direction: column; gap: 28px; }
+    .sheet > header h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+    .sheet > header p { margin: 3px 0 0; font-size: 12px; color: #6e6e73; }
+
+    section h2 { margin: 0 0 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #6e6e73; }
+    .panel { background: #fff; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05); padding: 18px 20px; }
+
+    .type-row { display: flex; align-items: baseline; gap: 16px; padding: 7px 0; border-top: 1px solid rgba(0,0,0,0.08); }
+    .type-row:first-child { border-top: 0; }
+    .type-row .meta { width: 150px; flex: 0 0 150px; font-size: 11px; color: #6e6e73; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+    .swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    .swatches h3 { margin: 0 0 10px; font-size: 12px; font-weight: 600; }
+    .sw { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+    .sw i { width: 26px; height: 26px; border-radius: 7px; flex: 0 0 26px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.12); }
+    .sw code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; color: #6e6e73; }
+    .sw b { font-size: 12px; font-weight: 500; min-width: 92px; }
+    .card-dark { background: #1e1e1e; color: rgba(255,255,255,0.92); border-radius: 10px; padding: 14px 16px; }
+    .card-dark .sw i { box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16); }
+    .card-dark .sw code, .card-dark h3 { color: rgba(255,255,255,0.55); }
+
+    .scale { display: flex; flex-wrap: wrap; gap: 10px; }
+    .scale .b { background: #007aff; height: 20px; border-radius: 4px; }
+    .scale .t { display: flex; flex-direction: column; align-items: center; gap: 5px; font-size: 10px; color: #6e6e73; font-family: ui-monospace, Menlo, monospace; }
+
+    .radii { display: flex; gap: 22px; align-items: flex-end; }
+    .radii .r { background: #007aff; width: 62px; height: 62px; }
+    .radii .t { font-size: 10px; color: #6e6e73; font-family: ui-monospace, Menlo, monospace; text-align: center; margin-top: 6px; }
+
+    .gallery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+    .cell { display: flex; flex-direction: column; gap: 8px; }
+    .cell .cap { font-size: 10px; color: #6e6e73; font-family: ui-monospace, Menlo, monospace; }
+    .cell .demo { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    .btn { height: 26px; padding: 0 12px; border-radius: 7px; border: 1px solid transparent; background: #007aff; color: #fff; font: inherit; font-weight: 600; font-size: 12px; }
+    .btn--sec { background: #fff; color: #1d1d1f; border-color: rgba(0,0,0,0.18); font-weight: 500; }
+    .btn--ghost { background: transparent; color: #007aff; border-color: transparent; font-weight: 500; }
+    .keycap { min-width: 22px; height: 22px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; background: #fff; border: 1px solid rgba(0,0,0,0.16); border-bottom-width: 2px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+    .switch { width: 38px; height: 22px; border-radius: 999px; background: #34c759; position: relative; }
+    .switch.off { background: rgba(0,0,0,0.16); }
+    .switch i { position: absolute; top: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+    .switch.on i { left: 18px; } .switch.off i { left: 2px; }
+    .tf { height: 28px; width: 150px; border: 1px solid rgba(0,0,0,0.18); border-radius: 7px; background: #fff; display: flex; align-items: center; padding: 0 10px; font-size: 12px; color: #6e6e73; }
+    .select { display: inline-flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px 0 11px; border-radius: 7px; border: 1px solid rgba(0,0,0,0.18); background: #fff; font-size: 12px; }
+    .select svg { width: 12px; height: 12px; color: #6e6e73; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .pill svg { width: 13px; height: 13px; }
+    .pill--ok { background: rgba(52,199,89,0.16); color: #248a3d; }
+    .pill--wait { background: rgba(255,159,10,0.18); color: #9a6100; }
+    .pill--err { background: rgba(255,59,48,0.16); color: #c0392b; }
+    .navitem { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 7px; color: #6e6e73; font-weight: 500; font-size: 13px; }
+    .navitem svg { width: 16px; height: 16px; }
+    .navitem.is-active { background: rgba(0,122,255,0.12); color: #007aff; }
+
+    .notes { font-size: 12px; color: #3a3a3c; line-height: 1.6; }
+    .notes b { color: #1d1d1f; }
+  </style>
+</helmet>
+
+<div class="sheet">
+  <header>
+    <h1>OpenStream &mdash; window design system</h1>
+    <p>Extends the push-to-talk overlay&rsquo;s language (system blue accent, SF, rounded glass) to a solid, light + dark desktop window. Reference for issue #211 &rarr; #212.</p>
+  </header>
+
+  <section>
+    <h2>Type scale &mdash; SF Pro Text / system-ui</h2>
+    <div class="panel">
+      <div class="type-row"><span class="meta">17 / 600 / -0.01em</span><span style="font-size:17px;font-weight:600;letter-spacing:-0.01em">Home headline</span></div>
+      <div class="type-row"><span class="meta">19 / 700 / -0.015em</span><span style="font-size:19px;font-weight:700;letter-spacing:-0.015em">First-launch title</span></div>
+      <div class="type-row"><span class="meta">13 / 600</span><span style="font-size:13px;font-weight:600">Settings group header</span></div>
+      <div class="type-row"><span class="meta">13 / 400</span><span style="font-size:13px">Body &mdash; row labels, running text</span></div>
+      <div class="type-row"><span class="meta">12 / 400 / secondary</span><span style="font-size:12px;color:#6e6e73">Descriptions and sublabels</span></div>
+      <div class="type-row"><span class="meta">11 / 600 / 0.04em / caps</span><span style="font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6e6e73">Card section label</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Colour</h2>
+    <div class="swatches">
+      <div class="panel">
+        <h3>Light</h3>
+        <div class="sw"><i style="background:#ececec"></i><b>Window</b><code>#ECECEC</code></div>
+        <div class="sw"><i style="background:#ffffff"></i><b>Surface</b><code>#FFFFFF</code></div>
+        <div class="sw"><i style="background:#f5f5f7"></i><b>Surface&#8202;2</b><code>#F5F5F7</code></div>
+        <div class="sw"><i style="background:#1d1d1f"></i><b>Text</b><code>#1D1D1F</code></div>
+        <div class="sw"><i style="background:#6e6e73"></i><b>Text 2</b><code>#6E6E73</code></div>
+        <div class="sw"><i style="background:#007aff"></i><b>Accent</b><code>#007AFF</code></div>
+        <div class="sw"><i style="background:rgba(0,0,0,0.1)"></i><b>Separator</b><code>black 10%</code></div>
+      </div>
+      <div class="panel card-dark">
+        <h3>Dark</h3>
+        <div class="sw"><i style="background:#1e1e1e"></i><b>Window</b><code>#1E1E1E</code></div>
+        <div class="sw"><i style="background:#2c2c2e"></i><b>Surface</b><code>#2C2C2E</code></div>
+        <div class="sw"><i style="background:#323234"></i><b>Surface&#8202;2</b><code>#323234</code></div>
+        <div class="sw"><i style="background:rgba(255,255,255,0.92)"></i><b>Text</b><code>white 92%</code></div>
+        <div class="sw"><i style="background:rgba(255,255,255,0.55)"></i><b>Text 2</b><code>white 55%</code></div>
+        <div class="sw"><i style="background:#0a84ff"></i><b>Accent</b><code>#0A84FF</code></div>
+        <div class="sw"><i style="background:rgba(255,255,255,0.1)"></i><b>Separator</b><code>white 10%</code></div>
+      </div>
+    </div>
+    <p class="notes" style="margin-top:10px">Status: <b style="color:#248a3d">green</b> #34C759 / #30D158 &nbsp;&middot;&nbsp; <b style="color:#9a6100">amber</b> #FF9F0A &nbsp;&middot;&nbsp; <b style="color:#c0392b">red</b> #FF3B30 / #FF453B. Accents share Apple&rsquo;s system-blue hue; no invented colours.</p>
+  </section>
+
+  <section>
+    <h2>Spacing &mdash; 4px base</h2>
+    <div class="panel">
+      <div class="scale">
+        <span class="t"><span class="b" style="width:4px"></span>4</span>
+        <span class="t"><span class="b" style="width:8px"></span>8</span>
+        <span class="t"><span class="b" style="width:12px"></span>12</span>
+        <span class="t"><span class="b" style="width:16px"></span>16</span>
+        <span class="t"><span class="b" style="width:20px"></span>20</span>
+        <span class="t"><span class="b" style="width:22px"></span>22</span>
+        <span class="t"><span class="b" style="width:28px"></span>28</span>
+      </div>
+      <div class="radii" style="margin-top:22px">
+        <div><div class="r" style="border-radius:6px"></div><div class="t">6 &mdash; controls</div></div>
+        <div><div class="r" style="border-radius:7px"></div><div class="t">7 &mdash; buttons</div></div>
+        <div><div class="r" style="border-radius:10px"></div><div class="t">10 &mdash; cards</div></div>
+        <div><div class="r" style="border-radius:12px"></div><div class="t">12 &mdash; window</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Components</h2>
+    <div class="panel">
+      <div class="gallery">
+        <div class="cell"><span class="cap">buttons</span><div class="demo"><button class="btn">Primary</button><button class="btn btn--sec">Secondary</button><button class="btn btn--ghost">Remove</button></div></div>
+        <div class="cell"><span class="cap">switch &mdash; on / off</span><div class="demo"><span class="switch on"><i></i></span><span class="switch off"><i></i></span></div></div>
+        <div class="cell"><span class="cap">text field / select</span><div class="demo"><span class="tf">com.example.App</span><span class="select">System Default <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></div></div>
+        <div class="cell"><span class="cap">keycaps</span><div class="demo"><span class="keycap">&#8963;</span><span class="keycap">&#8997;</span><span class="keycap">D</span></div></div>
+        <div class="cell"><span class="cap">status pill &mdash; 3 states</span><div class="demo"><span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Granted</span><span class="pill pill--wait">Warming up&#8230;</span><span class="pill pill--err">Denied</span></div></div>
+        <div class="cell"><span class="cap">toolbar nav item &mdash; active / rest</span><div class="demo"><span class="navitem is-active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/></svg>Home</span><span class="navitem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M4.2 7l2.1 1.2M17.7 15.8l2.1 1.2M4.2 17l2.1-1.2M17.7 8.2l2.1-1.2"/></svg>Settings</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Window chrome &amp; vibrancy</h2>
+    <div class="panel notes">
+      <b>Chrome:</b> <code>titleBarStyle: 'hiddenInset'</code> &mdash; traffic lights inset top-left, content runs full height. Default 760&times;580, min 560&times;440, resizable, size + position persisted.<br>
+      <b>Vibrancy:</b> the 52px toolbar strip uses macOS vibrancy (<code>under-window</code>); content surfaces are solid. The push-to-talk overlay keeps its own <code>hud</code> vibrancy &mdash; shared tokens (accent, radii, SF), separate material.<br>
+      <b>Tray:</b> unchanged &mdash; stays the live idle / recording / transcribing indicator; the window never carries in-dictation state.
+    </div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>

@@ -24,9 +24,11 @@ const { setBreakSafeApplications } = require("./breakSafety");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
+const { createVoiceEditIntake } = require("./voiceEditCoordinator");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
+const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
 const { sanitizeWindowBounds, WINDOW_STATE_DEFAULTS } = require("./windowState");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
@@ -57,6 +59,7 @@ let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
 let settingsStore = null;
+let pushToTalkShortcut = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
@@ -75,6 +78,23 @@ const dictationIntake = createDictationIntake({
   vocabulary,
   onDiagnostic: recordDictationDiagnostic,
 });
+
+// #17: voice editing shares the push-to-talk hotkey. If text is selected
+// when the key goes down, the recording is an editing command rather than
+// dictation, and goes here instead of dictationIntake.
+const voiceEditIntake = createVoiceEditIntake({
+  transcription,
+  delivery: accessibilityHelper,
+  onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
+});
+
+// A selection longer than this is almost never a deliberate edit target,
+// and reading a huge AX value at key-down is exactly the case the
+// injection engine's own max-chars guard exists to avoid.
+const VOICE_EDIT_MAX_CHARS = 5000;
+
+// Set at key-down (the async selection read), consumed at recording-complete.
+let pendingSelectionRead = null;
 
 // The desktop window is only ever opened from an explicit user action -
 // the tray item, a Dock-icon click (the `activate` handler), a second
@@ -281,6 +301,80 @@ const heldResultController = createHeldResultController({
   writeClipboard: (text) => clipboard.writeText(text),
 });
 
+// #17: fired on push-to-talk key-down. Kicks off the async selection read
+// so recording-complete can tell a voice edit from a dictation - a slow or
+// failed read just means "ordinary dictation" and must never delay
+// recording, so this is deliberately not awaited here.
+function beginPushToTalk() {
+  pendingSelectionRead = accessibilityHelper.getSelection().catch(() => null);
+  pushToTalkCoordinator.keyDown();
+}
+
+async function handleCompletedRecording(wavBuffer, timing) {
+  const selectionRead = pendingSelectionRead;
+  pendingSelectionRead = null;
+  const selection = selectionRead ? await selectionRead : null;
+
+  if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
+    showVoiceEditWorking();
+    return applyVoiceEdit(wavBuffer, selection, timing);
+  }
+  return transcribeAndPrint(wavBuffer, timing);
+}
+
+function showVoiceEditWorking() {
+  setTrayState("transcribing");
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  positionOverlayAtBottom();
+  overlayWin.webContents.send("dictation-state", "editing");
+  overlayWin.showInactive();
+}
+
+function showVoiceEditMessage(text) {
+  setTrayState("idle");
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.webContents.send("voice-edit-message", text);
+  overlayWin.showInactive();
+  setTimeout(() => setUserVisibleState("idle"), 2000);
+}
+
+async function applyVoiceEdit(wavBuffer, selection, timing) {
+  let result;
+  try {
+    result = await voiceEditIntake.complete(wavBuffer, {
+      selection: selection.text,
+      focusContext: selection.focusContext,
+    });
+  } catch (error) {
+    console.error("[voice-edit] unexpected intake failure:", error);
+    setUserVisibleState("idle");
+    return;
+  }
+
+  if (result.status === "delivered") {
+    console.log(`[voice-edit] ${result.commandId}: ${JSON.stringify(result.text)}`);
+    if (Number.isFinite(timing?.releasedAtMs)) {
+      console.log(`[voice-edit] release-to-insertion: ${(performance.now() - timing.releasedAtMs).toFixed(1)}ms`);
+    }
+    setUserVisibleState("idle");
+  } else if (result.status === "held") {
+    console.log(`[voice-edit] held: ${result.reason}`);
+    setUserVisibleState("held", { text: result.text, reason: result.reason });
+  } else if (result.status === "unrecognised") {
+    console.log(`[voice-edit] command not recognised: ${JSON.stringify(result.command)}`);
+    showVoiceEditMessage("Command not recognised");
+  } else if (result.status === "declined") {
+    console.log(`[voice-edit] ${result.commandId} declined: ${result.reason}`);
+    showVoiceEditMessage(result.reason);
+  } else if (result.status === "failed") {
+    console.error(`[voice-edit] ${result.stage} failed: ${result.reason}`);
+    setUserVisibleState("idle");
+  } else {
+    console.log("[voice-edit] no command captured, skipping");
+    setUserVisibleState("idle");
+  }
+}
+
 async function transcribeAndPrint(wavBuffer, timing) {
   let result;
   try {
@@ -416,14 +510,16 @@ function isCaptureSender(event) {
 }
 
 ipcMain.on("capture-ready", (event) => {
-  if (!isCaptureSender(event) || hotkeyStarted) return;
+  if (!isCaptureSender(event) || hotkeyStarted || !pushToTalkShortcut) return;
   hotkeyStarted = true;
-  hotkeyHelper.start();
+  void pushToTalkShortcut.start().catch((error) => {
+    console.error("[hotkey-helper] active shortcut could not start:", error.message);
+  });
 });
 
 ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
   if (!isCaptureSender(event)) return;
-  void transcribeAndPrint(Buffer.from(arrayBuffer), timing);
+  void handleCompletedRecording(Buffer.from(arrayBuffer), timing);
 });
 
 ipcMain.on("sound-level", (event, level) => {
@@ -495,19 +591,19 @@ ipcMain.handle("app:get-health", async () => {
   };
 });
 
-ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
-  // setHotkey validates and throws on a malformed hotkey - ipcMain.handle
-  // turns that into a rejected promise on the renderer side automatically,
-  // and the previously-saved hotkey is left untouched (see
-  // settingsStore.js), so a bad renderer-side capture can't leave the app
-  // with no working hotkey.
-  const settings = settingsStore.setHotkey(hotkey);
-  hotkeyHelper.setHotkey(settings.hotkey);
-  return settings;
+ipcMain.handle("settings:set-shortcut", (event, shortcut) => {
+  if (!pushToTalkShortcut) {
+    return {
+      ok: false,
+      kind: "internal-failure",
+      message: "Unable to change the Push-to-talk shortcut.",
+    };
+  }
+  return pushToTalkShortcut.replace(shortcut);
 });
 
 ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
-  // Same shape as settings:set-hotkey: setBreakSafeApps validates and
+  // Same shape as settings:set-shortcut: setBreakSafeApps validates and
   // throws on anything malformed, so a bad renderer-side edit can't corrupt
   // the deny-by-default allow-list breakSafety.js enforces.
   const settings = settingsStore.setBreakSafeApps(apps);
@@ -561,9 +657,16 @@ app.whenReady().then(() => {
   // stay silent in the tray - it's a background tool, not something that
   // should throw a window up every login. See issue #209.
   const isFirstLaunch = !fs.existsSync(settingsPath);
+  // Regular Dock app (issue #209) - no app.dock.hide().
   settingsStore = createSettingsStore({ filePath: settingsPath });
   createApplicationMenu();
-  hotkeyHelper.setHotkey(settingsStore.get().hotkey);
+  pushToTalkShortcut = createPushToTalkShortcutController({
+    settingsStore,
+    createHelper: hotkeyHelper.createHotkeyHelper,
+    onKeyDown: beginPushToTalk,
+    onKeyUp: pushToTalkCoordinator.keyUp,
+    onDiagnostic: (message) => console.error(`[hotkey-helper] ${message}`),
+  });
   setBreakSafeApplications(settingsStore.get().breakSafeApps);
   // Fire-and-forget: a scan failing here (bad/moved path since last run)
   // must not block startup. It just means vocabulary biasing stays off
@@ -575,8 +678,6 @@ app.whenReady().then(() => {
     });
   }
   createTray();
-  hotkeyHelper.onKeyDown(pushToTalkCoordinator.keyDown);
-  hotkeyHelper.onKeyUp(pushToTalkCoordinator.keyUp);
   createCaptureWindow();
   createOverlayWindow();
   whisperServer.start();
@@ -587,7 +688,7 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
-  hotkeyHelper.stop();
+  pushToTalkShortcut?.stop();
   accessibilityHelper.stop();
   whisperServer.stop();
   rewriteModelServer.stop();

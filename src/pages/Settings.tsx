@@ -58,10 +58,10 @@ function MicrophoneSection() {
 export default function Settings() {
   return (
     <main className="page">
-      <div className="group">
-        <h2>Push-to-talk shortcut</h2>
-        <HotkeySettings />
-      </div>
+      {/* HotkeySettings renders its own headed `.setting` section - it's
+          kept as-is until the shortcut work settles (#215), then restyled
+          into the card system like the rest of this page. */}
+      <HotkeySettings />
 
       <div className="group">
         <h2>Break-safe applications</h2>

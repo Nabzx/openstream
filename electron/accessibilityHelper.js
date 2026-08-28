@@ -117,6 +117,31 @@ function createAccessibilityHelper({
     return { bundleId: reply.bundleId, isOneLineField: reply.isOneLineField };
   }
 
+  // #17: the focused field's current selection, read at push-to-talk
+  // key-down. Returns null for "nothing selected" or "couldn't read" - the
+  // caller treats both the same way (fall through to ordinary dictation).
+  async function getSelection() {
+    let reply;
+    try {
+      reply = await request("selection");
+    } catch {
+      return null;
+    }
+    if (
+      reply.status !== "ok" ||
+      typeof reply.text !== "string" ||
+      reply.text.length === 0 ||
+      typeof reply.bundleId !== "string" ||
+      typeof reply.isOneLineField !== "boolean"
+    ) {
+      return null;
+    }
+    return {
+      text: reply.text,
+      focusContext: { bundleId: reply.bundleId, isOneLineField: reply.isOneLineField },
+    };
+  }
+
   async function deliver(text) {
     const reply = await request("insert", { text });
     if (reply.status === "delivered") return { kind: "inserted" };
@@ -130,6 +155,7 @@ function createAccessibilityHelper({
     start,
     stop,
     getFocusContext,
+    getSelection,
     deliver,
   };
 }

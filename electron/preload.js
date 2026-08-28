@@ -20,7 +20,7 @@ contextBridge.exposeInMainWorld("openstream", {
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
-    setHotkey: (hotkey) => ipcRenderer.invoke("settings:set-hotkey", hotkey),
+    setShortcut: (shortcut) => ipcRenderer.invoke("settings:set-shortcut", shortcut),
     setBreakSafeApps: (apps) => ipcRenderer.invoke("settings:set-break-safe-apps", apps),
     setVocabularyProjectPath: (projectPath) => ipcRenderer.invoke("settings:set-vocabulary-path", projectPath),
   },

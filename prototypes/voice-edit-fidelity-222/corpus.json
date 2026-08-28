@@ -1,0 +1,125 @@
+{
+  "note": "Selection + spoken-command pairs for issue #222. `expect` is a short human-readable description of the only acceptable change; `category` groups the case; `check` names the specific failure this case is probing for.",
+  "cases": [
+    {
+      "id": "core-bullets-commalist",
+      "category": "tested-core",
+      "instruction": "make this a bullet list",
+      "selection": "Buy milk, eggs, bread and coffee. Also pick up a birthday card.",
+      "expect": "Same items, one per line, each with a bullet marker. No items added or dropped.",
+      "check": "applies a structural transform at all"
+    },
+    {
+      "id": "core-bullets-sentences",
+      "category": "tested-core",
+      "instruction": "turn this into a bullet list",
+      "selection": "The build compiles the two engines from pinned commits. It downloads both models from pinned revisions. Every file is SHA-256 verified.",
+      "expect": "Three bullets, one per sentence, wording preserved.",
+      "check": "one bullet per idea, no rewording"
+    },
+    {
+      "id": "core-shorter",
+      "category": "tested-core",
+      "instruction": "make this shorter",
+      "selection": "I just wanted to quickly follow up on the thing we were talking about earlier today, because I think it might actually be quite important for us to sort out before the end of the week if at all possible.",
+      "expect": "Noticeably shorter, same core ask (follow up, important, sort out before end of week).",
+      "check": "shortens without losing the ask"
+    },
+    {
+      "id": "core-fix-grammar",
+      "category": "tested-core",
+      "instruction": "fix the grammar",
+      "selection": "Me and him was going to the shops but we dont has enough time.",
+      "expect": "Grammatical version, same meaning: 'He and I were going to the shops but we don't have enough time.'",
+      "check": "corrects errors only"
+    },
+    {
+      "id": "core-snake-case",
+      "category": "tested-core",
+      "instruction": "snake case that",
+      "selection": "getUserProfileData",
+      "expect": "get_user_profile_data",
+      "check": "exact identifier transform"
+    },
+    {
+      "id": "core-camel-case",
+      "category": "tested-core",
+      "instruction": "make this camel case",
+      "selection": "user profile display name",
+      "expect": "userProfileDisplayName",
+      "check": "exact identifier transform"
+    },
+    {
+      "id": "core-numbered-list",
+      "category": "tested-core",
+      "instruction": "make this a numbered list",
+      "selection": "First open the settings window. Then pick a new shortcut. Finally relaunch the app.",
+      "expect": "Three numbered steps, wording preserved.",
+      "check": "numbered structure, no rewording"
+    },
+    {
+      "id": "core-capitalise",
+      "category": "tested-core",
+      "instruction": "capitalise the first letter of each word",
+      "selection": "local first voice dictation for macos",
+      "expect": "Local First Voice Dictation For Macos",
+      "check": "casing only"
+    },
+    {
+      "id": "preserve-hedge",
+      "category": "preservation",
+      "instruction": "fix the grammar",
+      "selection": "I think this approach are the best one, but we should probaly check.",
+      "expect": "Grammar fixed; 'I think' and the tentativeness kept: 'I think this approach is the best one, but we should probably check.'",
+      "check": "does not drop the hedge (the #24 failure)"
+    },
+    {
+      "id": "preserve-number-name",
+      "category": "preservation",
+      "instruction": "make this shorter",
+      "selection": "According to the report that Priya sent over on Tuesday, the latency dropped by 43 milliseconds after the change was deployed to the fleet.",
+      "expect": "Shorter; keeps 'Priya', 'Tuesday', '43 milliseconds'.",
+      "check": "keeps specific facts"
+    },
+    {
+      "id": "adv-make-better",
+      "category": "adversarial",
+      "instruction": "make this better",
+      "selection": "The meeting is at 3pm in room 2.",
+      "expect": "A vague instruction on an already-clear sentence - minimal or no change is the faithful answer.",
+      "check": "does not over-rewrite on a vague command"
+    },
+    {
+      "id": "adv-question",
+      "category": "adversarial",
+      "instruction": "what does this mean",
+      "selection": "The settle guard refuses to trust a target until the frontmost app has been stable for 400ms.",
+      "expect": "This is a question, not an edit - the right behaviour is to return the text unchanged or signal that it is not an edit, NOT to answer the question.",
+      "check": "does not answer a question in place of editing"
+    },
+    {
+      "id": "adv-improve-comment",
+      "category": "adversarial",
+      "instruction": "improve this",
+      "selection": "// loop over the items and add each one to the set",
+      "expect": "Vague command on a fine comment - minimal change; must stay a comment, must not become code or prose.",
+      "check": "stays in-kind, minimal change"
+    },
+    {
+      "id": "adv-leave-alone",
+      "category": "adversarial",
+      "instruction": "leave this exactly as it is",
+      "selection": "Nothing about this sentence needs to change.",
+      "expect": "Returned verbatim.",
+      "check": "does not rewrite when told not to"
+    },
+    {
+      "id": "adv-out-of-scope",
+      "category": "adversarial",
+      "instruction": "translate this to French",
+      "selection": "The window remembers its size and position.",
+      "expect": "Out of the intended command surface. Either complies (documented) or returns unchanged - but must not add commentary about it.",
+      "check": "handles an off-surface command without chatter"
+    }
+  ]
+}
