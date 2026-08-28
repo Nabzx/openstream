@@ -2,6 +2,7 @@ import AccessibilityInjection
 import ApplicationServices
 import AppKit
 import Foundation
+import IOKit.hid
 
 func eprint(_ message: String) {
     FileHandle.standardError.write((message + "\n").data(using: .utf8)!)
@@ -82,6 +83,26 @@ while let line = readLine(strippingNewline: true) {
         var reply = engine.decide(text: text).replyFields
         reply["id"] = id
         emit(reply)
+    case "permissions":
+        // #47: the two grants the app can't function without. Reported from
+        // here because macOS attributes both to the Electron host that
+        // spawned this process (issue #46), so this reads the same state the
+        // pipeline actually depends on. IOHIDCheckAccess is a passive query -
+        // it does not claim Input Monitoring, so it can't clash with the
+        // hotkey helper's event tap.
+        func inputMonitoring() -> String {
+            switch IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) {
+            case kIOHIDAccessTypeGranted: return "granted"
+            case kIOHIDAccessTypeDenied: return "denied"
+            default: return "unknown"
+            }
+        }
+        emit([
+            "id": id,
+            "status": "ok",
+            "accessibility": AXIsProcessTrusted(),
+            "inputMonitoring": inputMonitoring(),
+        ])
     case "selection":
         // #17: a get-only read of the focused field's current selection,
         // used at push-to-talk key-down to tell a voice edit from an
