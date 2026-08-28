@@ -295,6 +295,9 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
     text: "Here is my shopping list.\n\n- Buy milk.\n- Buy eggs.\n- Buy bread.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["vocabulary.promptLength", 0],
+    ["context.bundleId", "com.apple.TextEdit"],
+    ["context.axReady", true],
     ["paragraphBreaks.formatValid", true],
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
@@ -316,6 +319,9 @@ test("an out-of-range list range is clamped into the text and recorded as repair
     text: "First sentence.\n\n- Second sentence.\n- Third sentence.\n- Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["vocabulary.promptLength", 0],
+    ["context.bundleId", "com.apple.TextEdit"],
+    ["context.axReady", true],
     ["paragraphBreaks.formatValid", true],
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
@@ -337,6 +343,9 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["vocabulary.promptLength", 0],
+    ["context.bundleId", "com.apple.TextEdit"],
+    ["context.axReady", true],
     ["paragraphBreaks.formatValid", true],
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", false],
@@ -357,6 +366,9 @@ test("list detection is off by default: a valid range is parsed and reported but
     text: "Here is my shopping list. Buy milk. Buy eggs. Buy bread.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["vocabulary.promptLength", 0],
+    ["context.bundleId", "com.apple.TextEdit"],
+    ["context.axReady", true],
     ["paragraphBreaks.formatValid", true],
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
