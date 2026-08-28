@@ -241,6 +241,7 @@ test("repairs malformed break indices without retrying and records format and re
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["paragraphBreaks.formatValid", false],
     ["paragraphBreaks.repairUsed", true],
@@ -422,7 +423,7 @@ test("transcription failure does not insert partial output", async () => {
   assert.equal(deliveryCalls, 0);
 });
 
-test("context detection failure leaves the target application unchanged", async () => {
+test("context detection failure holds the transcript instead of dropping it (#227)", async () => {
   let deliveryCalls = 0;
   const harness = createIntake({
     getFocusContext: async () => {
@@ -436,12 +437,15 @@ test("context detection failure leaves the target application unchanged", async 
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, {
-    status: "failed",
-    stage: "context",
-    reason: "accessibility unavailable",
-  });
-  assert.equal(deliveryCalls, 0);
+  // We have the words, we just don't know where they go - that's "held",
+  // not a silent failure. Cleaned with the safe defaults (no line breaks).
+  assert.equal(result.status, "held");
+  assert.equal(result.text, "Hello world.");
+  assert.match(result.reason, /couldn't read the focused field: accessibility unavailable/);
+  assert.equal(deliveryCalls, 0, "a context failure never reaches delivery");
+  assert.ok(
+    harness.diagnostics.some(([name, value]) => name === "context.failure" && value === "accessibility unavailable"),
+  );
 });
 
 test("delivery failure holds the complete finished text without retrying delivery", async () => {
