@@ -1,4 +1,5 @@
 const { app, Tray, Menu, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, screen } = require("electron");
+const fs = require("fs");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
@@ -62,6 +63,13 @@ const dictationIntake = createDictationIntake({
   onDiagnostic: recordDictationDiagnostic,
 });
 
+// The desktop window is only ever opened from an explicit user action -
+// the tray item, a Dock-icon click (the `activate` handler), a second
+// launch attempt, or first run. NOTHING in the dictation pipeline
+// (dictationCoordinator, transcribeAndPrint, any capture/hotkey callback)
+// may call this, win.show(), win.focus() or app.focus(): raising or
+// focusing the window mid-dictation would steal focus from the app the
+// user is dictating into. See issue #208 and AGENTS.md.
 function createWindow() {
   if (win) {
     win.show();
@@ -397,11 +405,21 @@ app.on("second-instance", () => {
   createWindow();
 });
 
+// Regular Dock app (issue #209): clicking the Dock icon with no window
+// open re-creates it. Without this the icon would be inert after the
+// user closes the window.
+app.on("activate", () => {
+  createWindow();
+});
+
 app.whenReady().then(() => {
-  if (process.platform === "darwin") {
-    app.dock.hide();
-  }
-  settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
+  const settingsPath = path.join(app.getPath("userData"), "settings.json");
+  // First ever launch (no settings file yet) opens the window so a new
+  // user sees the app came up and what the shortcut is. Later launches
+  // stay silent in the tray - it's a background tool, not something that
+  // should throw a window up every login. See issue #209.
+  const isFirstLaunch = !fs.existsSync(settingsPath);
+  settingsStore = createSettingsStore({ filePath: settingsPath });
   hotkeyHelper.setHotkey(settingsStore.get().hotkey);
   setBreakSafeApplications(settingsStore.get().breakSafeApps);
   // Fire-and-forget: a scan failing here (bad/moved path since last run)
@@ -421,6 +439,8 @@ app.whenReady().then(() => {
   whisperServer.start();
   rewriteModelServer.start();
   accessibilityHelper.start();
+
+  if (isFirstLaunch) createWindow();
 });
 
 app.on("will-quit", () => {
@@ -430,7 +450,10 @@ app.on("will-quit", () => {
   rewriteModelServer.stop();
 });
 
-// Menu bar app: stay alive with no windows open, quit only from the tray menu.
+// Closing the desktop window backgrounds the app - the tray icon, the
+// global hotkey and the resident model servers all stay alive. Quit is
+// always explicit: Cmd-Q, the App menu, or the tray's "Quit OpenStream".
+// See issue #209.
 app.on("window-all-closed", (event) => {
   event.preventDefault();
 });
