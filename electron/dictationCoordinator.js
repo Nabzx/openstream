@@ -76,6 +76,10 @@ function createDictationIntake(options) {
       ) {
         throw new Error("context adapter returned an invalid focus context");
       }
+      // #181: when the focused element wasn't AX-ready, isOneLineField is a
+      // safe guess (deny breaks), not the real role. Logged so we can see
+      // how often the fallback fires in practice.
+      emitDiagnostic("context.axReady", focusContext.axReady !== false);
     } catch (error) {
       return failed("context", error);
     }

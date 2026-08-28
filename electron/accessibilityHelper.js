@@ -114,7 +114,14 @@ function createAccessibilityHelper({
     ) {
       throw new Error(`accessibility-helper returned an invalid context reply${reply.reason ? `: ${reply.reason}` : ""}`);
     }
-    return { bundleId: reply.bundleId, isOneLineField: reply.isOneLineField };
+    // #181: axReady is false when the focused element never became AX-ready
+    // in time and isOneLineField is the safe default, not the real role.
+    // The dictation still proceeds - deny-by-default on line breaks.
+    return {
+      bundleId: reply.bundleId,
+      isOneLineField: reply.isOneLineField,
+      axReady: reply.axReady !== false,
+    };
   }
 
   // #47: the two grants the pipeline can't work without, as this process

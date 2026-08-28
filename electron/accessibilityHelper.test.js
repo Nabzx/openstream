@@ -55,7 +55,7 @@ test("accessibility helper correlates context and insertion replies received out
   child.stdout.write('{"id":"2","status":"delivered","method":"wrote into the field","verified":true}\n');
   child.stdout.write('{"id":"1","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n');
 
-  assert.deepEqual(await contextPromise, { bundleId: "com.apple.TextEdit", isOneLineField: false });
+  assert.deepEqual(await contextPromise, { bundleId: "com.apple.TextEdit", isOneLineField: false, axReady: true });
   assert.deepEqual(await insertionPromise, { kind: "inserted" });
   helper.stop();
 });
@@ -162,7 +162,7 @@ test("accessibility helper ignores logs and non-contract output on stdout", asyn
   child.stdout.write('{"id":7,"status":"ok"}\n');
   child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":true}\n`);
 
-  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: true });
+  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: true, axReady: true });
   helper.stop();
 });
 
@@ -181,7 +181,7 @@ test("accessibility helper keeps diagnostics on stderr and replies on stdout", a
   child.stderr.write("Accessibility access is missing\n");
   child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n`);
 
-  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: false });
+  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: false, axReady: true });
   assert.equal(stderrChunks.join(""), "[accessibility-helper] Accessibility access is missing\n");
   helper.stop();
 });
