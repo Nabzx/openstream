@@ -72,8 +72,19 @@ function createSettingsStore({ filePath }) {
   }
 
   function persist(settings) {
+    const temporaryPath = `${filePath}.${process.pid}.tmp`;
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
-    fs.writeFileSync(filePath, JSON.stringify(settings, null, 2));
+    try {
+      fs.writeFileSync(temporaryPath, JSON.stringify(settings, null, 2));
+      fs.renameSync(temporaryPath, filePath);
+    } catch (error) {
+      try {
+        fs.unlinkSync(temporaryPath);
+      } catch {
+        // The temporary file may not have been created.
+      }
+      throw error;
+    }
   }
 
   function notify(settings) {

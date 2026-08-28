@@ -33,11 +33,13 @@ test("a fresh store reads back what an earlier store wrote", () => {
   assert.deepEqual(reopened.get().hotkey, { keyCode: 0, modifiers: ["ctrl"] });
 });
 
-test("a failed disk write leaves the cached hotkey unchanged", () => {
-  const store = createSettingsStore({ filePath: tempFilePath() });
+test("a partial disk write leaves the cached and saved shortcut unchanged", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
   store.setHotkey({ keyCode: 2, modifiers: ["ctrl", "alt"] });
   const writeFileSync = fs.writeFileSync;
-  fs.writeFileSync = () => {
+  fs.writeFileSync = (temporaryPath, contents) => {
+    writeFileSync(temporaryPath, String(contents).slice(0, 10));
     throw new Error("disk is read-only");
   };
 
@@ -48,6 +50,7 @@ test("a failed disk write leaves the cached hotkey unchanged", () => {
   }
 
   assert.deepEqual(store.get().hotkey, { keyCode: 2, modifiers: ["ctrl", "alt"] });
+  assert.deepEqual(JSON.parse(fs.readFileSync(filePath, "utf8")).hotkey, { keyCode: 2, modifiers: ["ctrl", "alt"] });
 });
 
 test("rejects a hotkey with no modifiers", () => {
