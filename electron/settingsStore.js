@@ -11,6 +11,10 @@ const DEFAULT_SETTINGS = {
   // #16: null means no project configured - vocabulary biasing is opt-in,
   // not a default every fresh install has to notice and turn off.
   vocabularyProjectPath: null,
+  // #212: the desktop window's last size and position. null until the
+  // window has been opened and moved/resized once; windowState.js sanity
+  // -checks it against the actual display before it's used.
+  windowBounds: null,
 };
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
@@ -39,6 +43,23 @@ function validateVocabularyProjectPath(projectPath) {
   if (projectPath === null) return;
   if (typeof projectPath !== "string" || projectPath.trim().length === 0) {
     throw new Error("vocabularyProjectPath must be null or a non-empty string");
+  }
+}
+
+function validateWindowBounds(bounds) {
+  if (bounds === null) return;
+  if (typeof bounds !== "object") {
+    throw new Error("windowBounds must be null or an object");
+  }
+  for (const key of ["width", "height"]) {
+    if (!Number.isFinite(bounds[key]) || bounds[key] <= 0) {
+      throw new Error(`windowBounds.${key} must be a positive number`);
+    }
+  }
+  for (const key of ["x", "y"]) {
+    if (bounds[key] !== undefined && !Number.isFinite(bounds[key])) {
+      throw new Error(`windowBounds.${key} must be a number when present`);
+    }
   }
 }
 
@@ -130,12 +151,28 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() });
   }
 
+  function setWindowBounds(bounds) {
+    validateWindowBounds(bounds);
+    // Only the four geometry keys are kept - a caller passing a whole
+    // Electron Rectangle shouldn't leak extra fields into the file.
+    const next =
+      bounds === null
+        ? null
+        : {
+            width: bounds.width,
+            height: bounds.height,
+            ...(bounds.x !== undefined ? { x: bounds.x } : {}),
+            ...(bounds.y !== undefined ? { y: bounds.y } : {}),
+          };
+    return commit({ ...load(), windowBounds: next });
+  }
+
   function onChange(listener) {
     listeners.add(listener);
     return () => listeners.delete(listener);
   }
 
-  return { get, setShortcut, setHotkey, setBreakSafeApps, setVocabularyProjectPath, onChange };
+  return { get, setShortcut, setHotkey, setBreakSafeApps, setVocabularyProjectPath, setWindowBounds, onChange };
 }
 
 module.exports = {

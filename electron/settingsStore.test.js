@@ -167,3 +167,42 @@ test("rejects a non-string, non-null vocabularyProjectPath", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   assert.throws(() => store.setVocabularyProjectPath(42), /non-empty string/);
 });
+
+test("windowBounds defaults to null", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().windowBounds, null);
+});
+
+test("setWindowBounds persists only the geometry keys", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+
+  store.setWindowBounds({ x: 10, y: 20, width: 800, height: 600, extra: "nope" });
+  assert.deepEqual(store.get().windowBounds, { x: 10, y: 20, width: 800, height: 600 });
+
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.deepEqual(onDisk.windowBounds, { x: 10, y: 20, width: 800, height: 600 });
+});
+
+test("setWindowBounds allows omitting the position", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setWindowBounds({ width: 800, height: 600 });
+  assert.deepEqual(store.get().windowBounds, { width: 800, height: 600 });
+});
+
+test("setWindowBounds(null) clears a saved rectangle", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setWindowBounds({ width: 800, height: 600 });
+  store.setWindowBounds(null);
+  assert.equal(store.get().windowBounds, null);
+});
+
+test("rejects windowBounds with a non-positive size", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setWindowBounds({ width: 0, height: 600 }), /positive number/);
+});
+
+test("rejects windowBounds with a non-numeric position", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setWindowBounds({ width: 800, height: 600, x: "left" }), /must be a number/);
+});

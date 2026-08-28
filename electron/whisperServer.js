@@ -28,4 +28,8 @@ function inferenceUrl() {
   return `http://${HOST}:${PORT}/inference`;
 }
 
-module.exports = { start, stop, inferenceUrl };
+function healthUrl() {
+  return `http://${HOST}:${PORT}/`;
+}
+
+module.exports = { start, stop, inferenceUrl, healthUrl };

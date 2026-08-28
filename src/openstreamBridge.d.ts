@@ -10,6 +10,17 @@ export type SetShortcutResult =
   | { ok: true; settings: StoredSettings }
   | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
 
+export type MediaAccessStatus = "granted" | "denied" | "restricted" | "not-determined" | "unknown";
+export type ModelHealth = "ready" | "starting";
+
+export type AppHealth = {
+  accessibility: boolean;
+  microphone: MediaAccessStatus;
+  inputMonitoring: "unknown";
+  transcriptionModel: ModelHealth;
+  rewriteModel: ModelHealth;
+};
+
 export type VocabularyStatus = {
   path: string | null;
   termCount: number;
@@ -24,6 +35,11 @@ export type VocabularyStatus = {
 declare global {
   interface Window {
     openstream: {
+      app: {
+        getHealth(): Promise<AppHealth>;
+        getLoginItem(): Promise<boolean>;
+        setLoginItem(enabled: boolean): Promise<boolean>;
+      };
       settings: {
         get(): Promise<StoredSettings>;
         setShortcut(shortcut: StoredHotkey): Promise<SetShortcutResult>;
@@ -37,6 +53,7 @@ declare global {
         getStatus(): Promise<VocabularyStatus>;
         chooseFolder(): Promise<string | null>;
       };
+      onNavigate(callback: (page: string) => void): () => void;
     };
   }
 }

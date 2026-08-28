@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatHotkey, labelForMacKeyCode, macKeyCodeForDomCode } from "./keycodeMap";
+import { formatHotkey, hotkeyParts, labelForMacKeyCode, macKeyCodeForDomCode } from "./keycodeMap";
 
 describe("macKeyCodeForDomCode", () => {
   it("maps a letter key to its macOS virtual keycode", () => {
@@ -39,5 +39,16 @@ describe("formatHotkey", () => {
 
   it("formats a single modifier", () => {
     expect(formatHotkey({ keyCode: 49, modifiers: ["cmd"] })).toBe("⌘Space");
+  });
+});
+
+describe("hotkeyParts", () => {
+  it("splits a combo into one entry per key, modifiers in macOS order", () => {
+    expect(hotkeyParts({ keyCode: 2, modifiers: ["alt", "ctrl"] })).toEqual(["⌃", "⌥", "D"]);
+  });
+
+  it("is the same sequence formatHotkey joins", () => {
+    const hotkey = { keyCode: 2, modifiers: ["ctrl", "alt"] };
+    expect(hotkeyParts(hotkey).join("")).toBe(formatHotkey(hotkey));
   });
 });

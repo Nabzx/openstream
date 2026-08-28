@@ -33,46 +33,64 @@ export default function BreakSafeAppsSettings() {
   }
 
   return (
-    <section className="setting">
-      <h2>Break-safe applications</h2>
-      <p>
-        A spoken "new paragraph" only becomes a real line break in apps listed here. Everywhere else it's
-        deliberately dropped, since a newline can submit a half-typed terminal command or send an unfinished
-        message.
-      </p>
-      {apps === null ? (
-        <p className="setting-current">Loading…</p>
-      ) : (
-        <ul className="break-safe-list">
-          {apps.length === 0 && (
-            <li className="break-safe-empty">No apps listed - line breaks are off everywhere.</li>
-          )}
-          {apps.map((bundleId) => (
-            <li key={bundleId}>
-              <span>{bundleId}</span>
-              <button onClick={() => removeApp(bundleId)} disabled={saving} aria-label={`Remove ${bundleId}`}>
-                Remove
+    <>
+      <div className="card">
+        {apps === null ? (
+          <div className="row">
+            <span className="row-label">Loading…</span>
+          </div>
+        ) : (
+          <>
+            {apps.length === 0 && (
+              <div className="row">
+                <span className="row-label" style={{ color: "var(--text-2)" }}>
+                  No apps listed — line breaks are off everywhere.
+                </span>
+              </div>
+            )}
+            {apps.map((bundleId) => (
+              <div className="row" key={bundleId}>
+                <span className="row-label mono">{bundleId}</span>
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  onClick={() => removeApp(bundleId)}
+                  disabled={saving}
+                  aria-label={`Remove ${bundleId}`}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+            <div className="row">
+              <input
+                className="field mono"
+                type="text"
+                placeholder="com.example.App"
+                value={newBundleId}
+                onChange={(event) => setNewBundleId(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") addApp();
+                }}
+                disabled={saving}
+              />
+              <button
+                type="button"
+                className="btn"
+                onClick={addApp}
+                disabled={saving || newBundleId.trim().length === 0}
+              >
+                Add
               </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      <div className="break-safe-add">
-        <input
-          type="text"
-          placeholder="com.example.App"
-          value={newBundleId}
-          onChange={(event) => setNewBundleId(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter") addApp();
-          }}
-          disabled={saving || apps === null}
-        />
-        <button onClick={addApp} disabled={saving || apps === null || newBundleId.trim().length === 0}>
-          Add
-        </button>
+            </div>
+          </>
+        )}
       </div>
-      {error && <p className="setting-error">{error}</p>}
-    </section>
+      {error && <p className="error-text">{error}</p>}
+      <p className="hint">
+        Find an app’s bundle identifier with{" "}
+        <span className="mono">osascript -e 'id of app "…"'</span>.
+      </p>
+    </>
   );
 }

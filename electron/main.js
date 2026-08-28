@@ -1,4 +1,17 @@
-const { app, Tray, Menu, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, screen } = require("electron");
+const {
+  app,
+  Tray,
+  Menu,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  nativeImage,
+  screen,
+  systemPreferences,
+} = require("electron");
+const fs = require("fs");
+const http = require("http");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
@@ -16,6 +29,7 @@ const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
+const { sanitizeWindowBounds, WINDOW_STATE_DEFAULTS } = require("./windowState");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
 // forgot was already running) from spawning a whole second app: its own
@@ -82,6 +96,13 @@ const VOICE_EDIT_MAX_CHARS = 5000;
 // Set at key-down (the async selection read), consumed at recording-complete.
 let pendingSelectionRead = null;
 
+// The desktop window is only ever opened from an explicit user action -
+// the tray item, a Dock-icon click (the `activate` handler), a second
+// launch attempt, or first run. NOTHING in the dictation pipeline
+// (dictationCoordinator, transcribeAndPrint, any capture/hotkey callback)
+// may call this, win.show(), win.focus() or app.focus(): raising or
+// focusing the window mid-dictation would steal focus from the app the
+// user is dictating into. See issue #208 and AGENTS.md.
 function createWindow() {
   if (win) {
     win.show();
@@ -89,12 +110,18 @@ function createWindow() {
     return;
   }
 
+  const display = screen.getPrimaryDisplay();
+  const saved = settingsStore ? settingsStore.get().windowBounds : null;
+  const bounds = sanitizeWindowBounds(saved, display.workArea);
+
   win = new BrowserWindow({
-    width: 360,
-    height: 220,
+    ...bounds,
+    minWidth: WINDOW_STATE_DEFAULTS.minWidth,
+    minHeight: WINDOW_STATE_DEFAULTS.minHeight,
     show: false,
-    resizable: false,
-    fullscreenable: false,
+    // Traffic lights inset into a full-height content view - the shell
+    // paints its own toolbar strip behind them (issue #211).
+    titleBarStyle: "hiddenInset",
     title: "OpenStream",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -110,9 +137,91 @@ function createWindow() {
   }
 
   win.once("ready-to-show", () => win.show());
+
+  // Remember size and position, debounced so a drag doesn't hammer the
+  // settings file. Not saved while maximised/minimised - getBounds()
+  // would record the wrong rectangle.
+  const persistBounds = () => {
+    if (!win || win.isDestroyed() || win.isMinimized() || win.isMaximized()) return;
+    if (settingsStore) settingsStore.setWindowBounds(win.getBounds());
+  };
+  let boundsTimer = null;
+  const scheduleBoundsPersist = () => {
+    clearTimeout(boundsTimer);
+    boundsTimer = setTimeout(persistBounds, 400);
+  };
+  win.on("resize", scheduleBoundsPersist);
+  win.on("move", scheduleBoundsPersist);
+
+  win.on("close", () => {
+    clearTimeout(boundsTimer);
+    persistBounds();
+  });
   win.on("closed", () => {
     win = null;
   });
+}
+
+// Opens the window and asks the renderer to show a particular page. The
+// navigate message is sent once the page is loaded, and the shell also
+// re-reads it on mount, so this works whether the window already existed
+// or was just created.
+function openWindowTo(page) {
+  const wasOpen = Boolean(win);
+  createWindow();
+  if (!win) return;
+  if (wasOpen && win.webContents) {
+    win.webContents.send("navigate", page);
+  } else {
+    win.webContents.once("did-finish-load", () => win.webContents.send("navigate", page));
+  }
+}
+
+// A regular Dock app has a menu bar (issue #209). It's also what makes
+// Cmd-C / Cmd-V / Cmd-A work in the window's text fields - those only
+// fire on macOS when the application menu carries the matching roles.
+// App + Edit + Window, no File menu (there are no documents).
+function createApplicationMenu() {
+  app.setAboutPanelOptions({
+    applicationName: "OpenStream",
+    applicationVersion: app.getVersion(),
+    copyright: "Local-first voice dictation. MIT (app) / Apache-2.0 (models). No telemetry.",
+  });
+
+  const template = [
+    {
+      label: "OpenStream",
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { label: "Settings…", accelerator: "CmdOrCtrl+,", click: () => openWindowTo("settings") },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close" }],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 function createCaptureWindow() {
@@ -441,6 +550,47 @@ ipcMain.on("recording-error", (event, message) => {
 
 ipcMain.handle("settings:get", () => settingsStore.get());
 
+// Is an HTTP server answering on this URL at all? Any response - even a
+// 404 - means the process is up and listening; a connection error or
+// timeout means it's still loading its shaders (cold start is 15-20s -
+// see docs/progress). Used only for the Home page's status section.
+function probeHttp(url, timeoutMs = 800) {
+  return new Promise((resolve) => {
+    const request = http.get(url, (response) => {
+      response.resume();
+      resolve(true);
+    });
+    request.setTimeout(timeoutMs, () => request.destroy());
+    request.on("error", () => resolve(false));
+  });
+}
+
+// Just the launch-at-login toggle. The broader startup behaviour (issue
+// #135) - whether the window shows, notifications - is out of scope here.
+ipcMain.handle("app:get-login-item", () => app.getLoginItemSettings().openAtLogin);
+ipcMain.handle("app:set-login-item", (event, enabled) => {
+  app.setLoginItemSettings({ openAtLogin: Boolean(enabled) });
+  return app.getLoginItemSettings().openAtLogin;
+});
+
+ipcMain.handle("app:get-health", async () => {
+  const [transcription, rewrite] = await Promise.all([
+    probeHttp(whisperServer.healthUrl()),
+    probeHttp(rewriteModelServer.healthUrl()),
+  ]);
+  return {
+    // isTrustedAccessibilityClient(false) reports without prompting.
+    accessibility: systemPreferences.isTrustedAccessibilityClient(false),
+    microphone: systemPreferences.getMediaAccessStatus("microphone"),
+    // macOS exposes no status API for Input Monitoring - the hotkey
+    // helper only finds out when it does or doesn't receive events.
+    // Left as "unknown" until issue #47 wires a functional probe.
+    inputMonitoring: "unknown",
+    transcriptionModel: transcription ? "ready" : "starting",
+    rewriteModel: rewrite ? "ready" : "starting",
+  };
+});
+
 ipcMain.handle("settings:set-shortcut", (event, shortcut) => {
   if (!pushToTalkShortcut) {
     return {
@@ -493,11 +643,23 @@ app.on("second-instance", () => {
   createWindow();
 });
 
+// Regular Dock app (issue #209): clicking the Dock icon with no window
+// open re-creates it. Without this the icon would be inert after the
+// user closes the window.
+app.on("activate", () => {
+  createWindow();
+});
+
 app.whenReady().then(() => {
-  if (process.platform === "darwin") {
-    app.dock.hide();
-  }
-  settingsStore = createSettingsStore({ filePath: path.join(app.getPath("userData"), "settings.json") });
+  const settingsPath = path.join(app.getPath("userData"), "settings.json");
+  // First ever launch (no settings file yet) opens the window so a new
+  // user sees the app came up and what the shortcut is. Later launches
+  // stay silent in the tray - it's a background tool, not something that
+  // should throw a window up every login. See issue #209.
+  const isFirstLaunch = !fs.existsSync(settingsPath);
+  // Regular Dock app (issue #209) - no app.dock.hide().
+  settingsStore = createSettingsStore({ filePath: settingsPath });
+  createApplicationMenu();
   pushToTalkShortcut = createPushToTalkShortcutController({
     settingsStore,
     createHelper: hotkeyHelper.createHotkeyHelper,
@@ -521,6 +683,8 @@ app.whenReady().then(() => {
   whisperServer.start();
   rewriteModelServer.start();
   accessibilityHelper.start();
+
+  if (isFirstLaunch) createWindow();
 });
 
 app.on("will-quit", () => {
@@ -530,7 +694,10 @@ app.on("will-quit", () => {
   rewriteModelServer.stop();
 });
 
-// Menu bar app: stay alive with no windows open, quit only from the tray menu.
+// Closing the desktop window backgrounds the app - the tray icon, the
+// global hotkey and the resident model servers all stay alive. Quit is
+// always explicit: Cmd-Q, the App menu, or the tray's "Quit OpenStream".
+// See issue #209.
 app.on("window-all-closed", (event) => {
   event.preventDefault();
 });

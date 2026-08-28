@@ -1,81 +1,504 @@
+/* OpenStream desktop window - design tokens and shared components.
+   Ported from prototypes/desktop-ui-211 (issue #211). Extends the
+   push-to-talk overlay's language: Apple system-blue accent, SF, the
+   same corner radii, but a solid window that follows the OS light/dark
+   setting rather than glass. */
+
 :root {
   color-scheme: light dark;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --bg: #ececec;
+  --surface: #ffffff;
+  --surface-2: #f5f5f7;
+  --toolbar: #f6f6f6;
+  --text: #1d1d1f;
+  --text-2: #6e6e73;
+  --sep: rgba(0, 0, 0, 0.1);
+  --accent: #007aff;
+  --accent-text: #007aff;
+  --accent-tint: rgba(0, 122, 255, 0.12);
+  --ok: #248a3d;
+  --ok-tint: rgba(52, 199, 89, 0.16);
+  --wait: #9a6100;
+  --wait-tint: rgba(255, 159, 10, 0.18);
+  --err: #c0392b;
+  --err-tint: rgba(255, 59, 48, 0.16);
+  --field: #ffffff;
+  --field-border: rgba(0, 0, 0, 0.18);
+  --keycap: #ffffff;
+  --keycap-border: rgba(0, 0, 0, 0.16);
+  --switch-off: rgba(0, 0, 0, 0.16);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+
+  --radius-control: 6px;
+  --radius-button: 7px;
+  --radius-card: 10px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 22px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1e1e1e;
+    --surface: #2c2c2e;
+    --surface-2: #323234;
+    --toolbar: #282828;
+    --text: rgba(255, 255, 255, 0.92);
+    --text-2: rgba(255, 255, 255, 0.55);
+    --sep: rgba(255, 255, 255, 0.1);
+    --accent: #0a84ff;
+    --accent-text: #6cb4ff;
+    --accent-tint: rgba(10, 132, 255, 0.24);
+    --ok: #30d158;
+    --ok-tint: rgba(48, 209, 88, 0.2);
+    --wait: #ffb340;
+    --wait-tint: rgba(255, 159, 10, 0.22);
+    --err: #ff6961;
+    --err-tint: rgba(255, 69, 58, 0.2);
+    --field: #1c1c1e;
+    --field-border: rgba(255, 255, 255, 0.16);
+    --keycap: #3a3a3c;
+    --keycap-border: rgba(255, 255, 255, 0.16);
+    --switch-off: rgba(255, 255, 255, 0.18);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 0, 0, 0.5);
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
 }
+
+button {
+  font: inherit;
+}
+
+/* --- app shell --- */
 
 .shell {
-  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
-.shell h1 {
-  font-size: 1.1rem;
-  margin: 0 0 0.5rem;
+.toolbar {
+  flex: 0 0 52px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  /* room for the inset traffic lights on the left */
+  padding: 0 var(--space-4) 0 92px;
+  background: var(--toolbar);
+  border-bottom: 1px solid var(--sep);
+  -webkit-app-region: drag;
 }
 
-.shell p {
-  font-size: 0.85rem;
-  opacity: 0.7;
+.navtab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-button);
+  background: transparent;
+  color: var(--text-2);
+  font-weight: 500;
+  -webkit-app-region: no-drag;
+  cursor: default;
+}
+
+.navtab svg {
+  width: 16px;
+  height: 16px;
+}
+
+.navtab[aria-current="page"] {
+  background: var(--accent-tint);
+  color: var(--accent-text);
+}
+
+.page {
+  flex: 1;
+  overflow: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* --- building blocks --- */
+
+.card {
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow);
+}
+
+.card-label {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-top: 1px solid var(--sep);
+  min-height: 44px;
+}
+
+.row:first-child {
+  border-top: 0;
+}
+
+.row-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  color: var(--text-2);
+}
+
+.row-label {
+  flex: 1;
+}
+
+.row-label small {
+  display: block;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.group > h2 {
+  margin: 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.group > .group-desc {
+  margin: 0 2px 2px;
+  font-size: 12px;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+
+.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+}
+
+/* --- controls --- */
+
+.btn {
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--field-border);
+  background: var(--field);
+  color: var(--text);
+  font-weight: 500;
+  font-size: 12px;
+  cursor: default;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.05);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+}
+
+.btn--primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+}
+
+.btn--ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--accent-text);
+}
+
+.linkbtn {
+  border: 0;
+  background: transparent;
+  color: var(--accent-text);
+  font-weight: 500;
+  cursor: default;
+}
+
+.field {
+  flex: 1;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--field-border);
+  background: var(--field);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+.select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 8px 0 11px;
+  border-radius: var(--radius-button);
+  border: 1px solid var(--field-border);
+  background: var(--field);
+  color: var(--text);
+  font-size: 12px;
+  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.05);
+}
+
+.select svg {
+  width: 12px;
+  height: 12px;
+  color: var(--text-2);
+}
+
+.switch {
+  width: 38px;
+  height: 22px;
+  flex: 0 0 38px;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  background: var(--switch-off);
+  position: relative;
+  cursor: default;
+}
+
+.switch[aria-checked="true"] {
+  background: var(--accent);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.15s ease;
+}
+
+.switch[aria-checked="true"]::after {
+  left: 18px;
+}
+
+.keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keycap {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--keycap);
+  border: 1px solid var(--keycap-border);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-control);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* --- status --- */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px 3px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pill svg {
+  width: 13px;
+  height: 13px;
+}
+
+.pill--ok {
+  background: var(--ok-tint);
+  color: var(--ok);
+}
+
+.pill--wait {
+  background: var(--wait-tint);
+  color: var(--wait);
+}
+
+.pill--err {
+  background: var(--err-tint);
+  color: var(--err);
+}
+
+.pill--muted {
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+/* --- home --- */
+
+.hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 4px 2px;
+}
+
+.hero h1 {
   margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
+.hero p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+}
+
+.beacon {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+}
+
+.beacon::before,
+.beacon::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+}
+
+.beacon::before {
+  inset: 0;
+  background: var(--ok);
+}
+
+.beacon::after {
+  inset: -6px;
+  border: 2px solid var(--ok);
+  opacity: 0.35;
+}
+
+.beacon[data-state="recording"]::before {
+  background: var(--accent);
+}
+
+.beacon[data-state="recording"]::after {
+  border-color: var(--accent);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 26px 14px 30px;
+  color: var(--text-2);
+  text-align: center;
+  font-size: 12px;
+}
+
+.empty svg {
+  width: 24px;
+  height: 24px;
+  opacity: 0.7;
+}
+
+.hint {
+  margin: 4px 2px 0;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.tag {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--sep);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+
+.error-text {
+  color: var(--err);
+  font-size: 12px;
+  margin: 6px 2px 0;
+}
+
+/* Kept for HotkeySettings.tsx, which still uses the pre-shell classes -
+   its restyle to the card system waits on the shortcut work landing
+   (#215). Everything else on the Settings page uses the tokens above. */
 .setting {
   margin-top: 1rem;
 }
 
 .setting h2 {
-  font-size: 0.9rem;
+  font-size: 13px;
+  font-weight: 600;
   margin: 0 0 0.4rem;
 }
 
 .setting-current {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 600;
-  margin: 0 0 0.5rem;
-  opacity: 1;
+  margin: 0 0 0.4rem;
 }
 
 .setting-guidance {
-  margin-bottom: 0.5rem !important;
+  margin: 0 0 0.5rem;
+  font-size: 12px;
+  color: var(--text-2);
 }
 
 .setting-error {
-  color: #d64545;
-  font-size: 0.8rem;
+  color: var(--err);
+  font-size: 12px;
   margin-top: 0.5rem;
-  opacity: 1;
-}
-
-.break-safe-list {
-  list-style: none;
-  margin: 0 0 0.5rem;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.break-safe-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-}
-
-.break-safe-empty {
-  opacity: 0.7;
-}
-
-.break-safe-add {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.break-safe-add input {
-  flex: 1;
 }
