@@ -37,7 +37,9 @@ jobs:
       - name: Set the package version from the tag
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]] && VERSION="${VERSION}.0"
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            VERSION="${VERSION}.0"
+          fi
           npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - name: Typecheck and build the renderer
