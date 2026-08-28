@@ -52,14 +52,19 @@ function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
     : { tone: "wait", label: "Starting…" };
 }
 
+type Activity = "idle" | "recording" | "transcribing";
+
 export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   const [settings, setSettings] = useState<StoredSettings | null>(null);
   const [health, setHealth] = useState<AppHealth | null>(null);
   const [expanded, setExpanded] = useState(loadExpanded);
+  const [activity, setActivity] = useState<Activity>("idle");
 
   useEffect(() => {
     window.openstream.settings.get().then(setSettings);
   }, []);
+
+  useEffect(() => window.openstream.onDictationState((state) => setActivity(state as Activity)), []);
 
   useEffect(() => {
     let active = true;
@@ -120,11 +125,30 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   return (
     <main className="page">
       <div className="hero">
-        <Mark tile state={permissionsNeedAttention ? "attention" : "idle"} />
+        <Mark
+          tile
+          state={
+            permissionsNeedAttention ? "attention" : activity === "recording" ? "recording" : "idle"
+          }
+        />
         <div>
-          <h1>{permissionsNeedAttention ? "OpenStream needs a moment" : "OpenStream is listening"}</h1>
+          <h1>
+            {activity === "recording"
+              ? "Listening…"
+              : activity === "transcribing"
+                ? "Transcribing…"
+                : permissionsNeedAttention
+                  ? "OpenStream needs a moment"
+                  : "OpenStream is listening"}
+          </h1>
           <p>
-            {settings ? (
+            {activity === "recording" ? (
+              <>
+                Release the key to transcribe. Press <kbd className="keycap">esc</kbd> to cancel.
+              </>
+            ) : activity === "transcribing" ? (
+              "Placing your words at the cursor."
+            ) : settings ? (
               <>
                 Hold <KeyCaps hotkey={settings.hotkey} /> anywhere and speak — your words land at the cursor. Press{" "}
                 <kbd className="keycap">esc</kbd> to cancel a recording.

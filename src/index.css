@@ -512,6 +512,25 @@ button {
   color: var(--err);
 }
 
+.mark--recording {
+  animation: mark-pulse 1.7s ease-out infinite;
+}
+
+@keyframes mark-pulse {
+  from {
+    box-shadow: 0 0 0 0 var(--accent-tint);
+  }
+  to {
+    box-shadow: 0 0 0 11px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark--recording {
+    animation: none;
+  }
+}
+
 .empty {
   display: flex;
   flex-direction: column;

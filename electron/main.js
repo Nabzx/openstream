@@ -328,6 +328,7 @@ async function handleCompletedRecording(wavBuffer, timing) {
 
 function showVoiceEditWorking() {
   setTrayState("transcribing");
+  notifyWindowState("editing");
   if (!overlayWin || overlayWin.isDestroyed()) return;
   positionOverlayAtBottom();
   overlayWin.webContents.send("dictation-state", "editing");
@@ -498,7 +499,22 @@ function positionOverlayAtBottom() {
   overlayWin.setPosition(x, y);
 }
 
+// The desktop window's Home page reflects live dictation activity. It only
+// needs the coarse state - recording / transcribing / idle - not the
+// overlay's fuller vocabulary ("editing", "held").
+function notifyWindowState(rawState) {
+  if (!win || win.isDestroyed()) return;
+  const state =
+    rawState === "recording"
+      ? "recording"
+      : rawState === "transcribing" || rawState === "editing"
+        ? "transcribing"
+        : "idle";
+  win.webContents.send("dictation-state", state);
+}
+
 function setUserVisibleState(state, details) {
+  notifyWindowState(state);
   if (state === "held") {
     setTrayState("idle");
     heldResultController.hold(details.text);
