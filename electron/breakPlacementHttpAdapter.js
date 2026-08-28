@@ -22,7 +22,16 @@ const SYSTEM_PROMPT = [
 ].join("\n");
 
 function createBreakPlacementHttpAdapter(options) {
-  const { chatCompletionsUrl, fetchImpl = fetch, requestTimeoutMs = 300 } = options;
+  const {
+    chatCompletionsUrl,
+    fetchImpl = fetch,
+    requestTimeoutMs = 300,
+    // #186: AbortSignal.timeout()'s internal timer is unref()'d by design,
+    // which trips node --test's "is there work left?" heuristic on Node 22 -
+    // the test gets cancelled before a real millisecond-scale timer fires.
+    // Injectable so a test can drive the abort itself, no real clock.
+    timeoutSignal = (ms) => AbortSignal.timeout(ms),
+  } = options;
   if (typeof chatCompletionsUrl !== "function") {
     throw new Error("Break-placement HTTP adapter requires a chatCompletionsUrl function");
   }
@@ -32,7 +41,7 @@ function createBreakPlacementHttpAdapter(options) {
     const response = await fetchImpl(chatCompletionsUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(requestTimeoutMs),
+      signal: timeoutSignal(requestTimeoutMs),
       body: JSON.stringify({
         messages: [
           { role: "system", content: SYSTEM_PROMPT },

@@ -55,18 +55,29 @@ test("fails clearly when the rewrite model server rejects break placement", asyn
 });
 
 test("bounds a break-placement request by the dictation latency headroom", async () => {
+  // #186: drive the timeout ourselves instead of leaning on a real
+  // AbortSignal.timeout() millisecond timer, which node --test on Node 22
+  // cancels the test out from under before it fires.
+  const controller = new AbortController();
+  let requestedTimeoutMs = null;
   const adapter = createBreakPlacementHttpAdapter({
     chatCompletionsUrl: () => "http://127.0.0.1:8179/v1/chat/completions",
     requestTimeoutMs: 5,
-    fetchImpl: async (_url, options) => new Promise((_resolve, reject) => {
-      options.signal.addEventListener("abort", () => reject(options.signal.reason));
-    }),
+    timeoutSignal: (ms) => {
+      requestedTimeoutMs = ms;
+      return controller.signal;
+    },
+    fetchImpl: (_url, options) =>
+      new Promise((_resolve, reject) => {
+        options.signal.addEventListener("abort", () => reject(options.signal.reason));
+      }),
   });
 
-  await assert.rejects(
-    () => adapter.placeParagraphBreaks(["One.", "Two.", "Three."]),
-    { name: "TimeoutError" }
-  );
+  const pending = adapter.placeParagraphBreaks(["One.", "Two.", "Three."]);
+  controller.abort(new DOMException("The operation timed out.", "TimeoutError"));
+
+  await assert.rejects(pending, { name: "TimeoutError" });
+  assert.equal(requestedTimeoutMs, 5, "the configured timeout is passed through to the signal factory");
 });
 
 test("rejects a malformed break-placement response", async () => {
