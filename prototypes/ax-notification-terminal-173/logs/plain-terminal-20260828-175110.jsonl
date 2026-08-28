@@ -1,0 +1,23 @@
+{"chain":[{"name":".probe","pid":22785},{"name":"bash","pid":22765},{"name":"bash","pid":21823},{"name":"herdr","pid":45911}],"elapsedMs":1,"event":"processAncestry"}
+{"appName":"Terminal","elapsedMs":1012,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":2010,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Terminal","elapsedMs":3012,"event":"directPoll","matchesNotificationCache":false}
+{"appName":"Google Chrome","bundleId":"com.google.Chrome","elapsedMs":3390,"event":"notificationReceived"}
+{"appName":"Google Chrome","elapsedMs":4011,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","elapsedMs":5012,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Code","bundleId":"com.microsoft.VSCode","elapsedMs":5424,"event":"notificationReceived"}
+{"appName":"Code","elapsedMs":6012,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Code","elapsedMs":7012,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Code","elapsedMs":8012,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Google Chrome","bundleId":"com.google.Chrome","elapsedMs":8030,"event":"notificationReceived"}
+{"appName":"Terminal","bundleId":"com.apple.Terminal","elapsedMs":8745,"event":"notificationReceived"}
+{"appName":"Terminal","elapsedMs":9010,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Finder","bundleId":"com.apple.finder","elapsedMs":9780,"event":"notificationReceived"}
+{"appName":"Finder","elapsedMs":10010,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Finder","elapsedMs":11010,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Notes","bundleId":"com.apple.Notes","elapsedMs":11097,"event":"notificationReceived"}
+{"appName":"Notes","elapsedMs":12011,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Finder","bundleId":"com.apple.finder","elapsedMs":12697,"event":"notificationReceived"}
+{"appName":"Finder","elapsedMs":13013,"event":"directPoll","matchesNotificationCache":true}
+{"appName":"Terminal","bundleId":"com.apple.Terminal","elapsedMs":13278,"event":"notificationReceived"}
+{"appName":"Terminal","elapsedMs":14012,"event":"directPoll","matchesNotificationCache":true}
