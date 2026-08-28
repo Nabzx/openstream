@@ -602,7 +602,9 @@ function probeHttp(url, timeoutMs = 800) {
 // #135) - whether the window shows, notifications - is out of scope here.
 ipcMain.handle("app:get-login-item", () => app.getLoginItemSettings().openAtLogin);
 ipcMain.handle("app:set-login-item", (event, enabled) => {
-  app.setLoginItemSettings({ openAtLogin: Boolean(enabled) });
+  // openAsHidden: a login launch should start silently in the tray, not
+  // throw the window up - it's a background dictation tool (#135).
+  app.setLoginItemSettings({ openAtLogin: Boolean(enabled), openAsHidden: Boolean(enabled) });
   return app.getLoginItemSettings().openAtLogin;
 });
 
@@ -706,6 +708,10 @@ app.whenReady().then(() => {
   // stay silent in the tray - it's a background tool, not something that
   // should throw a window up every login. See issue #209.
   const isFirstLaunch = !fs.existsSync(settingsPath);
+  // #135: a launch triggered by the login item never opens the Home
+  // window, even on a first run - the user asked for it to start quietly.
+  // A missing permission still surfaces (below) because that's actionable.
+  const launchedAtLogin = process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin;
   // Regular Dock app (issue #209) - no app.dock.hide().
   settingsStore = createSettingsStore({ filePath: settingsPath });
   createApplicationMenu();
@@ -729,9 +735,18 @@ app.whenReady().then(() => {
   createTray();
   createCaptureWindow();
   createOverlayWindow();
-  whisperServer.start();
-  rewriteModelServer.start();
   accessibilityHelper.start();
+
+  // #135: the two model servers stay resident for the app's life (#29), so
+  // they start here rather than per-dictation. At login, hold them back a
+  // few seconds so the ~15-20s Metal warm-up isn't competing with
+  // everything else macOS is starting.
+  const startModelServers = () => {
+    whisperServer.start();
+    rewriteModelServer.start();
+  };
+  if (launchedAtLogin) setTimeout(startModelServers, 3000);
+  else startModelServers();
 
   // #47: if a hard grant is missing, the app silently does nothing on every
   // push-to-talk - so open the window on the Permissions view and say so,
@@ -742,11 +757,11 @@ app.whenReady().then(() => {
     .then((verdict) => {
       updateTrayForPermissions(verdict);
       if (!verdict.ok) openWindowTo("permissions");
-      else if (isFirstLaunch) createWindow();
+      else if (isFirstLaunch && !launchedAtLogin) createWindow();
     })
     .catch((error) => {
       console.error("[permissions] startup check failed:", error);
-      if (isFirstLaunch) createWindow();
+      if (isFirstLaunch && !launchedAtLogin) createWindow();
     });
 });
 
