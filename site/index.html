@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenStream</title>
+<meta name="description" content="Local-first voice dictation for Apple Silicon Macs. Hold a key, speak, release. Nothing leaves the machine, and a spoken line break never submits your terminal command.">
+<meta property="og:title" content="OpenStream">
+<meta property="og:description" content="Local-first voice dictation for Apple Silicon Macs. Deny-by-default on line breaks.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* ---- tokens: light is the base ---------------------------------- */
+:root {
+  --paper: #f4f6f2;
+  --surface: #ffffff;
+  --surface-2: #eef1ec;
+  --fg: #16201b;
+  --muted: #586460;
+  --line: #dde2db;
+  --accent: #2f9d75;
+  --accent-ink: #1c6e50;
+  --warn: #b1742b;
+  --danger: #c1524a;
+  --shadow: 0 1px 2px rgba(22, 32, 27, .06), 0 8px 30px rgba(22, 32, 27, .07);
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1512;
+    --surface: #151d19;
+    --surface-2: #1b241f;
+    --fg: #e6ebe6;
+    --muted: #9aa8a1;
+    --line: #26302b;
+    --accent: #54c79b;
+    --accent-ink: #8fe0c1;
+    --warn: #d69a55;
+    --danger: #e07a72;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 40px rgba(0, 0, 0, .35);
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1512;
+  --surface: #151d19;
+  --surface-2: #1b241f;
+  --fg: #e6ebe6;
+  --muted: #9aa8a1;
+  --line: #26302b;
+  --accent: #54c79b;
+  --accent-ink: #8fe0c1;
+  --warn: #d69a55;
+  --danger: #e07a72;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 12px 40px rgba(0, 0, 0, .35);
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--paper);
+  color: var(--fg);
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---- type ------------------------------------------------------- */
+h1, h2, h3 {
+  font-family: "Bricolage Grotesque", "IBM Plex Sans", sans-serif;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(2.4rem, 6vw, 3.5rem); }
+h2 { font-size: clamp(1.5rem, 3.4vw, 1.9rem); letter-spacing: -0.015em; }
+h3 { font-size: 1.06rem; font-weight: 600; letter-spacing: -0.01em; }
+
+.eyebrow {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+a { color: var(--accent-ink); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration: none; }
+
+code, kbd, .mono {
+  font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+kbd {
+  display: inline-block;
+  padding: 2px 7px;
+  font-size: 0.85em;
+  line-height: 1.4;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 6px;
+  color: var(--fg);
+  white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* ---- layout rhythm -------------------------------------------- */
+main > section {
+  padding: 56px 0;
+  border-top: 1px solid var(--line);
+}
+main > section:first-child { border-top: 0; }
+.section-body { display: flex; flex-direction: column; gap: 20px; margin-top: 22px; }
+
+/* ---- hero ----------------------------------------------------- */
+.hero { padding: 88px 0 60px; }
+.hero p.lede {
+  font-size: 1.2rem;
+  color: var(--muted);
+  max-width: 34ch;
+  margin-top: 20px;
+}
+.hero .cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 32px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 9px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: transform .12s ease, background .12s ease;
+}
+.btn-primary { background: var(--accent); color: #06110c; }
+.btn-primary:hover { transform: translateY(-1px); }
+.btn-ghost { border-color: var(--line); color: var(--fg); background: var(--surface); }
+.btn-ghost:hover { border-color: var(--accent); }
+
+.keyline {
+  margin-top: 18px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+.keyline kbd { margin: 0 2px; }
+
+/* ---- demo windows ------------------------------------------- */
+.demo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 44px;
+}
+@media (max-width: 620px) { .demo { grid-template-columns: 1fr; } }
+
+.win {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.win-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+.win-title {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-left: 4px;
+}
+.win-body {
+  padding: 16px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.86rem;
+  line-height: 1.7;
+  flex: 1;
+  min-height: 128px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.win-body .prompt { color: var(--accent-ink); }
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  background: var(--accent);
+  vertical-align: -0.18em;
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+.verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  min-height: 40px;
+}
+.verdict .tag {
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+}
+.verdict.ok .tag { background: color-mix(in srgb, var(--accent) 22%, transparent); color: var(--accent-ink); }
+.verdict.drop .tag { background: color-mix(in srgb, var(--warn) 22%, transparent); color: var(--warn); }
+.verdict span:last-child { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .caret { animation: none; }
+}
+
+/* ---- break table ------------------------------------------- */
+.table-scroll { overflow-x: auto; }
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.92rem;
+}
+th, td {
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+}
+thead th {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 500;
+}
+tbody td:first-child { font-family: "IBM Plex Mono", monospace; font-size: 0.86rem; }
+.pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.74rem;
+  font-weight: 500;
+}
+.pill.keep { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--accent-ink); }
+.pill.drop { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
+
+/* ---- facts grid ------------------------------------------- */
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 22px; }
+@media (max-width: 620px) { .facts { grid-template-columns: 1fr; } }
+.fact {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+}
+.fact .n {
+  font-family: "Bricolage Grotesque", sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.fact .l { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+/* ---- steps ------------------------------------------------ */
+ol.steps { list-style: none; counter-reset: s; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+ol.steps li { counter-increment: s; display: grid; grid-template-columns: 26px 1fr; gap: 12px; }
+ol.steps li::before {
+  content: counter(s);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--accent-ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+ol.steps li b { font-weight: 600; }
+ol.steps li span { color: var(--muted); }
+
+/* ---- feature list --------------------------------------- */
+.feature { display: flex; flex-direction: column; gap: 4px; }
+.feature p { color: var(--muted); }
+
+/* ---- code block ---------------------------------------- */
+pre {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  overflow-x: auto;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.86rem;
+  line-height: 1.7;
+}
+pre .c { color: var(--muted); }
+
+.note {
+  border-left: 3px solid var(--warn);
+  padding: 4px 0 4px 16px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.note b { color: var(--fg); font-weight: 600; }
+
+ul.plain { padding-left: 1.1rem; color: var(--muted); }
+ul.plain li { margin: 4px 0; }
+ul.plain li::marker { color: var(--accent); }
+
+/* ---- footer ------------------------------------------- */
+footer {
+  border-top: 1px solid var(--line);
+  padding: 40px 0 64px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+footer .links { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 14px; }
+footer a { color: var(--fg); }
+
+/* GIF placeholder */
+.gif-slot {
+  margin-top: 44px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  aspect-ratio: 16 / 9;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  padding: 24px;
+}
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">Local-first voice dictation &middot; Apple Silicon</p>
+    <h1>Speak into any app. Your words land where the cursor is.</h1>
+    <p class="lede">Hold a key, talk, release. Nothing leaves the Mac &mdash; and a spoken line break never submits your terminal command by accident.</p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Zazai840/openstream">Get it on GitHub</a>
+      <a class="btn btn-ghost" href="#install">How to run it</a>
+    </div>
+    <p class="keyline">Push-to-talk on a key you choose &mdash; <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>D</kbd> out of the box. <kbd>esc</kbd> aborts a recording.</p>
+
+    <div class="demo" id="demo" aria-hidden="true">
+      <div class="win">
+        <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="win-title">Notes &mdash; break-safe</span></div>
+        <div class="win-body" data-role="prose"></div>
+        <div class="verdict ok" data-role="prose-verdict"><span class="tag">break kept</span><span>a newline here is harmless</span></div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="win-title">Terminal</span></div>
+        <div class="win-body" data-role="term"></div>
+        <div class="verdict drop" data-role="term-verdict"><span class="tag">break dropped</span><span>a newline would run the command</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="safety">
+    <p class="eyebrow">The idea</p>
+    <h2>Deny-by-default on line breaks</h2>
+    <div class="section-body">
+      <p>Most dictation tools treat every target the same. That is fine in a document and dangerous in a shell, where one newline submits a half-typed command or fires off an unfinished message.</p>
+      <p>OpenStream checks the frontmost app and the focused field before it turns a spoken &ldquo;new paragraph&rdquo; into a real break. A break only survives in apps you have put on the allow-list. Everywhere else it is dropped and the words run on.</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Where you are</th><th>&ldquo;new paragraph&rdquo; becomes</th></tr></thead>
+          <tbody>
+            <tr><td>iA Writer, Notes, a text editor</td><td><span class="pill keep">a real line break</span></td></tr>
+            <tr><td>Terminal, a shell prompt</td><td><span class="pill drop">dropped &mdash; text runs on</span></td></tr>
+            <tr><td>Slack, a chat box</td><td><span class="pill drop">dropped &mdash; text runs on</span></td></tr>
+            <tr><td>A single-line field</td><td><span class="pill drop">dropped &mdash; text runs on</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">If a result <b>needs</b> its line breaks &mdash; a bullet list, say &mdash; and the target cannot take them, OpenStream holds the text for you to paste rather than flattening it into nonsense.</p>
+    </div>
+  </section>
+
+  <section id="local">
+    <p class="eyebrow">Privacy by construction</p>
+    <h2>Nothing leaves the machine</h2>
+    <div class="section-body">
+      <p>Transcription and text handling run in local model servers that stay resident while the app is open. There is no account, no cloud endpoint, and no network call on the path from your voice to the cursor.</p>
+      <div class="facts">
+        <div class="fact"><div class="n">0</div><div class="l">network calls in the dictation path</div></div>
+        <div class="fact"><div class="n">&lt;1&nbsp;ms</div><div class="l">deterministic cleanup budget</div></div>
+        <div class="fact"><div class="n">2</div><div class="l">local model servers, kept warm</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="do">
+    <p class="eyebrow">What it does today</p>
+    <h2>Dictate, edit, cancel &mdash; all by voice</h2>
+    <div class="section-body">
+      <div class="feature">
+        <h3>Push-to-talk dictation</h3>
+        <p>Hold the key, speak, release. The transcript is cleaned of fillers and spoken punctuation by deterministic rules &mdash; no model rewriting your words &mdash; then placed at the cursor.</p>
+      </div>
+      <div class="feature">
+        <h3>Voice edits on a selection</h3>
+        <p>Select text, hold the key, and say a command from a fixed set: &ldquo;snake case&rdquo;, &ldquo;camel case&rdquo;, &ldquo;wrap in backticks&rdquo;, &ldquo;bullet list&rdquo;. The transform is a plain string operation, so it is instant and never surprises you.</p>
+      </div>
+      <div class="feature">
+        <h3>Escape to abort</h3>
+        <p>Press <kbd>esc</kbd> while the key is held and the audio is discarded. Nothing is transcribed, nothing is inserted.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="how">
+    <p class="eyebrow">Under the hood</p>
+    <h2>How one dictation works</h2>
+    <div class="section-body">
+      <ol class="steps">
+        <li><b>Capture.</b> <span>A native helper watches for the push-to-talk key; audio records only while it is held.</span></li>
+        <li><b>Transcribe.</b> <span>A resident <code>whisper.cpp</code> server turns the audio into text on the Mac's GPU.</span></li>
+        <li><b>Clean.</b> <span>Deterministic rules strip fillers, resolve spoken punctuation, and segment long run-on speech.</span></li>
+        <li><b>Check the target.</b> <span>A separate Accessibility helper reads the frontmost app and focused field to decide what a line break means here.</span></li>
+        <li><b>Deliver.</b> <span>Text is written into the field, with clipboard paste and synthesised keystrokes as fallbacks.</span></li>
+      </ol>
+      <p>The two helpers run as separate processes on purpose: a blocked Accessibility call can never take down the global hotkey.</p>
+    </div>
+  </section>
+
+  <section id="install">
+    <p class="eyebrow">Run it</p>
+    <h2>Build from source</h2>
+    <div class="section-body">
+      <p>OpenStream is pre-alpha and installs from source. You need an Apple Silicon Mac on macOS 13+, Node 20+, and Xcode Command Line Tools.</p>
+<pre><span class="c"># clone and install &mdash; this also compiles whisper.cpp and</span>
+<span class="c"># downloads the transcription + rewrite models (~1.3 GiB)</span>
+git clone https://github.com/Zazai840/openstream.git
+cd openstream
+npm install
+npm start</pre>
+      <p>OpenStream needs Microphone, Input Monitoring, and Accessibility permission. It opens on a Permissions screen with a link straight to each System Settings pane; <code>npm run doctor</code> runs the same check from the terminal.</p>
+      <p class="note"><b>Because it runs from source, every rebuild resets the macOS permission grants.</b> When you re-grant, remove the old OpenStream entry in System Settings first, then add the new build.</p>
+    </div>
+  </section>
+
+  <section id="demo-gif">
+    <p class="eyebrow">See it move</p>
+    <h2>The tool, working</h2>
+    <div class="section-body">
+      <p>A short screen recording of a real dictation &mdash; hotkey held, words appearing at the cursor, a line break dropped in the terminal.</p>
+      <div class="gif-slot">[ demo.gif goes here &mdash; drop the recording at <span class="mono">site/demo.gif</span> and swap this box for an &lt;img&gt; ]</div>
+    </div>
+  </section>
+
+  <section id="status">
+    <p class="eyebrow">Where it stands</p>
+    <h2>Honest status</h2>
+    <div class="section-body">
+      <ul class="plain">
+        <li>The core path &mdash; hotkey, transcription, cleanup, break-safety, delivery &mdash; runs from source today.</li>
+        <li>Installation, permission identity across rebuilds, and delivery recovery are still rough.</li>
+        <li>Codebase-aware vocabulary and semantic edits (&ldquo;make this shorter&rdquo;) are on the roadmap, not in the app.</li>
+        <li>Not signed or notarised yet &mdash; the supported install is <code>git clone</code>.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div class="links">
+    <a href="https://github.com/Zazai840/openstream">GitHub</a>
+    <a href="https://github.com/Zazai840/openstream/blob/main/CONTEXT.md">Vocabulary</a>
+    <a href="https://github.com/Zazai840/openstream/blob/main/ROADMAP.md">Roadmap</a>
+    <a href="https://github.com/Zazai840/openstream/tree/main/docs/progress">Engineering notes</a>
+  </div>
+  <p>MIT licensed. Pre-alpha &mdash; not ready for everyday use or outside contributors yet.</p>
+</footer>
+
+<script>
+(function () {
+  var demo = document.getElementById("demo");
+  if (!demo) return;
+
+  var prose = demo.querySelector('[data-role="prose"]');
+  var term = demo.querySelector('[data-role="term"]');
+  var proseV = demo.querySelector('[data-role="prose-verdict"]');
+  var termV = demo.querySelector('[data-role="term-verdict"]');
+
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // Each step: [element, text-to-append, newline-after]
+  var proseFinal = "Met the team this morning.\nShipping the parser fix today.";
+  var termFinal = "$ git commit -m \"fix the parser\" and then push to main";
+
+  function caret(el) {
+    var c = document.createElement("span");
+    c.className = "caret";
+    el.appendChild(c);
+  }
+  function clearCaret(el) {
+    var c = el.querySelector(".caret");
+    if (c) c.remove();
+  }
+
+  function typeInto(el, text, done) {
+    if (reduce) {
+      el.textContent = text;
+      caret(el);
+      done && done();
+      return;
+    }
+    var i = 0;
+    clearCaret(el);
+    (function tick() {
+      el.textContent = text.slice(0, i);
+      caret(el);
+      i++;
+      if (i <= text.length) {
+        setTimeout(tick, text[i - 2] === " " ? 34 : 22);
+      } else {
+        done && done();
+      }
+    })();
+  }
+
+  function run() {
+    prose.textContent = "";
+    term.textContent = "";
+    proseV.style.opacity = ".3";
+    termV.style.opacity = ".3";
+
+    typeInto(prose, proseFinal, function () {
+      proseV.style.opacity = "1";
+    });
+    setTimeout(function () {
+      typeInto(term, termFinal, function () {
+        termV.style.opacity = "1";
+      });
+    }, reduce ? 0 : 900);
+  }
+
+  var started = false;
+  function maybeStart() {
+    if (started) return;
+    var r = demo.getBoundingClientRect();
+    if (r.top < window.innerHeight && r.bottom > 0) {
+      started = true;
+      run();
+      if (!reduce) setInterval(run, 11000);
+    }
+  }
+  maybeStart();
+  window.addEventListener("scroll", maybeStart, { passive: true });
+})();
+</script>
+</body>
+</html>
