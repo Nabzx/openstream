@@ -47,7 +47,7 @@ export default function HotkeySettings() {
   }, [recording]);
 
   const buttonLabel = recording
-    ? "Press Option…"
+    ? "Press Option or F1–F19…"
     : shortcutChangePending
       ? "Checking shortcut…"
       : "Change shortcut";
@@ -57,8 +57,8 @@ export default function HotkeySettings() {
       <h2>Push-to-talk shortcut</h2>
       <p className="setting-current">{shortcut ? formatHotkey(shortcut) : "Loading…"}</p>
       <p className="setting-guidance">
-        OpenStream cannot reliably detect whether macOS or another app also uses Option. If it does not work, choose
-        another shortcut.
+        F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. OpenStream cannot
+        reliably detect whether macOS or another app also uses a key.
       </p>
       <button
         onClick={() => {

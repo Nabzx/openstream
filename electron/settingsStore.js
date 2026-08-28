@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
-const { STANDALONE_OPTION_KEY_CODE, isStandaloneOptionShortcut } = require("./hotkeyDefinitions");
+const { STANDALONE_OPTION_KEY_CODE, isSupportedSingleKeyShortcut } = require("./hotkeyDefinitions");
 
 // Matches hotkeyHelper.js's standalone Option default and breakSafety.js's
 // own default allow-list. Existing settings are read as-is below so this
@@ -31,7 +31,7 @@ function validateShortcut(shortcut) {
   if (!Array.isArray(shortcut.modifiers)) {
     throw new Error("shortcut.modifiers must be an array");
   }
-  if (shortcut.modifiers.length === 0 && !isStandaloneOptionShortcut(shortcut)) {
+  if (shortcut.modifiers.length === 0 && !isSupportedSingleKeyShortcut(shortcut)) {
     throw new Error("Unsupported key");
   }
 
@@ -44,7 +44,7 @@ function validateShortcut(shortcut) {
 
 function validateNewShortcut(shortcut) {
   validateShortcut(shortcut);
-  if (!isStandaloneOptionShortcut(shortcut)) throw new Error("Unsupported key");
+  if (!isSupportedSingleKeyShortcut(shortcut)) throw new Error("Unsupported key");
 }
 
 function validateVocabularyProjectPath(projectPath) {

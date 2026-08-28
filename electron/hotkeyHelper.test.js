@@ -153,6 +153,22 @@ test("starts with a custom hotkey when one is passed to the factory", () => {
   helper.stop();
 });
 
+test("passes a function-key identity to the native helper without modifiers", () => {
+  const spawned = [];
+  const helper = createHotkeyHelper({
+    hotkey: { keyCode: 80, modifiers: [] },
+    spawnProcess: (bin, args) => {
+      spawned.push(args);
+      return fakeProcess();
+    },
+  });
+
+  helper.start();
+
+  assert.deepEqual(spawned[0], ["--keycode", "80", "--modifiers", ""]);
+  helper.stop();
+});
+
 test("setHotkey restarts a running helper with the new args", () => {
   const spawned = [];
   const children = [];

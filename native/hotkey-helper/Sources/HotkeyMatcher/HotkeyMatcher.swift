@@ -39,6 +39,10 @@ public enum HotkeySignal: Equatable {
 public struct HotkeyMatcher {
     public static let standaloneOptionKeyCode: Int64 = 58
     private static let rightOptionKeyCode: Int64 = 61
+    private static let functionKeyCodes: Set<Int64> = [
+        122, 120, 99, 118, 96, 97, 98, 100, 101, 109,
+        103, 111, 105, 107, 113, 106, 64, 79, 80
+    ]
 
     private let targetKeyCode: Int64
     private let targetFlags: HotkeyFlags
@@ -54,7 +58,7 @@ public struct HotkeyMatcher {
         if isStandaloneOption {
             return handleStandaloneOption(event)
         }
-        guard !targetFlags.isEmpty else { return nil }
+        guard !targetFlags.isEmpty || isFunctionKey else { return nil }
 
         switch event.type {
         case .keyDown:
@@ -73,6 +77,10 @@ public struct HotkeyMatcher {
 
     private var isStandaloneOption: Bool {
         targetKeyCode == Self.standaloneOptionKeyCode && targetFlags.isEmpty
+    }
+
+    private var isFunctionKey: Bool {
+        targetFlags.isEmpty && Self.functionKeyCodes.contains(targetKeyCode)
     }
 
     private static func isOptionKeyCode(_ keyCode: Int64) -> Bool {

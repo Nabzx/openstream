@@ -79,6 +79,40 @@ final class HotkeyMatcherTests: XCTestCase {
         XCTAssertEqual(matcher.handle(HotkeyEvent(keyCode: 61, type: .flagsChanged)), .up)
     }
 
+    func testFunctionKeysEmitOnePairAndIgnoreRepeatsAndModifiers() {
+        let functionKeyCodes: [Int64] = [
+            122, 120, 99, 118, 96, 97, 98, 100, 101, 109,
+            103, 111, 105, 107, 113, 106, 64, 79, 80
+        ]
+
+        for keyCode in functionKeyCodes {
+            var matcher = HotkeyMatcher(keyCode: keyCode, flags: [])
+
+            XCTAssertNil(
+                matcher.handle(HotkeyEvent(keyCode: 2, type: .keyDown)),
+                "unrelated input should be ignored for F\(keyCode)"
+            )
+            XCTAssertNil(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .keyDown, flags: [.command])),
+                "additional modifiers should be ignored for F\(keyCode)"
+            )
+            XCTAssertEqual(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .keyDown)),
+                .down,
+                "F\(keyCode) should start one pair"
+            )
+            XCTAssertNil(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .keyDown, isAutorepeat: true)),
+                "autorepeat should not emit another down for F\(keyCode)"
+            )
+            XCTAssertEqual(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .keyUp)),
+                .up,
+                "F\(keyCode) should end its pair"
+            )
+        }
+    }
+
     func testStandaloneOptionRejectsAnAdditionalModifierOnPress() {
         var matcher = HotkeyMatcher(keyCode: HotkeyMatcher.standaloneOptionKeyCode, flags: [])
 

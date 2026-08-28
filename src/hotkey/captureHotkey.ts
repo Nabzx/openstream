@@ -1,4 +1,4 @@
-import { macKeyCodeForDomCode, STANDALONE_OPTION_KEY_CODE } from "./keycodeMap";
+import { FUNCTION_KEY_CODES, macKeyCodeForDomCode, STANDALONE_OPTION_KEY_CODE } from "./keycodeMap";
 
 export type CapturedKeyEvent = {
   code: string;
@@ -20,14 +20,20 @@ const STANDALONE_OPTION_CODES = new Set(["AltLeft", "AltRight"]);
 // without a browser. A component wires this to a real keydown listener.
 export function captureHotkeyFromEvent(event: CapturedKeyEvent): CaptureResult {
   const keyCode = macKeyCodeForDomCode(event.code);
+  const hasNoModifiers = !event.ctrlKey && !event.shiftKey && !event.metaKey && !event.altKey;
+  const isFunctionKey = FUNCTION_KEY_CODES[event.code] !== undefined;
   const isStandaloneOption =
     keyCode === STANDALONE_OPTION_KEY_CODE &&
     STANDALONE_OPTION_CODES.has(event.code) &&
+    event.altKey &&
     !event.ctrlKey &&
     !event.shiftKey &&
     !event.metaKey;
+  const isSupportedFunctionKey = isFunctionKey && hasNoModifiers;
 
-  if (!isStandaloneOption) return { ok: false, reason: UNSUPPORTED_KEY };
+  if (keyCode === undefined || (!isSupportedFunctionKey && !isStandaloneOption)) {
+    return { ok: false, reason: UNSUPPORTED_KEY };
+  }
 
-  return { ok: true, hotkey: { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] } };
+  return { ok: true, hotkey: { keyCode, modifiers: [] } };
 }

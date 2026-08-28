@@ -5,6 +5,7 @@ const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
 
 const OLD_HOTKEY = { keyCode: 2, modifiers: ["ctrl", "alt"] };
 const NEW_HOTKEY = { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] };
+const FUNCTION_HOTKEY = { keyCode: 122, modifiers: [] };
 
 function fakeSettingsStore({ failFor = null } = {}) {
   let hotkey = { ...OLD_HOTKEY, modifiers: [...OLD_HOTKEY.modifiers] };
@@ -110,6 +111,22 @@ test("keeps the active helper and saved shortcut while a candidate is starting",
   assert.equal(factory.helpers[0].stopped, true);
   assert.equal(factory.helpers[1].activated, true);
   assert.deepEqual(settings.get().hotkey, NEW_HOTKEY);
+});
+
+test("accepts a function-key candidate and activates its helper", async () => {
+  const settings = fakeSettingsStore();
+  const factory = fakeHelperFactory();
+  const controller = createController(settings, factory);
+
+  const replacement = controller.replace(FUNCTION_HOTKEY);
+  assert.deepEqual(factory.helpers[1].options.hotkey, FUNCTION_HOTKEY);
+  factory.helpers[1].becomeReady();
+
+  const result = await replacement;
+
+  assert.deepEqual(result, { ok: true, settings: { hotkey: FUNCTION_HOTKEY } });
+  assert.equal(factory.helpers[1].activated, true);
+  assert.deepEqual(controller.getActiveShortcut(), FUNCTION_HOTKEY);
 });
 
 test("reports an unavailable candidate without stopping the active helper", async () => {

@@ -67,6 +67,20 @@ test("persists standalone Option", () => {
   assert.deepEqual(store.get().hotkey, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
 });
 
+test("accepts and persists every supported function-key identity", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  const functionKeyCodes = [122, 120, 99, 118, 96, 97, 98, 100, 101, 109, 103, 111, 105, 107, 113, 106, 64, 79, 80];
+
+  for (const keyCode of functionKeyCodes) {
+    store.setShortcut({ keyCode, modifiers: [] });
+    assert.deepEqual(store.get().hotkey, { keyCode, modifiers: [] });
+  }
+
+  const reopened = createSettingsStore({ filePath });
+  assert.deepEqual(reopened.get().hotkey, { keyCode: 80, modifiers: [] });
+});
+
 test("rejects an unsupported standalone key", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   assert.throws(() => store.setHotkey({ keyCode: 2, modifiers: [] }), /Unsupported key/);

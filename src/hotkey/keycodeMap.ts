@@ -1,8 +1,30 @@
 // macOS virtual keycodes (Carbon Events.h kVK_*) keyed by the DOM
 // KeyboardEvent.code values a renderer can actually observe. Legacy
-// combinations still use the ANSI character mappings; new captures only use
-// the logical standalone Option identity below.
+// combinations still use the ANSI character mappings; new captures use
+// standalone Option or one of the supported function keys.
 export const STANDALONE_OPTION_KEY_CODE = 58;
+
+export const FUNCTION_KEY_CODES: Record<string, number> = {
+  F1: 122,
+  F2: 120,
+  F3: 99,
+  F4: 118,
+  F5: 96,
+  F6: 97,
+  F7: 98,
+  F8: 100,
+  F9: 101,
+  F10: 109,
+  F11: 103,
+  F12: 111,
+  F13: 105,
+  F14: 107,
+  F15: 113,
+  F16: 106,
+  F17: 64,
+  F18: 79,
+  F19: 80,
+};
 
 export const DOM_CODE_TO_MAC_KEYCODE: Record<string, number> = {
   KeyA: 0, KeyB: 11, KeyC: 8, KeyD: 2, KeyE: 14, KeyF: 3, KeyG: 5, KeyH: 4,
@@ -16,6 +38,7 @@ export const DOM_CODE_TO_MAC_KEYCODE: Record<string, number> = {
   Space: 49, Tab: 48,
   // Both physical Option keys share one logical identity for new captures.
   AltLeft: STANDALONE_OPTION_KEY_CODE, AltRight: STANDALONE_OPTION_KEY_CODE,
+  ...FUNCTION_KEY_CODES,
 };
 
 const SYMBOL_LABELS: Record<string, string> = {
