@@ -47,9 +47,16 @@ const MODIFIER_SYMBOLS: Record<string, string> = {
   ctrl: "⌃", alt: "⌥", shift: "⇧", cmd: "⌘",
 };
 
-export function formatHotkey(hotkey: { keyCode: number; modifiers: string[] }): string {
+// Each key of the combo as its own symbol, modifiers in macOS order:
+// ["⌃", "⌥", "D"]. formatHotkey joins these; the Home page renders them
+// as separate keycaps.
+export function hotkeyParts(hotkey: { keyCode: number; modifiers: string[] }): string[] {
   const symbols = MODIFIER_ORDER.filter((modifier) => hotkey.modifiers.includes(modifier)).map(
     (modifier) => MODIFIER_SYMBOLS[modifier]
   );
-  return [...symbols, labelForMacKeyCode(hotkey.keyCode)].join("");
+  return [...symbols, labelForMacKeyCode(hotkey.keyCode)];
+}
+
+export function formatHotkey(hotkey: { keyCode: number; modifiers: string[] }): string {
+  return hotkeyParts(hotkey).join("");
 }
