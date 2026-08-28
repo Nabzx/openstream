@@ -27,14 +27,15 @@ Grounded in the decisions from [#209](https://github.com/Nabzx/openstream/issues
 | `SettingsDark.dc.html` | Settings, dark |
 | `FirstLaunch.dc.html` | the window state a fresh install opens to (permissions not yet granted) |
 | `DesignSystem.dc.html` | type scale, colour (light + dark), spacing, radii, components, chrome/vibrancy notes |
-| `NavAlternate.dc.html` | Direction B — 176px sidebar instead of toolbar tabs |
+| `NavAlternate.dc.html` | Rejected — sidebar instead of toolbar tabs (kept for the record) |
 
-## The open decision
+## Navigation model — decided
 
-The mock leads with **Direction A** (toolbar tabs after the traffic lights).
-**Direction B** (`NavAlternate.dc.html`) is a sidebar. The map's remaining
-"not yet specified" item is which one — a sidebar for two pages may be heavy.
-Pick A or B before #212.
+**Direction A (toolbar tabs)** was chosen on 2026-08-28: lighter, right-sized for
+two pages, and it keeps the full window width for content. `NavAlternate.dc.html`
+is the rejected sidebar sketch, kept on page 2 so the rationale stays visible.
+The map ([#206](https://github.com/Nabzx/openstream/issues/206)) is complete;
+[#212](https://github.com/Nabzx/openstream/issues/212) is the build.
 
 ## Design language
 
