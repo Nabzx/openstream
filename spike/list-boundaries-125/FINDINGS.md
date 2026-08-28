@@ -8,6 +8,16 @@ corpus samples reached the model (`list-standup` and `inline-shop` collapse to
 run - its GGUF is not in the repo fetch script. Data in `out/results.json`,
 review page in `out/review.html`.
 
+> **Re-run 2026-08-28 (for #126), clean Metal decode.** Same harness, same
+> machine, this time with token generation actually on the GPU. It reproduces
+> the negative content result exactly - breaks match **1/10**, list
+> false-positive **5/10** - and finally gives a real latency number:
+> **median 1.07s, min 0.93s, max 1.42s** for the two-line call (completion
+> ~24 tokens). That is against #67's break-only **0.12s** and the **0.39s** of
+> warm headroom in the 1s budget - roughly **3x over budget**. So the combined
+> call now fails on latency as well as content. Cold start 7.6s, RSS 1.43 GB.
+> The rest of this document (the 2026-08-27 run) stands; only §1 is superseded.
+
 ## Answer
 
 **Do not ship list detection in the combined call as it stands.** The two-line
