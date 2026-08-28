@@ -4,7 +4,6 @@ import type { Page } from "../nav";
 import KeyCaps from "../components/KeyCaps";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import {
-  ClockIcon,
   InputMonitorIcon,
   KeyboardIcon,
   MicIcon,
@@ -91,17 +90,23 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
 
   const permissionsNeedAttention =
     health && (health.permissions.accessibility !== "granted" || health.permissions.inputMonitoring === "missing");
+  const ready =
+    health &&
+    !permissionsNeedAttention &&
+    health.transcriptionModel === "ready" &&
+    health.rewriteModel === "ready";
 
   return (
     <main className="page">
       <div className="hero">
-        <span className="beacon" data-state="idle" />
+        <span className="beacon" data-state={permissionsNeedAttention ? "attention" : "idle"} />
         <div>
-          <h1>OpenStream is listening</h1>
+          <h1>{permissionsNeedAttention ? "OpenStream needs a moment" : "OpenStream is listening"}</h1>
           <p>
             {settings ? (
               <>
-                Hold <KeyCaps hotkey={settings.hotkey} /> anywhere and speak — your words land at the cursor.
+                Hold <KeyCaps hotkey={settings.hotkey} /> anywhere and speak — your words land at the cursor. Press{" "}
+                <kbd className="keycap">esc</kbd> to cancel a recording.
               </>
             ) : (
               "Loading…"
@@ -122,20 +127,27 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
       </div>
 
       <div className="card">
-        <div className="card-label">Status</div>
-        {permissionsNeedAttention && (
+        <div className="card-label">System</div>
+        {permissionsNeedAttention ? (
           <div className="row">
             <span className="row-label" style={{ color: "var(--err)" }}>
-              A required permission is missing — push-to-talk won't work.
+              A required permission is missing — push-to-talk won{"’"}t work.
             </span>
             <button type="button" className="btn btn--primary" onClick={() => navigate("permissions")}>
               Fix
             </button>
           </div>
+        ) : (
+          <div className="row">
+            <span className="row-label">{ready ? "Everything is ready" : "Getting ready…"}</span>
+            <StatusPill tone={ready ? "ok" : "wait"} label={ready ? "All set" : "Starting"} />
+          </div>
         )}
         {rows.length === 0 ? (
           <div className="row">
-            <span className="row-label">Checking…</span>
+            <span className="row-label" style={{ color: "var(--text-2)" }}>
+              Checking…
+            </span>
           </div>
         ) : (
           rows.map((row) => (
@@ -151,13 +163,10 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
         )}
       </div>
 
-      <div className="card">
-        <div className="card-label">Recent</div>
-        <div className="empty">
-          <ClockIcon />
-          <span>Your recent dictations will appear here.</span>
-        </div>
-      </div>
+      <p className="hint">
+        OpenStream lives in the menu bar. Closing this window leaves it running; quit from the menu bar icon or the app
+        menu.
+      </p>
     </main>
   );
 }
