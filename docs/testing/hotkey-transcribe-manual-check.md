@@ -17,7 +17,7 @@ The automated coverage behind the wizard also includes:
 - `whisper-server` serving `/inference` and producing a transcription from a synthetic WAV.
 - A valid mono 16kHz 16-bit WAV from the capture path.
 - `hotkey-helper` and `accessibility-helper` handling missing permissions without hanging or crashing.
-- Twelve `InjectionEngine` tests covering the fallback chain, settle guard, and blind-paste gate. Run them with `swift test --package-path native/accessibility-helper` on a full Xcode installation.
+- Fourteen `InjectionEngine` tests covering the fallback chain, settle guard, blind-paste gate, and the #227 focus-resolution retry. Run them with `swift test --package-path native/accessibility-helper` on a full Xcode installation.
 - Four overlay-positioning tests covering centering, the bottom margin, offset work areas, and a custom margin. Run them with `node --test electron/overlayPosition.test.js`. The actual Dock clearance still needs a human check.
 - `node --check` passing for all new and changed JavaScript files.
 
