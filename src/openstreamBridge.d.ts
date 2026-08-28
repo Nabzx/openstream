@@ -33,6 +33,8 @@ declare global {
     openstream: {
       app: {
         getHealth(): Promise<AppHealth>;
+        getLoginItem(): Promise<boolean>;
+        setLoginItem(enabled: boolean): Promise<boolean>;
       };
       settings: {
         get(): Promise<StoredSettings>;

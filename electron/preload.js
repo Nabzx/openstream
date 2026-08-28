@@ -15,6 +15,8 @@ function onNavigate(callback) {
 contextBridge.exposeInMainWorld("openstream", {
   app: {
     getHealth: () => ipcRenderer.invoke("app:get-health"),
+    getLoginItem: () => ipcRenderer.invoke("app:get-login-item"),
+    setLoginItem: (enabled) => ipcRenderer.invoke("app:set-login-item", enabled),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),

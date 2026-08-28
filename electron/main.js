@@ -469,6 +469,14 @@ function probeHttp(url, timeoutMs = 800) {
   });
 }
 
+// Just the launch-at-login toggle. The broader startup behaviour (issue
+// #135) - whether the window shows, notifications - is out of scope here.
+ipcMain.handle("app:get-login-item", () => app.getLoginItemSettings().openAtLogin);
+ipcMain.handle("app:set-login-item", (event, enabled) => {
+  app.setLoginItemSettings({ openAtLogin: Boolean(enabled) });
+  return app.getLoginItemSettings().openAtLogin;
+});
+
 ipcMain.handle("app:get-health", async () => {
   const [transcription, rewrite] = await Promise.all([
     probeHttp(whisperServer.healthUrl()),
