@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { captureHotkeyFromEvent, type StoredHotkey } from "./hotkey/captureHotkey";
 import { formatHotkey } from "./hotkey/keycodeMap";
 
+export const SHORTCUT_CAPTURE_PROMPT = "Press Option or F1–F19…";
+export const SHORTCUT_GUIDANCE =
+  "F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. OpenStream cannot reliably detect whether macOS or another app also uses a key.";
+
 export default function HotkeySettings() {
   const [shortcut, setShortcut] = useState<StoredHotkey | null>(null);
   const [recording, setRecording] = useState(false);
@@ -47,7 +51,7 @@ export default function HotkeySettings() {
   }, [recording]);
 
   const buttonLabel = recording
-    ? "Press Option or F1–F19…"
+    ? SHORTCUT_CAPTURE_PROMPT
     : shortcutChangePending
       ? "Checking shortcut…"
       : "Change shortcut";
@@ -56,10 +60,7 @@ export default function HotkeySettings() {
     <section className="setting">
       <h2>Push-to-talk shortcut</h2>
       <p className="setting-current">{shortcut ? formatHotkey(shortcut) : "Loading…"}</p>
-      <p className="setting-guidance">
-        F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. OpenStream cannot
-        reliably detect whether macOS or another app also uses a key.
-      </p>
+      <p className="setting-guidance">{SHORTCUT_GUIDANCE}</p>
       <button
         onClick={() => {
           setError(null);

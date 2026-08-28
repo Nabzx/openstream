@@ -89,6 +89,14 @@ final class HotkeyMatcherTests: XCTestCase {
             var matcher = HotkeyMatcher(keyCode: keyCode, flags: [])
 
             XCTAssertNil(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .flagsChanged)),
+                "function-key flagsChanged events should be ignored for F\(keyCode)"
+            )
+            XCTAssertNil(
+                matcher.handle(HotkeyEvent(keyCode: keyCode, type: .keyUp)),
+                "a release before a press should be ignored for F\(keyCode)"
+            )
+            XCTAssertNil(
                 matcher.handle(HotkeyEvent(keyCode: 2, type: .keyDown)),
                 "unrelated input should be ignored for F\(keyCode)"
             )
