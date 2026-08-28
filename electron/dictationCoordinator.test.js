@@ -140,6 +140,27 @@ test("a one-line field removes line breaks and its final full stop in a break-sa
   assert.deepEqual(delivered, ["First line second line"]);
 });
 
+test("a not-AX-ready context (#181) delivers as one paragraph and records the fallback", async () => {
+  let breakCalls = 0;
+  const harness = createIntake({
+    transcript: "first topic. still first topic. second topic. more on the second topic.",
+    getFocusContext: async () => ({ bundleId: "com.apple.TextEdit", isOneLineField: true, axReady: false }),
+    placeParagraphBreaks: async () => {
+      breakCalls++;
+      return "3";
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  // isOneLineField:true (the safe default when axReady is false) means no
+  // break-placement call and no line breaks - just deliver the text.
+  assert.equal(breakCalls, 0);
+  assert.equal(result.status, "delivered");
+  assert.ok(!result.text.includes("\n"));
+  assert.ok(harness.diagnostics.some(([name, value]) => name === "context.axReady" && value === false));
+});
+
 test("eligible long dictation sends cleaned sentences once and applies returned break indices", async () => {
   const harness = createIntake({
     transcript: "first topic. still first topic. second topic. more on the second topic.",
@@ -220,6 +241,7 @@ test("repairs malformed break indices without retrying and records format and re
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["context.axReady", true],
     ["paragraphBreaks.formatValid", false],
     ["paragraphBreaks.repairUsed", true],
     ["listBoundaries.formatValid", true],
