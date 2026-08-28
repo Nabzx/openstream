@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { captureHotkeyFromEvent, type StoredHotkey } from "./hotkey/captureHotkey";
-import { formatHotkey } from "./hotkey/keycodeMap";
+import KeyCaps from "./components/KeyCaps";
 
 export default function HotkeySettings() {
   const [hotkey, setHotkey] = useState<StoredHotkey | null>(null);
@@ -31,19 +31,23 @@ export default function HotkeySettings() {
   }, [recording]);
 
   return (
-    <section className="setting">
-      <h2>Push-to-talk hotkey</h2>
-      <p className="setting-current">{hotkey ? formatHotkey(hotkey) : "Loading…"}</p>
-      <button
-        onClick={() => {
-          setError(null);
-          setRecording(true);
-        }}
-        disabled={recording}
-      >
-        {recording ? "Press a key combo…" : "Change hotkey"}
-      </button>
-      {error && <p className="setting-error">{error}</p>}
-    </section>
+    <div className="card">
+      <div className="row">
+        <span className="row-label">Hold to dictate</span>
+        {hotkey && !recording && <KeyCaps hotkey={hotkey} />}
+        <button
+          type="button"
+          className="btn"
+          onClick={() => {
+            setError(null);
+            setRecording(true);
+          }}
+          disabled={recording}
+        >
+          {recording ? "Press a key combo…" : "Change…"}
+        </button>
+      </div>
+      {error && <p className="error-text">{error}</p>}
+    </div>
   );
 }
