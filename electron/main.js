@@ -11,6 +11,7 @@ const { setBreakSafeApplications } = require("./breakSafety");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
+const { createVoiceEditIntake } = require("./voiceEditCoordinator");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
@@ -63,6 +64,23 @@ const dictationIntake = createDictationIntake({
   vocabulary,
   onDiagnostic: recordDictationDiagnostic,
 });
+
+// #17: voice editing shares the push-to-talk hotkey. If text is selected
+// when the key goes down, the recording is an editing command rather than
+// dictation, and goes here instead of dictationIntake.
+const voiceEditIntake = createVoiceEditIntake({
+  transcription,
+  delivery: accessibilityHelper,
+  onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
+});
+
+// A selection longer than this is almost never a deliberate edit target,
+// and reading a huge AX value at key-down is exactly the case the
+// injection engine's own max-chars guard exists to avoid.
+const VOICE_EDIT_MAX_CHARS = 5000;
+
+// Set at key-down (the async selection read), consumed at recording-complete.
+let pendingSelectionRead = null;
 
 function createWindow() {
   if (win) {
@@ -173,6 +191,63 @@ const heldResultController = createHeldResultController({
   hideHeldResult,
   writeClipboard: (text) => clipboard.writeText(text),
 });
+
+// #17: fired on push-to-talk key-down. Kicks off the async selection read
+// so recording-complete can tell a voice edit from a dictation - a slow or
+// failed read just means "ordinary dictation" and must never delay
+// recording, so this is deliberately not awaited here.
+function beginPushToTalk() {
+  pendingSelectionRead = accessibilityHelper.getSelection().catch(() => null);
+  pushToTalkCoordinator.keyDown();
+}
+
+async function handleCompletedRecording(wavBuffer, timing) {
+  const selectionRead = pendingSelectionRead;
+  pendingSelectionRead = null;
+  const selection = selectionRead ? await selectionRead : null;
+
+  if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
+    return applyVoiceEdit(wavBuffer, selection, timing);
+  }
+  return transcribeAndPrint(wavBuffer, timing);
+}
+
+async function applyVoiceEdit(wavBuffer, selection, timing) {
+  let result;
+  try {
+    result = await voiceEditIntake.complete(wavBuffer, {
+      selection: selection.text,
+      focusContext: selection.focusContext,
+    });
+  } catch (error) {
+    console.error("[voice-edit] unexpected intake failure:", error);
+    setUserVisibleState("idle");
+    return;
+  }
+
+  if (result.status === "delivered") {
+    console.log(`[voice-edit] ${result.commandId}: ${JSON.stringify(result.text)}`);
+    if (Number.isFinite(timing?.releasedAtMs)) {
+      console.log(`[voice-edit] release-to-insertion: ${(performance.now() - timing.releasedAtMs).toFixed(1)}ms`);
+    }
+    setUserVisibleState("idle");
+  } else if (result.status === "held") {
+    console.log(`[voice-edit] held: ${result.reason}`);
+    setUserVisibleState("held", { text: result.text, reason: result.reason });
+  } else if (result.status === "unrecognised") {
+    console.log(`[voice-edit] command not recognised: ${JSON.stringify(result.command)}`);
+    setUserVisibleState("idle");
+  } else if (result.status === "declined") {
+    console.log(`[voice-edit] ${result.commandId} declined: ${result.reason}`);
+    setUserVisibleState("idle");
+  } else if (result.status === "failed") {
+    console.error(`[voice-edit] ${result.stage} failed: ${result.reason}`);
+    setUserVisibleState("idle");
+  } else {
+    console.log("[voice-edit] no command captured, skipping");
+    setUserVisibleState("idle");
+  }
+}
 
 async function transcribeAndPrint(wavBuffer, timing) {
   let result;
@@ -318,7 +393,7 @@ ipcMain.on("capture-ready", (event) => {
 
 ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
   if (!isCaptureSender(event)) return;
-  void transcribeAndPrint(Buffer.from(arrayBuffer), timing);
+  void handleCompletedRecording(Buffer.from(arrayBuffer), timing);
 });
 
 ipcMain.on("sound-level", (event, level) => {
@@ -409,7 +484,7 @@ app.whenReady().then(() => {
   pushToTalkShortcut = createPushToTalkShortcutController({
     settingsStore,
     createHelper: hotkeyHelper.createHotkeyHelper,
-    onKeyDown: pushToTalkCoordinator.keyDown,
+    onKeyDown: beginPushToTalk,
     onKeyUp: pushToTalkCoordinator.keyUp,
     onDiagnostic: (message) => console.error(`[hotkey-helper] ${message}`),
   });
