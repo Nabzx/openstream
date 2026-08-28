@@ -58,6 +58,8 @@ declare global {
         get(): Promise<StoredSettings>;
         setShortcut(shortcut: StoredHotkey): Promise<SetShortcutResult>;
         setBreakSafeApps(apps: string[]): Promise<StoredSettings>;
+        resetBreakSafeApps(): Promise<StoredSettings>;
+        pickBreakSafeApp(): Promise<{ bundleId: string; name: string } | null>;
         setVocabularyProjectPath(
           projectPath: string | null
         ): Promise<{ settings: StoredSettings; status: VocabularyStatus }>;

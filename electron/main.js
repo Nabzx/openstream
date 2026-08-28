@@ -22,7 +22,8 @@ const rewriteModelServer = require("./rewriteModelServer");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
-const { setBreakSafeApplications } = require("./breakSafety");
+const { setBreakSafeApplications, DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
+const { createBundleIdReader } = require("./appBundleId");
 const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
@@ -668,6 +669,28 @@ ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
   const settings = settingsStore.setBreakSafeApps(apps);
   setBreakSafeApplications(settings.breakSafeApps);
   return settings;
+});
+
+ipcMain.handle("settings:reset-break-safe-apps", () => {
+  const settings = settingsStore.setBreakSafeApps([...DEFAULT_BREAK_SAFE_BUNDLE_IDS]);
+  setBreakSafeApplications(settings.breakSafeApps);
+  return settings;
+});
+
+// #19: pick an app from disk instead of hunting down its bundle id by
+// hand. Returns { bundleId, name } for the renderer to add, or null if the
+// dialog was cancelled; a bundle with no readable identifier rejects.
+const bundleIdReader = createBundleIdReader();
+ipcMain.handle("settings:pick-break-safe-app", async () => {
+  if (!win) return null;
+  const result = await dialog.showOpenDialog(win, {
+    defaultPath: "/Applications",
+    properties: ["openFile"],
+    filters: [{ name: "Applications", extensions: ["app"] }],
+    message: "Choose an app where a spoken line break should insert a real newline",
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return bundleIdReader.readBundleId(result.filePaths[0]);
 });
 
 // #16: setting the path persists it and triggers a rescan in the same
