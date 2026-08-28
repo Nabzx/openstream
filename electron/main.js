@@ -103,6 +103,68 @@ function createWindow() {
   });
 }
 
+// Opens the window and asks the renderer to show a particular page. The
+// navigate message is sent once the page is loaded, and the shell also
+// re-reads it on mount, so this works whether the window already existed
+// or was just created.
+function openWindowTo(page) {
+  const wasOpen = Boolean(win);
+  createWindow();
+  if (!win) return;
+  if (wasOpen && win.webContents) {
+    win.webContents.send("navigate", page);
+  } else {
+    win.webContents.once("did-finish-load", () => win.webContents.send("navigate", page));
+  }
+}
+
+// A regular Dock app has a menu bar (issue #209). It's also what makes
+// Cmd-C / Cmd-V / Cmd-A work in the window's text fields - those only
+// fire on macOS when the application menu carries the matching roles.
+// App + Edit + Window, no File menu (there are no documents).
+function createApplicationMenu() {
+  app.setAboutPanelOptions({
+    applicationName: "OpenStream",
+    applicationVersion: app.getVersion(),
+    copyright: "Local-first voice dictation. MIT (app) / Apache-2.0 (models). No telemetry.",
+  });
+
+  const template = [
+    {
+      label: "OpenStream",
+      submenu: [
+        { role: "about" },
+        { type: "separator" },
+        { label: "Settings…", accelerator: "CmdOrCtrl+,", click: () => openWindowTo("settings") },
+        { type: "separator" },
+        { role: "hide" },
+        { role: "hideOthers" },
+        { role: "unhide" },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "zoom" }, { role: "close" }],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 function createCaptureWindow() {
   captureWin = new BrowserWindow({
     show: false,
@@ -420,6 +482,7 @@ app.whenReady().then(() => {
   // should throw a window up every login. See issue #209.
   const isFirstLaunch = !fs.existsSync(settingsPath);
   settingsStore = createSettingsStore({ filePath: settingsPath });
+  createApplicationMenu();
   hotkeyHelper.setHotkey(settingsStore.get().hotkey);
   setBreakSafeApplications(settingsStore.get().breakSafeApps);
   // Fire-and-forget: a scan failing here (bad/moved path since last run)

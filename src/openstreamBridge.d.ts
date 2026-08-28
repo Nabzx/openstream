@@ -33,6 +33,7 @@ declare global {
         getStatus(): Promise<VocabularyStatus>;
         chooseFolder(): Promise<string | null>;
       };
+      onNavigate(callback: (page: string) => void): () => void;
     };
   }
 }

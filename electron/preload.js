@@ -1,5 +1,13 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
+// Main asks the shell to switch pages (the App menu's "Settings…" item,
+// the tray). Returns an unsubscribe so the renderer can clean up.
+function onNavigate(callback) {
+  const listener = (_event, page) => callback(page);
+  ipcRenderer.on("navigate", listener);
+  return () => ipcRenderer.removeListener("navigate", listener);
+}
+
 // The renderer's only route to the main process, per contextIsolation - see
 // the settings window's webPreferences in main.js. First surface: settings
 // (#19). This will grow to cover the hotkey helper, the accessibility
@@ -16,4 +24,5 @@ contextBridge.exposeInMainWorld("openstream", {
     getStatus: () => ipcRenderer.invoke("vocabulary:get-status"),
     chooseFolder: () => ipcRenderer.invoke("vocabulary:choose-folder"),
   },
+  onNavigate,
 });
