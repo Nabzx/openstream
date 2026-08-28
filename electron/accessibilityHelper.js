@@ -112,7 +112,13 @@ function createAccessibilityHelper({
       reply.bundleId.length === 0 ||
       typeof reply.isOneLineField !== "boolean"
     ) {
-      throw new Error(`accessibility-helper returned an invalid context reply${reply.reason ? `: ${reply.reason}` : ""}`);
+      // #227: carry the helper's own AXIsProcessTrusted() through when it
+      // sends one, so "no frontmost application (trusted=false)" points
+      // straight at a lost Accessibility grant rather than a mystery.
+      const trust = typeof reply.trusted === "boolean" ? ` (trusted=${reply.trusted})` : "";
+      throw new Error(
+        `accessibility-helper returned an invalid context reply${reply.reason ? `: ${reply.reason}` : ""}${trust}`,
+      );
     }
     // #181: axReady is false when the focused element never became AX-ready
     // in time and isOneLineField is the safe default, not the real role.
