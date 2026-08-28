@@ -15,6 +15,7 @@ const { createDictationIntake } = require("./dictationCoordinator");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
+const { sanitizeWindowBounds, WINDOW_STATE_DEFAULTS } = require("./windowState");
 
 // Without this, nothing stops a second `npm start` (or a launch someone
 // forgot was already running) from spawning a whole second app: its own
@@ -77,12 +78,18 @@ function createWindow() {
     return;
   }
 
+  const display = screen.getPrimaryDisplay();
+  const saved = settingsStore ? settingsStore.get().windowBounds : null;
+  const bounds = sanitizeWindowBounds(saved, display.workArea);
+
   win = new BrowserWindow({
-    width: 360,
-    height: 220,
+    ...bounds,
+    minWidth: WINDOW_STATE_DEFAULTS.minWidth,
+    minHeight: WINDOW_STATE_DEFAULTS.minHeight,
     show: false,
-    resizable: false,
-    fullscreenable: false,
+    // Traffic lights inset into a full-height content view - the shell
+    // paints its own toolbar strip behind them (issue #211).
+    titleBarStyle: "hiddenInset",
     title: "OpenStream",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
@@ -98,6 +105,26 @@ function createWindow() {
   }
 
   win.once("ready-to-show", () => win.show());
+
+  // Remember size and position, debounced so a drag doesn't hammer the
+  // settings file. Not saved while maximised/minimised - getBounds()
+  // would record the wrong rectangle.
+  const persistBounds = () => {
+    if (!win || win.isDestroyed() || win.isMinimized() || win.isMaximized()) return;
+    if (settingsStore) settingsStore.setWindowBounds(win.getBounds());
+  };
+  let boundsTimer = null;
+  const scheduleBoundsPersist = () => {
+    clearTimeout(boundsTimer);
+    boundsTimer = setTimeout(persistBounds, 400);
+  };
+  win.on("resize", scheduleBoundsPersist);
+  win.on("move", scheduleBoundsPersist);
+
+  win.on("close", () => {
+    clearTimeout(boundsTimer);
+    persistBounds();
+  });
   win.on("closed", () => {
     win = null;
   });
