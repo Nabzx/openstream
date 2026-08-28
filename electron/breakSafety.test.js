@@ -5,6 +5,7 @@ const {
   setBreakSafeApplications,
   getBreakSafeApplications,
   DEFAULT_BREAK_SAFE_BUNDLE_IDS,
+  DEFAULT_BREAK_SAFE_APP_NAMES,
 } = require("./breakSafety");
 
 test.afterEach(() => {
@@ -12,6 +13,12 @@ test.afterEach(() => {
   // leak into the next (or into dictationCoordinator.test.js, which relies
   // on the default list including com.apple.TextEdit).
   setBreakSafeApplications(DEFAULT_BREAK_SAFE_BUNDLE_IDS);
+});
+
+test("every default bundle id has a friendly name (#19)", () => {
+  for (const bundleId of DEFAULT_BREAK_SAFE_BUNDLE_IDS) {
+    assert.equal(typeof DEFAULT_BREAK_SAFE_APP_NAMES[bundleId], "string", `missing a name for ${bundleId}`);
+  }
 });
 
 test("defaults match the original hardcoded allow-list", () => {

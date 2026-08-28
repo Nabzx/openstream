@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld("openstream", {
     get: () => ipcRenderer.invoke("settings:get"),
     setShortcut: (shortcut) => ipcRenderer.invoke("settings:set-shortcut", shortcut),
     setBreakSafeApps: (apps) => ipcRenderer.invoke("settings:set-break-safe-apps", apps),
+    resetBreakSafeApps: () => ipcRenderer.invoke("settings:reset-break-safe-apps"),
+    pickBreakSafeApp: () => ipcRenderer.invoke("settings:pick-break-safe-app"),
     setVocabularyProjectPath: (projectPath) => ipcRenderer.invoke("settings:set-vocabulary-path", projectPath),
   },
   vocabulary: {

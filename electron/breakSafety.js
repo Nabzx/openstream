@@ -10,6 +10,16 @@ const DEFAULT_BREAK_SAFE_BUNDLE_IDS = [
   "com.microsoft.VSCode",
 ];
 
+// Friendly names for the built-in entries, so the settings list reads as
+// "Notes" rather than a bare bundle id. User-added apps carry the name the
+// picker resolved; a manually typed id just shows as itself.
+const DEFAULT_BREAK_SAFE_APP_NAMES = {
+  "com.apple.TextEdit": "TextEdit",
+  "com.apple.Notes": "Notes",
+  "md.obsidian": "Obsidian",
+  "com.microsoft.VSCode": "Visual Studio Code",
+};
+
 let breakSafeBundleIds = new Set(DEFAULT_BREAK_SAFE_BUNDLE_IDS);
 
 function isBreakSafeApplication(bundleId) {
@@ -29,4 +39,5 @@ module.exports = {
   setBreakSafeApplications,
   getBreakSafeApplications,
   DEFAULT_BREAK_SAFE_BUNDLE_IDS,
+  DEFAULT_BREAK_SAFE_APP_NAMES,
 };

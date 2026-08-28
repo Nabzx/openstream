@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import HotkeySettings from "../HotkeySettings";
 import BreakSafeAppsSettings from "../BreakSafeAppsSettings";
 import Toggle from "../components/Toggle";
-import { ChevronDownIcon } from "../components/Icons";
 
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
@@ -35,27 +34,6 @@ function StartupSection() {
   );
 }
 
-function MicrophoneSection() {
-  // Device enumeration and selection is issue #137 - the section exists
-  // so the layout is settled, but the control is inert for now.
-  return (
-    <div className="group">
-      <h2>
-        Microphone <span className="tag">Issue #137</span>
-      </h2>
-      <div className="card">
-        <div className="row">
-          <span className="row-label">Input device</span>
-          <span className="select" aria-disabled="true" style={{ opacity: 0.5 }}>
-            System Default
-            <ChevronDownIcon />
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function Settings() {
   return (
     <main className="page">
@@ -74,7 +52,6 @@ export default function Settings() {
       </div>
 
       <StartupSection />
-      <MicrophoneSection />
     </main>
   );
 }
