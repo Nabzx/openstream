@@ -67,5 +67,8 @@ jobs:
           name: ${{ github.ref_name }}
           body: ${{ steps.notes.outputs.body }}
           generate_release_notes: true
+          # A hyphen in the tag (v0.4.0-rc.1, v1.0.0-beta) marks a
+          # pre-release, so it never displaces the real "Latest" release.
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: release/*.dmg
           fail_on_unmatched_files: true
