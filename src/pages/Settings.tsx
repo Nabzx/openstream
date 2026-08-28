@@ -13,12 +13,13 @@ function StartupSection() {
 
   return (
     <div className="group">
-      <h2>
-        Startup <span className="tag">Issue #135</span>
-      </h2>
+      <h2>Startup</h2>
       <div className="card">
         <div className="row">
-          <span className="row-label">Launch OpenStream at login</span>
+          <span className="row-label">
+            Launch OpenStream at login
+            <small>Starts quietly in the menu bar — no window.</small>
+          </span>
           <Toggle
             label="Launch OpenStream at login"
             checked={openAtLogin ?? false}

@@ -93,6 +93,13 @@ On launch the app checks these grants: if Accessibility or Input Monitoring is m
 
 Source runs can be attributed to Terminal, Electron, or OpenStream in System Settings. Permission identity across rebuilds is still being worked out.
 
+## Startup
+
+- The menu bar icon appears immediately. The window opens only on the very first run, or when you pick **Open Window** from the tray / click the Dock icon.
+- Both model servers start resident at launch and stay up for the app's life — the `whisper-server` Metal warm-up (15–20 s) happens once, not per dictation.
+- **Launch at login** (Settings → Startup) opens OpenStream hidden — straight to the menu bar, no window. Model-server start is held back a few seconds so the warm-up doesn't fight everything else macOS is doing at login.
+- Closing the window backgrounds the app. Quit from the tray, the app menu, or `⌘Q`.
+
 ## Design
 
 - **Electron and React** provide the menu bar shell, hidden capture window, overlay, and renderer.
