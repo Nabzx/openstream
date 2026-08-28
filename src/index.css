@@ -192,6 +192,34 @@ button {
   border-top: 0;
 }
 
+/* A row that toggles a disclosure (Home's System card). */
+.row--disclosure {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--sep);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.row--disclosure:hover {
+  background: var(--sep);
+}
+
+.disclosure-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-3);
+  transition: transform 0.15s ease;
+}
+
+.row--disclosure[aria-expanded="true"] .disclosure-chevron {
+  transform: rotate(180deg);
+}
+
 .row-icon {
   width: 17px;
   height: 17px;

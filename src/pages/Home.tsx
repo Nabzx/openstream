@@ -5,6 +5,7 @@ import KeyCaps from "../components/KeyCaps";
 import Mark from "../components/Mark";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import {
+  ChevronDownIcon,
   InputMonitorIcon,
   KeyboardIcon,
   MicIcon,
@@ -13,6 +14,24 @@ import {
 } from "../components/Icons";
 
 const HEALTH_POLL_MS = 4000;
+const DETAILS_KEY = "openstream.home.systemExpanded";
+
+function loadExpanded(): boolean {
+  try {
+    return window.localStorage.getItem(DETAILS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveExpanded(value: boolean) {
+  try {
+    window.localStorage.setItem(DETAILS_KEY, value ? "1" : "0");
+  } catch {
+    // A locked-down renderer can throw on localStorage; the toggle still
+    // works for the session, it just won't be remembered.
+  }
+}
 
 function grantPill(state: GrantState): { tone: PillTone; label: string } {
   switch (state) {
@@ -36,6 +55,7 @@ function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
 export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   const [settings, setSettings] = useState<StoredSettings | null>(null);
   const [health, setHealth] = useState<AppHealth | null>(null);
+  const [expanded, setExpanded] = useState(loadExpanded);
 
   useEffect(() => {
     window.openstream.settings.get().then(setSettings);
@@ -138,19 +158,28 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
               Fix
             </button>
           </div>
+        ) : ready ? (
+          <button
+            type="button"
+            className="row row--disclosure"
+            aria-expanded={expanded}
+            onClick={() => {
+              const next = !expanded;
+              setExpanded(next);
+              saveExpanded(next);
+            }}
+          >
+            <span className="row-label">Everything is ready</span>
+            <StatusPill tone="ok" label="All set" />
+            <ChevronDownIcon className="disclosure-chevron" />
+          </button>
         ) : (
           <div className="row">
-            <span className="row-label">{ready ? "Everything is ready" : "Getting ready…"}</span>
-            <StatusPill tone={ready ? "ok" : "wait"} label={ready ? "All set" : "Starting"} />
+            <span className="row-label">{health ? "Getting ready…" : "Checking…"}</span>
+            {health && <StatusPill tone="wait" label="Starting" />}
           </div>
         )}
-        {rows.length === 0 ? (
-          <div className="row">
-            <span className="row-label" style={{ color: "var(--text-2)" }}>
-              Checking…
-            </span>
-          </div>
-        ) : (
+        {(expanded || !ready) &&
           rows.map((row) => (
             <div className="row" key={row.label}>
               {row.icon}
@@ -160,8 +189,7 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
               </span>
               <StatusPill tone={row.pill.tone} label={row.pill.label} />
             </div>
-          ))
-        )}
+          ))}
       </div>
 
       <p className="hint">
