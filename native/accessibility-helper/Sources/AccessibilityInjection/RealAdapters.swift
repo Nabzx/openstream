@@ -51,15 +51,28 @@ public final class RealAXTarget: AccessibilityTarget {
 }
 
 // Tracks when the frontmost app last changed, so delivery can be gated on it
-// rather than trusting a possibly-stale pid - see #62's settle guard, and
-// #113 for why NSWorkspace.shared.frontmostApplication can't be read
-// directly here: it's notification-driven internally and goes stale on a
-// thread that never pumps a run loop, which is exactly what the thread
-// handling IPC is, parked in readLine() and the AX calls this file makes.
-// Caching the value here, updated only from startObserving()'s thread,
-// keeps reads of it live instead of frozen at whatever was frontmost the
-// last time that thread got a turn.
+// rather than trusting a possibly-stale pid - see #62's settle guard.
+//
+// #113 established that a direct read of NSWorkspace.shared.frontmostApplication
+// from the IPC thread (parked in readLine()) returns a frozen value, so the
+// live value is cached here and updated from startObserving()'s own thread.
+//
+// #173: that update used to be driven by NSWorkspace.didActivateApplication
+// Notification. That notification is delivered on the MAIN thread's run loop,
+// which this process never pumps (the main thread runs the readLine() command
+// loop), so the observer never fired and the cache stayed frozen at init() -
+// context detection then failed on every dictation, most visibly when the app
+// was launched from an IDE-integrated terminal. Measured in
+// prototypes/ax-notification-terminal-173: the notification mechanism itself
+// works fine from every launch context; the bug was observing it on a run
+// loop this process doesn't pump. So the frontmost app is now polled directly
+// on startObserving()'s thread instead - a read that IS accurate from a
+// thread that pumps its own run loop, which that one does.
 public final class RealAppSwitchTracker: AppSwitchTracking {
+    // The settle guard works at 400ms+ granularity (Config.settleMs), so
+    // 250ms resolution on "when did the frontmost app last change" is ample.
+    private static let pollInterval: TimeInterval = 0.25
+
     private let lock = NSLock()
     private var switchedAt = Date()
     private var frontmost: NSRunningApplication?
@@ -68,24 +81,22 @@ public final class RealAppSwitchTracker: AppSwitchTracking {
         frontmost = NSWorkspace.shared.frontmostApplication
     }
 
-    // Must be called from the thread whose run loop will pump the
-    // notification - see the note above. That thread should then call
-    // RunLoop.current.run() to keep receiving them.
+    // Must be called on a thread that then calls RunLoop.current.run() - the
+    // poll timer is scheduled on that thread's run loop.
     public func startObserving() {
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil,
-            queue: nil
-        ) { [weak self] note in
-            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
-            self?.recordSwitch(to: app)
+        let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
+            self?.pollFrontmost()
         }
+        RunLoop.current.add(timer, forMode: .common)
     }
 
-    private func recordSwitch(to app: NSRunningApplication?) {
+    private func pollFrontmost() {
+        let current = NSWorkspace.shared.frontmostApplication
         lock.lock()
-        switchedAt = Date()
-        frontmost = app
+        if current?.processIdentifier != frontmost?.processIdentifier {
+            switchedAt = Date()
+            frontmost = current
+        }
         lock.unlock()
     }
 
