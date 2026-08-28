@@ -460,47 +460,28 @@ button {
   margin: 0 1px;
 }
 
-/* Concentric pulse - the home mark and the tray-state beacon. */
-.beacon {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
-  margin-top: 5px;
+/* The app mark: a listening ring around a caret. Tile form sits in the
+   Home hero; the colour follows app state. */
+.mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  margin-top: 2px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-tint);
+  color: var(--accent-text);
 }
 
-.beacon::before,
-.beacon::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
+.mark svg {
+  width: 19px;
+  height: 19px;
 }
 
-.beacon::before {
-  inset: 0;
-  background: var(--ok);
-}
-
-.beacon::after {
-  inset: -6px;
-  border: 2px solid var(--ok);
-  opacity: 0.32;
-}
-
-.beacon[data-state="recording"]::before {
-  background: var(--accent);
-}
-
-.beacon[data-state="recording"]::after {
-  border-color: var(--accent);
-}
-
-.beacon[data-state="attention"]::before {
-  background: var(--err);
-}
-
-.beacon[data-state="attention"]::after {
-  border-color: var(--err);
+.mark--attention {
+  background: var(--err-tint);
+  color: var(--err);
 }
 
 .empty {

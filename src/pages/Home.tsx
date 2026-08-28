@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { AppHealth, GrantState, ModelHealth, StoredSettings } from "../openstreamBridge";
 import type { Page } from "../nav";
 import KeyCaps from "../components/KeyCaps";
+import Mark from "../components/Mark";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import {
   InputMonitorIcon,
@@ -99,7 +100,7 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   return (
     <main className="page">
       <div className="hero">
-        <span className="beacon" data-state={permissionsNeedAttention ? "attention" : "idle"} />
+        <Mark tile state={permissionsNeedAttention ? "attention" : "idle"} />
         <div>
           <h1>{permissionsNeedAttention ? "OpenStream needs a moment" : "OpenStream is listening"}</h1>
           <p>
