@@ -13,6 +13,9 @@ function onNavigate(callback) {
 // (#19). This will grow to cover the hotkey helper, the accessibility
 // helper, and the transcription model server as those get their own UI.
 contextBridge.exposeInMainWorld("openstream", {
+  app: {
+    getHealth: () => ipcRenderer.invoke("app:get-health"),
+  },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
     setHotkey: (hotkey) => ipcRenderer.invoke("settings:set-hotkey", hotkey),

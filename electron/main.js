@@ -1,5 +1,17 @@
-const { app, Tray, Menu, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, screen } = require("electron");
+const {
+  app,
+  Tray,
+  Menu,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  nativeImage,
+  screen,
+  systemPreferences,
+} = require("electron");
 const fs = require("fs");
+const http = require("http");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
@@ -441,6 +453,39 @@ ipcMain.on("recording-error", (event, message) => {
 });
 
 ipcMain.handle("settings:get", () => settingsStore.get());
+
+// Is an HTTP server answering on this URL at all? Any response - even a
+// 404 - means the process is up and listening; a connection error or
+// timeout means it's still loading its shaders (cold start is 15-20s -
+// see docs/progress). Used only for the Home page's status section.
+function probeHttp(url, timeoutMs = 800) {
+  return new Promise((resolve) => {
+    const request = http.get(url, (response) => {
+      response.resume();
+      resolve(true);
+    });
+    request.setTimeout(timeoutMs, () => request.destroy());
+    request.on("error", () => resolve(false));
+  });
+}
+
+ipcMain.handle("app:get-health", async () => {
+  const [transcription, rewrite] = await Promise.all([
+    probeHttp(whisperServer.healthUrl()),
+    probeHttp(rewriteModelServer.healthUrl()),
+  ]);
+  return {
+    // isTrustedAccessibilityClient(false) reports without prompting.
+    accessibility: systemPreferences.isTrustedAccessibilityClient(false),
+    microphone: systemPreferences.getMediaAccessStatus("microphone"),
+    // macOS exposes no status API for Input Monitoring - the hotkey
+    // helper only finds out when it does or doesn't receive events.
+    // Left as "unknown" until issue #47 wires a functional probe.
+    inputMonitoring: "unknown",
+    transcriptionModel: transcription ? "ready" : "starting",
+    rewriteModel: rewrite ? "ready" : "starting",
+  };
+});
 
 ipcMain.handle("settings:set-hotkey", (event, hotkey) => {
   // setHotkey validates and throws on a malformed hotkey - ipcMain.handle

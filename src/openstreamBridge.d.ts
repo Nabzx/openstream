@@ -6,6 +6,17 @@ export type StoredSettings = {
   vocabularyProjectPath: string | null;
 };
 
+export type MediaAccessStatus = "granted" | "denied" | "restricted" | "not-determined" | "unknown";
+export type ModelHealth = "ready" | "starting";
+
+export type AppHealth = {
+  accessibility: boolean;
+  microphone: MediaAccessStatus;
+  inputMonitoring: "unknown";
+  transcriptionModel: ModelHealth;
+  rewriteModel: ModelHealth;
+};
+
 export type VocabularyStatus = {
   path: string | null;
   termCount: number;
@@ -20,6 +31,9 @@ export type VocabularyStatus = {
 declare global {
   interface Window {
     openstream: {
+      app: {
+        getHealth(): Promise<AppHealth>;
+      };
       settings: {
         get(): Promise<StoredSettings>;
         setHotkey(hotkey: StoredHotkey): Promise<StoredSettings>;
