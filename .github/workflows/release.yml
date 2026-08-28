@@ -1,0 +1,71 @@
+name: Release
+
+# Cut a GitHub release when a version tag is pushed. The tag's own
+# annotation becomes the release notes; the auto-generated commit list is
+# appended. An unsigned arm64 DMG is attached for convenience - the
+# supported install path stays "git clone && npm install" until signed
+# distribution is decided (issues #11, #37).
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12
+          cache: npm
+
+      # postinstall compiles whisper.cpp and fetches ~1.15 GiB of weights -
+      # slow, but it's the same work every push already does in build.yml.
+      - run: npm ci
+
+      - name: Set the package version from the tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            VERSION="${VERSION}.0"
+          fi
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Typecheck and build the renderer
+        run: npm run build
+
+      - name: Package the unsigned DMG
+        run: npm run dist
+
+      - name: Assemble release notes
+        id: notes
+        run: |
+          {
+            echo 'body<<EOF'
+            git tag -l --format='%(contents)' "${GITHUB_REF_NAME}"
+            echo
+            echo '---'
+            echo
+            echo '**The attached DMG is unsigned.** macOS Gatekeeper will warn on first open (right-click → Open, or allow it in System Settings → Privacy & Security). The supported install is still `git clone` + `npm install` - see the README.'
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create the release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ github.ref_name }}
+          body: ${{ steps.notes.outputs.body }}
+          generate_release_notes: true
+          files: release/*.dmg
+          fail_on_unmatched_files: true
