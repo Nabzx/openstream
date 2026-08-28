@@ -117,6 +117,26 @@ function createAccessibilityHelper({
     return { bundleId: reply.bundleId, isOneLineField: reply.isOneLineField };
   }
 
+  // #47: the two grants the pipeline can't work without, as this process
+  // (and therefore the Electron host that owns the grant) sees them.
+  // Returns null if the helper can't answer - the caller treats that as
+  // "can't confirm", which is itself a blocking state.
+  async function getPermissions() {
+    let reply;
+    try {
+      reply = await request("permissions");
+    } catch {
+      return null;
+    }
+    if (reply.status !== "ok" || typeof reply.accessibility !== "boolean") {
+      return null;
+    }
+    return {
+      accessibility: reply.accessibility,
+      inputMonitoring: typeof reply.inputMonitoring === "string" ? reply.inputMonitoring : "unknown",
+    };
+  }
+
   // #17: the focused field's current selection, read at push-to-talk
   // key-down. Returns null for "nothing selected" or "couldn't read" - the
   // caller treats both the same way (fall through to ordinary dictation).
@@ -156,6 +176,7 @@ function createAccessibilityHelper({
     stop,
     getFocusContext,
     getSelection,
+    getPermissions,
     deliver,
   };
 }
