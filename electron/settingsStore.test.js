@@ -4,7 +4,13 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const { createSettingsStore, DEFAULT_SETTINGS } = require("./settingsStore");
-const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
+const {
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_OPTION_KEY_CODE,
+} = require("./hotkeyDefinitions");
 
 function tempFilePath() {
   return path.join(fs.mkdtempSync(path.join(os.tmpdir(), "openstream-settings-")), "settings.json");
@@ -59,12 +65,21 @@ test("a partial disk write leaves the cached and saved shortcut unchanged", () =
   assert.deepEqual(JSON.parse(fs.readFileSync(filePath, "utf8")).hotkey, { keyCode: 2, modifiers: ["ctrl", "alt"] });
 });
 
-test("persists standalone Option", () => {
+test("persists every supported standalone trigger", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });
+  const keyCodes = [
+    STANDALONE_OPTION_KEY_CODE,
+    STANDALONE_COMMAND_KEY_CODE,
+    STANDALONE_CONTROL_KEY_CODE,
+    STANDALONE_FN_KEY_CODE,
+    STANDALONE_CAPS_LOCK_KEY_CODE,
+  ];
 
-  store.setShortcut({ keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
-  assert.deepEqual(store.get().hotkey, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
+  for (const keyCode of keyCodes) {
+    store.setShortcut({ keyCode, modifiers: [] });
+    assert.deepEqual(store.get().hotkey, { keyCode, modifiers: [] });
+  }
 });
 
 test("accepts and persists every supported function-key identity", () => {
@@ -81,9 +96,12 @@ test("accepts and persists every supported function-key identity", () => {
   assert.deepEqual(reopened.get().hotkey, { keyCode: 80, modifiers: [] });
 });
 
-test("rejects an unsupported standalone key", () => {
+test("rejects unsupported standalone identities", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
-  assert.throws(() => store.setHotkey({ keyCode: 2, modifiers: [] }), /Unsupported key/);
+
+  for (const keyCode of [2, 56, 999]) {
+    assert.throws(() => store.setShortcut({ keyCode, modifiers: [] }), /Unsupported key/);
+  }
 });
 
 test("rejects an unknown modifier", () => {

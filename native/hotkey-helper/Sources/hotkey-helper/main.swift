@@ -74,6 +74,7 @@ func hotkeyFlags(for flags: CGEventFlags) -> HotkeyFlags {
     if flags.contains(.maskShift) { result.insert(.shift) }
     if flags.contains(.maskAlternate) { result.insert(.alternate) }
     if flags.contains(.maskControl) { result.insert(.control) }
+    if flags.contains(.maskSecondaryFn) { result.insert(.secondaryFunction) }
     return result
 }
 

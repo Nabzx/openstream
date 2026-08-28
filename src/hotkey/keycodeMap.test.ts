@@ -4,6 +4,10 @@ import {
   hotkeyParts,
   labelForMacKeyCode,
   macKeyCodeForDomCode,
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
   STANDALONE_OPTION_KEY_CODE,
 } from "./keycodeMap";
 
@@ -47,6 +51,17 @@ describe("macKeyCodeForDomCode", () => {
     expect(macKeyCodeForDomCode("AltRight")).toBe(STANDALONE_OPTION_KEY_CODE);
   });
 
+  it.each([
+    ["MetaLeft", STANDALONE_COMMAND_KEY_CODE],
+    ["MetaRight", STANDALONE_COMMAND_KEY_CODE],
+    ["ControlLeft", STANDALONE_CONTROL_KEY_CODE],
+    ["ControlRight", STANDALONE_CONTROL_KEY_CODE],
+    ["Fn", STANDALONE_FN_KEY_CODE],
+    ["CapsLock", STANDALONE_CAPS_LOCK_KEY_CODE],
+  ])("maps %s to its logical standalone identity", (code, keyCode) => {
+    expect(macKeyCodeForDomCode(code)).toBe(keyCode);
+  });
+
   it("returns undefined for an unmapped key", () => {
     expect(macKeyCodeForDomCode("ArrowUp")).toBeUndefined();
   });
@@ -57,8 +72,14 @@ describe("labelForMacKeyCode", () => {
     expect(labelForMacKeyCode(2)).toBe("D");
   });
 
-  it("labels the standalone Option identity", () => {
-    expect(labelForMacKeyCode(STANDALONE_OPTION_KEY_CODE)).toBe("Option");
+  it.each([
+    [STANDALONE_OPTION_KEY_CODE, "Option"],
+    [STANDALONE_COMMAND_KEY_CODE, "Command"],
+    [STANDALONE_CONTROL_KEY_CODE, "Control"],
+    [STANDALONE_FN_KEY_CODE, "Fn"],
+    [STANDALONE_CAPS_LOCK_KEY_CODE, "Caps Lock"],
+  ])("labels standalone keycode %s", (keyCode, label) => {
+    expect(labelForMacKeyCode(keyCode)).toBe(label);
   });
 
   it("labels a function key by its familiar name", () => {
@@ -83,8 +104,14 @@ describe("formatHotkey", () => {
     expect(formatHotkey({ keyCode: 49, modifiers: ["cmd"] })).toBe("⌘Space");
   });
 
-  it("formats standalone Option with its human-readable name", () => {
-    expect(formatHotkey({ keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] })).toBe("Option");
+  it.each([
+    [STANDALONE_OPTION_KEY_CODE, "Option"],
+    [STANDALONE_COMMAND_KEY_CODE, "Command"],
+    [STANDALONE_CONTROL_KEY_CODE, "Control"],
+    [STANDALONE_FN_KEY_CODE, "Fn"],
+    [STANDALONE_CAPS_LOCK_KEY_CODE, "Caps Lock"],
+  ])("formats standalone keycode %s without modifiers", (keyCode, label) => {
+    expect(formatHotkey({ keyCode, modifiers: [] })).toBe(label);
   });
 
   it("formats a function key with its familiar name", () => {

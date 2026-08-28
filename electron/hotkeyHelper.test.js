@@ -3,7 +3,13 @@ const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const { PassThrough, Writable } = require("node:stream");
 const { createHotkeyHelper, DEFAULT_HOTKEY } = require("./hotkeyHelper");
-const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
+const {
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_OPTION_KEY_CODE,
+} = require("./hotkeyDefinitions");
 
 function fakeProcess() {
   const process = new EventEmitter();
@@ -135,6 +141,34 @@ test("spawns with the configured hotkey's args, defaulting to DEFAULT_HOTKEY", (
   assert.deepEqual(DEFAULT_HOTKEY, { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] });
   assert.deepEqual(spawned[0].args, ["--keycode", String(STANDALONE_OPTION_KEY_CODE), "--modifiers", ""]);
   helper.stop();
+});
+
+test("passes each standalone trigger identity to the native helper", () => {
+  const spawned = [];
+  const keyCodes = [
+    STANDALONE_OPTION_KEY_CODE,
+    STANDALONE_COMMAND_KEY_CODE,
+    STANDALONE_CONTROL_KEY_CODE,
+    STANDALONE_FN_KEY_CODE,
+    STANDALONE_CAPS_LOCK_KEY_CODE,
+  ];
+
+  for (const keyCode of keyCodes) {
+    const helper = createHotkeyHelper({
+      hotkey: { keyCode, modifiers: [] },
+      spawnProcess: (bin, args) => {
+        spawned.push(args);
+        return fakeProcess();
+      },
+    });
+    helper.start();
+    helper.stop();
+  }
+
+  assert.deepEqual(
+    spawned,
+    keyCodes.map((keyCode) => ["--keycode", String(keyCode), "--modifiers", ""]),
+  );
 });
 
 test("starts with a custom hotkey when one is passed to the factory", () => {

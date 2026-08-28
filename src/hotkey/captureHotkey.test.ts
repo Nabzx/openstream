@@ -1,15 +1,30 @@
 import { describe, expect, it } from "vitest";
 import { captureHotkeyFromEvent, type CapturedKeyEvent } from "./captureHotkey";
-import { STANDALONE_OPTION_KEY_CODE } from "./keycodeMap";
+import {
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_OPTION_KEY_CODE,
+} from "./keycodeMap";
 
 function keyEvent(overrides: Partial<CapturedKeyEvent> & { code: string }): CapturedKeyEvent {
   return { metaKey: false, shiftKey: false, altKey: false, ctrlKey: false, ...overrides };
 }
 
 describe("captureHotkeyFromEvent", () => {
-  it.each(["AltLeft", "AltRight"])("accepts standalone %s as Option", (code) => {
-    const result = captureHotkeyFromEvent(keyEvent({ code, altKey: true }));
-    expect(result).toEqual({ ok: true, hotkey: { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] } });
+  it.each([
+    ["AltLeft", STANDALONE_OPTION_KEY_CODE, { altKey: true }],
+    ["AltRight", STANDALONE_OPTION_KEY_CODE, { altKey: true }],
+    ["MetaLeft", STANDALONE_COMMAND_KEY_CODE, { metaKey: true }],
+    ["MetaRight", STANDALONE_COMMAND_KEY_CODE, { metaKey: true }],
+    ["ControlLeft", STANDALONE_CONTROL_KEY_CODE, { ctrlKey: true }],
+    ["ControlRight", STANDALONE_CONTROL_KEY_CODE, { ctrlKey: true }],
+    ["Fn", STANDALONE_FN_KEY_CODE, {}],
+    ["CapsLock", STANDALONE_CAPS_LOCK_KEY_CODE, {}],
+  ])("accepts standalone %s", (code, keyCode, modifiers) => {
+    const result = captureHotkeyFromEvent(keyEvent({ code, ...modifiers }));
+    expect(result).toEqual({ ok: true, hotkey: { keyCode, modifiers: [] } });
   });
 
   it.each([
@@ -47,12 +62,21 @@ describe("captureHotkeyFromEvent", () => {
     { code: "KeyD" },
     { code: "ShiftLeft", shiftKey: true },
     { code: "ArrowUp", ctrlKey: true },
+    { code: "MetaLeft", metaKey: true, shiftKey: true },
+    { code: "ControlLeft", ctrlKey: true, altKey: true },
+    { code: "Fn", metaKey: true },
+    { code: "CapsLock", ctrlKey: true },
   ])("rejects unsupported input with the exact error", (event) => {
     expect(captureHotkeyFromEvent(keyEvent(event))).toEqual({ ok: false, reason: "Unsupported key" });
   });
 
-  it("rejects Option when another modifier is held", () => {
-    const result = captureHotkeyFromEvent(keyEvent({ code: "AltLeft", altKey: true, metaKey: true }));
-    expect(result).toEqual({ ok: false, reason: "Unsupported key" });
+  it.each([
+    { code: "AltLeft", altKey: true, metaKey: true },
+    { code: "MetaLeft", metaKey: true, ctrlKey: true },
+    { code: "ControlLeft", ctrlKey: true, shiftKey: true },
+    { code: "Fn", altKey: true },
+    { code: "CapsLock", shiftKey: true },
+  ])("rejects %s when another modifier is held", (event) => {
+    expect(captureHotkeyFromEvent(keyEvent(event))).toEqual({ ok: false, reason: "Unsupported key" });
   });
 });

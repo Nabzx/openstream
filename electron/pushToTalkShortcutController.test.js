@@ -1,7 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
-const { STANDALONE_OPTION_KEY_CODE } = require("./hotkeyDefinitions");
+const {
+  STANDALONE_CAPS_LOCK_KEY_CODE,
+  STANDALONE_COMMAND_KEY_CODE,
+  STANDALONE_CONTROL_KEY_CODE,
+  STANDALONE_FN_KEY_CODE,
+  STANDALONE_OPTION_KEY_CODE,
+} = require("./hotkeyDefinitions");
 
 const OLD_HOTKEY = { keyCode: 2, modifiers: ["ctrl", "alt"] };
 const NEW_HOTKEY = { keyCode: STANDALONE_OPTION_KEY_CODE, modifiers: [] };
@@ -188,6 +194,27 @@ test("leaves persistence untouched when a ready candidate cannot become active",
   assert.equal(factory.helpers[1].stopped, true);
   assert.deepEqual(settings.get().hotkey, OLD_HOTKEY);
   assert.deepEqual(settings.writes, []);
+});
+
+test("accepts every supported standalone trigger", async () => {
+  const settings = fakeSettingsStore();
+  const factory = fakeHelperFactory();
+  const controller = createController(settings, factory);
+  const keyCodes = [
+    STANDALONE_OPTION_KEY_CODE,
+    STANDALONE_COMMAND_KEY_CODE,
+    STANDALONE_CONTROL_KEY_CODE,
+    STANDALONE_FN_KEY_CODE,
+    STANDALONE_CAPS_LOCK_KEY_CODE,
+  ];
+
+  for (const keyCode of keyCodes) {
+    const replacement = controller.replace({ keyCode, modifiers: [] });
+    const candidate = factory.helpers.at(-1);
+    candidate.becomeReady();
+    assert.deepEqual((await replacement).ok, true);
+    assert.deepEqual(controller.getActiveShortcut(), { keyCode, modifiers: [] });
+  }
 });
 
 test("rejects legacy combinations and unsupported standalone keys without starting a helper", async () => {

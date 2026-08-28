@@ -9,7 +9,7 @@ This repository is a development fork of [Nabzx/openstream](https://github.com/N
 The current app can:
 
 - run as a macOS menu bar app
-- listen for standalone `Option` through a native hotkey helper
+- listen for standalone `Option`, `Command`, `Control`, `Fn`, or `Caps Lock` through a native hotkey helper when macOS exposes the key
 - record while the hotkey is held and transcribe after release
 - keep `whisper-server` resident instead of loading it for each dictation
 - insert text at the cursor through a separate Accessibility helper
@@ -81,7 +81,7 @@ OpenStream needs three macOS permissions:
 2. Input Monitoring for the hotkey helper.
 3. Accessibility for the text-insertion helper.
 
-After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold `Option`, speak, and release it. Existing saved combinations such as `Control+Option+D` remain usable until changed. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
+After granting Input Monitoring and Accessibility, quit and restart the app. Click a text field, hold the configured standalone key, speak, and release it. Existing saved combinations such as `Control+Option+D` remain usable until changed. Fn and Caps Lock depend on keyboard support and may not produce a usable event. A cold start can take 15 to 20 seconds while `whisper-server` loads its Metal shaders.
 
 On launch the app checks these grants: if Accessibility or Input Monitoring is missing it opens on a **Permissions** screen with links straight to the right System Settings pane. `npm run doctor` runs the same check from the terminal.
 
