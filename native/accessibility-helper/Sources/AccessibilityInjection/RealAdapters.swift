@@ -156,7 +156,29 @@ public final class RealFocusResolver: FocusResolving {
         return RealAXTarget(focusedRef as! AXUIElement) // swiftlint:disable:this force_cast
     }
 
-    public func focusContext(deadlineMs: Double) -> (bundleId: String, isOneLineField: Bool)? {
+    // #181: retry resolveFocusedElement until it works or the budget runs
+    // out. Each attempt is still capped by deadlineMs; a short sleep sits
+    // between attempts. Used only by context/selection detection, not by
+    // the injection path, so a slow AX tree can't add latency to delivery.
+    private func resolveFocusedElementWithin(budgetMs: Double, deadlineMs: Double) -> AccessibilityTarget? {
+        let start = Date()
+        while true {
+            if let target = resolveFocusedElement(deadlineMs: deadlineMs) {
+                return target
+            }
+            if Date().timeIntervalSince(start) * 1000 >= budgetMs {
+                return nil
+            }
+            Thread.sleep(forTimeInterval: 0.04)
+        }
+    }
+
+    // axReady is false when the focused element never became resolvable
+    // within the budget. The caller still gets a usable context - bundleId
+    // from the tracker, isOneLineField defaulted to true (deny line breaks,
+    // the safe direction for an unknown target) - rather than a hard nil
+    // that would fail the whole dictation. See #181.
+    public func focusContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, axReady: Bool)? {
         guard let frontApp = tracker.currentFrontmostApp() else {
             log("focusContext: tracker has no frontmost app cached")
             return nil
@@ -165,19 +187,20 @@ public final class RealFocusResolver: FocusResolving {
             log("focusContext: frontmost app \(frontApp.localizedName ?? "?") (pid \(frontApp.processIdentifier)) has no bundle identifier")
             return nil
         }
-        guard let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
-            return nil
+        guard let focused = resolveFocusedElementWithin(budgetMs: budgetMs, deadlineMs: deadlineMs) else {
+            log("focusContext: \(bundleId) focused element not AX-ready within \(budgetMs)ms - unknown-field context")
+            return (bundleId, true, false)
         }
 
         let role = focused.fieldInfo.role
-        return (bundleId, role == "AXTextField" || role == "AXComboBox")
+        return (bundleId, role == "AXTextField" || role == "AXComboBox", true)
     }
 
     // Voice editing (#17): the focused field's current selection, plus the
     // same bundle id / one-line-field context focusContext() returns.
     // nil means the focused element or the attribute could not be read;
     // an empty selectedText means there is simply nothing selected.
-    public func selectionContext(deadlineMs: Double) -> (bundleId: String, isOneLineField: Bool, selectedText: String)? {
+    public func selectionContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, selectedText: String)? {
         guard let frontApp = tracker.currentFrontmostApp() else {
             log("selectionContext: tracker has no frontmost app cached")
             return nil
@@ -186,7 +209,10 @@ public final class RealFocusResolver: FocusResolving {
             log("selectionContext: frontmost app has no bundle identifier")
             return nil
         }
-        guard let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
+        // A voice edit needs the selection; if the AX tree isn't ready in
+        // time there's nothing to read, so this returns nil and the caller
+        // falls through to ordinary dictation (#17).
+        guard let focused = resolveFocusedElementWithin(budgetMs: budgetMs, deadlineMs: deadlineMs) else {
             return nil
         }
         let role = focused.fieldInfo.role

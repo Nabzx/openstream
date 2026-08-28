@@ -65,7 +65,10 @@ while let line = readLine(strippingNewline: true) {
 
     switch cmd {
     case "context":
-        guard let context = focusResolver.focusContext(deadlineMs: config.axDeadlineMs) else {
+        guard let context = focusResolver.focusContext(
+            deadlineMs: config.axDeadlineMs,
+            budgetMs: config.axReadyBudgetMs
+        ) else {
             emit(["id": id, "status": "error", "reason": "focused element unavailable"])
             continue
         }
@@ -74,6 +77,9 @@ while let line = readLine(strippingNewline: true) {
             "status": "ok",
             "bundleId": context.bundleId,
             "isOneLineField": context.isOneLineField,
+            // #181: false when the focused element never became AX-ready and
+            // isOneLineField is the safe default rather than the real role.
+            "axReady": context.axReady,
         ])
     case "insert", "inject":
         guard let text = obj["text"] as? String, !text.isEmpty else {
@@ -107,7 +113,10 @@ while let line = readLine(strippingNewline: true) {
         // #17: a get-only read of the focused field's current selection,
         // used at push-to-talk key-down to tell a voice edit from an
         // ordinary dictation. No settle guard, no injection.
-        guard let context = focusResolver.selectionContext(deadlineMs: config.axDeadlineMs) else {
+        guard let context = focusResolver.selectionContext(
+            deadlineMs: config.axDeadlineMs,
+            budgetMs: config.axReadyBudgetMs
+        ) else {
             emit(["id": id, "status": "error", "reason": "focused element unavailable"])
             continue
         }
