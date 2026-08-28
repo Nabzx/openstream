@@ -553,6 +553,89 @@ button {
   margin: 6px 2px 0;
 }
 
+/* --- permissions page --- */
+
+.perm-progress {
+  margin: -6px 2px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.perm-item[data-granted="true"] {
+  opacity: 0.72;
+}
+
+.perm-item__icon {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.perm-item[data-granted="true"] .perm-item__icon {
+  background: var(--ok-tint);
+  color: var(--ok);
+}
+
+.perm-item__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perm-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.perm-item__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.perm-item__why {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.perm-item__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.perm-footer {
+  display: flex;
+  gap: 8px;
+  padding: 0 2px;
+}
+
 /* --- Push-to-talk shortcut section (HotkeySettings.tsx) ---
    The component predates the card system and renders a bare
    <section class="setting"> with an unstyled button. Its markup is
