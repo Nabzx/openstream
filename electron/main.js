@@ -207,9 +207,26 @@ async function handleCompletedRecording(wavBuffer, timing) {
   const selection = selectionRead ? await selectionRead : null;
 
   if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
+    showVoiceEditWorking();
     return applyVoiceEdit(wavBuffer, selection, timing);
   }
   return transcribeAndPrint(wavBuffer, timing);
+}
+
+function showVoiceEditWorking() {
+  setTrayState("transcribing");
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  positionOverlayAtBottom();
+  overlayWin.webContents.send("dictation-state", "editing");
+  overlayWin.showInactive();
+}
+
+function showVoiceEditMessage(text) {
+  setTrayState("idle");
+  if (!overlayWin || overlayWin.isDestroyed()) return;
+  overlayWin.webContents.send("voice-edit-message", text);
+  overlayWin.showInactive();
+  setTimeout(() => setUserVisibleState("idle"), 2000);
 }
 
 async function applyVoiceEdit(wavBuffer, selection, timing) {
@@ -236,10 +253,10 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "unrecognised") {
     console.log(`[voice-edit] command not recognised: ${JSON.stringify(result.command)}`);
-    setUserVisibleState("idle");
+    showVoiceEditMessage("Command not recognised");
   } else if (result.status === "declined") {
     console.log(`[voice-edit] ${result.commandId} declined: ${result.reason}`);
-    setUserVisibleState("idle");
+    showVoiceEditMessage(result.reason);
   } else if (result.status === "failed") {
     console.error(`[voice-edit] ${result.stage} failed: ${result.reason}`);
     setUserVisibleState("idle");
