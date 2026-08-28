@@ -8,6 +8,8 @@ const DEFAULT_MAX_RECORDING_MS = 60_000;
 function createPushToTalkCoordinator({
   startCapture,
   stopCapture,
+  // #134: discard the recording without running it through the pipeline.
+  cancelCapture = () => {},
   setUserVisibleState,
   now = performance.now.bind(performance),
   setSafetyTimer = setTimeout,
@@ -18,12 +20,16 @@ function createPushToTalkCoordinator({
   let recording = false;
   let safetyTimer = null;
 
-  function finishRecording() {
+  function stopRecordingState() {
     recording = false;
     if (safetyTimer) {
       clearSafetyTimer(safetyTimer);
       safetyTimer = null;
     }
+  }
+
+  function finishRecording() {
+    stopRecordingState();
     stopCapture({ releasedAtMs: now() });
     setUserVisibleState("transcribing");
   }
@@ -48,6 +54,19 @@ function createPushToTalkCoordinator({
     keyUp() {
       if (!recording) return;
       finishRecording();
+    },
+
+    // #134: called when the user hits Escape mid-recording. Drops the audio
+    // and returns to idle without transcribing or delivering anything.
+    cancel() {
+      if (!recording) return;
+      stopRecordingState();
+      cancelCapture();
+      setUserVisibleState("idle");
+    },
+
+    isRecording() {
+      return recording;
     },
   };
 }

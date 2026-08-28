@@ -117,4 +117,12 @@ window.capture.onStop((timing) => {
   window.capture.sendRecording(wav, timing);
 });
 
+// #134: stop recording and throw the audio away - no WAV, no
+// recording-complete, so the pipeline never sees it.
+window.capture.onCancel(() => {
+  isRecording = false;
+  chunks = [];
+  window.capture.sendSoundLevel(0);
+});
+
 prepareCapture();
