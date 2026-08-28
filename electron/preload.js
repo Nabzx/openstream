@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld("openstream", {
     getHealth: () => ipcRenderer.invoke("app:get-health"),
     getLoginItem: () => ipcRenderer.invoke("app:get-login-item"),
     setLoginItem: (enabled) => ipcRenderer.invoke("app:set-login-item", enabled),
+    checkPermissions: () => ipcRenderer.invoke("app:check-permissions"),
+    openPrivacySettings: (key) => ipcRenderer.invoke("app:open-privacy-settings", key),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),

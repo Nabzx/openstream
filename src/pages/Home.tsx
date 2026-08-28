@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { AppHealth, MediaAccessStatus, StoredSettings } from "../openstreamBridge";
+import type { AppHealth, GrantState, ModelHealth, StoredSettings } from "../openstreamBridge";
+import type { Page } from "../nav";
 import KeyCaps from "../components/KeyCaps";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import {
@@ -13,31 +14,26 @@ import {
 
 const HEALTH_POLL_MS = 4000;
 
-function boolPill(granted: boolean): { tone: PillTone; label: string } {
-  return granted ? { tone: "ok", label: "Granted" } : { tone: "err", label: "Not granted" };
-}
-
-function micPill(status: MediaAccessStatus): { tone: PillTone; label: string } {
-  switch (status) {
+function grantPill(state: GrantState): { tone: PillTone; label: string } {
+  switch (state) {
     case "granted":
       return { tone: "ok", label: "Granted" };
-    case "denied":
-    case "restricted":
-      return { tone: "err", label: "Denied" };
-    case "not-determined":
+    case "missing":
+      return { tone: "err", label: "Not granted" };
+    case "pending":
       return { tone: "wait", label: "Not asked yet" };
     default:
       return { tone: "muted", label: "Unknown" };
   }
 }
 
-function modelPill(state: "ready" | "starting"): { tone: PillTone; label: string } {
+function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
   return state === "ready"
     ? { tone: "ok", label: "Ready" }
     : { tone: "wait", label: "Starting…" };
 }
 
-export default function Home({ onOpenSettings }: { onOpenSettings: () => void }) {
+export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   const [settings, setSettings] = useState<StoredSettings | null>(null);
   const [health, setHealth] = useState<AppHealth | null>(null);
 
@@ -63,13 +59,21 @@ export default function Home({ onOpenSettings }: { onOpenSettings: () => void })
   const rows: { icon: JSX.Element; label: string; sub?: string; pill: { tone: PillTone; label: string } }[] =
     health
       ? [
-          { icon: <ShieldIcon className="row-icon" />, label: "Accessibility", pill: boolPill(health.accessibility) },
+          {
+            icon: <ShieldIcon className="row-icon" />,
+            label: "Accessibility",
+            pill: grantPill(health.permissions.accessibility),
+          },
           {
             icon: <InputMonitorIcon className="row-icon" />,
             label: "Input Monitoring",
-            pill: { tone: "muted", label: "Checked on first use" },
+            pill: grantPill(health.permissions.inputMonitoring),
           },
-          { icon: <MicIcon className="row-icon" />, label: "Microphone", pill: micPill(health.microphone) },
+          {
+            icon: <MicIcon className="row-icon" />,
+            label: "Microphone",
+            pill: grantPill(health.permissions.microphone),
+          },
           {
             icon: <WaveformIcon className="row-icon" />,
             label: "Transcription model",
@@ -84,6 +88,9 @@ export default function Home({ onOpenSettings }: { onOpenSettings: () => void })
           },
         ]
       : [];
+
+  const permissionsNeedAttention =
+    health && (health.permissions.accessibility !== "granted" || health.permissions.inputMonitoring === "missing");
 
   return (
     <main className="page">
@@ -108,7 +115,7 @@ export default function Home({ onOpenSettings }: { onOpenSettings: () => void })
           <KeyboardIcon className="row-icon" />
           <span className="row-label">Push-to-talk shortcut</span>
           {settings && <KeyCaps hotkey={settings.hotkey} />}
-          <button type="button" className="linkbtn" style={{ marginLeft: 10 }} onClick={onOpenSettings}>
+          <button type="button" className="linkbtn" style={{ marginLeft: 10 }} onClick={() => navigate("settings")}>
             Change
           </button>
         </div>
@@ -116,6 +123,16 @@ export default function Home({ onOpenSettings }: { onOpenSettings: () => void })
 
       <div className="card">
         <div className="card-label">Status</div>
+        {permissionsNeedAttention && (
+          <div className="row">
+            <span className="row-label" style={{ color: "var(--err)" }}>
+              A required permission is missing — push-to-talk won't work.
+            </span>
+            <button type="button" className="btn btn--primary" onClick={() => navigate("permissions")}>
+              Fix
+            </button>
+          </div>
+        )}
         {rows.length === 0 ? (
           <div className="row">
             <span className="row-label">Checking…</span>
