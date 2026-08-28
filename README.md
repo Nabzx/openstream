@@ -71,6 +71,10 @@ To create an unsigned DMG under `release/`:
 npm run dist
 ```
 
+### Releases
+
+Pushing a `v*` tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml): it builds an unsigned arm64 DMG and publishes a GitHub release, using the tag's annotation as the notes. The DMG is a convenience download — Gatekeeper will warn on it (right-click → Open, or allow it in System Settings). The supported install is still `git clone` + `npm install`; a Homebrew formula waits on the signed-distribution decision ([#11](https://github.com/Nabzx/openstream/issues/11)).
+
 There is no code signing or notarization yet. macOS may block the DMG until you explicitly allow it.
 
 ## First-run permissions
