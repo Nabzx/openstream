@@ -70,6 +70,7 @@ declare global {
         chooseFolder(): Promise<string | null>;
       };
       onNavigate(callback: (page: string) => void): () => void;
+      onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
     };
   }
 }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GrantState, PermissionVerdict } from "../openstreamBridge";
+import Mark from "../components/Mark";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import { InputMonitorIcon, MicIcon, ShieldIcon } from "../components/Icons";
 
@@ -10,9 +11,9 @@ const ICONS: Record<string, (props: { className?: string }) => JSX.Element> = {
 };
 
 const EXPLAIN: Record<string, string> = {
-  accessibility: "Lets OpenStream place text at the cursor.",
+  accessibility: "Lets OpenStream place your words at the cursor.",
   inputMonitoring: "Lets the push-to-talk shortcut work in every app.",
-  microphone: "Lets OpenStream hear you. macOS prompts for this the first time you dictate.",
+  microphone: "Lets OpenStream hear you. macOS asks the first time you dictate.",
 };
 
 function pill(state: GrantState): { tone: PillTone; label: string } {
@@ -44,60 +45,84 @@ export default function Permissions({ onDone }: { onDone: () => void }) {
     recheck();
   }, [recheck]);
 
+  const details = verdict?.details ?? [];
+  const required = details.filter((row) => row.key !== "microphone");
+  const grantedRequired = required.filter((row) => row.state === "granted").length;
+
   return (
     <main className="page">
       <div className="hero">
+        <Mark tile state={verdict && !verdict.ok ? "attention" : "idle"} />
         <div>
-          <h1>Permissions</h1>
+          <h1>{verdict?.ok ? "OpenStream is ready" : "Grant two permissions"}</h1>
           <p>
-            OpenStream needs two macOS permissions to work. Because it runs from source, a rebuild resets them — if a
-            grant looks stuck, <b>remove the old OpenStream entry in System Settings first, then add it again</b>.
+            OpenStream places text at your cursor and listens for the shortcut. macOS gates both behind a switch you
+            flip once.
           </p>
         </div>
       </div>
 
-      <div className="card">
-        {(verdict?.details ?? []).map((row) => {
+      {verdict && !verdict.ok && (
+        <p className="perm-progress">
+          {grantedRequired} of {required.length} required permissions granted
+        </p>
+      )}
+
+      <div className="perm-list">
+        {details.map((row) => {
           const Icon = ICONS[row.key];
           const p = pill(row.state);
+          const optional = row.key === "microphone";
           return (
-            <div className="row" key={row.key}>
-              {Icon && <Icon className="row-icon" />}
-              <span className="row-label">
-                {row.label}
-                <small>{EXPLAIN[row.key]}</small>
-              </span>
-              <StatusPill tone={p.tone} label={p.label} />
-              {row.state !== "granted" && row.key !== "microphone" && (
-                <button
-                  type="button"
-                  className="btn"
-                  style={{ marginLeft: 8 }}
-                  onClick={() => window.openstream.app.openPrivacySettings(row.key)}
-                >
-                  Open Settings
-                </button>
-              )}
+            <div className="perm-item" data-granted={row.state === "granted"} key={row.key}>
+              <span className="perm-item__icon">{Icon && <Icon />}</span>
+              <div className="perm-item__body">
+                <div className="perm-item__title">
+                  {row.label}
+                  {optional && <span className="tag">Optional now</span>}
+                </div>
+                <p className="perm-item__why">{EXPLAIN[row.key]}</p>
+              </div>
+              <div className="perm-item__action">
+                <StatusPill tone={p.tone} label={p.label} />
+                {row.state !== "granted" && !optional && (
+                  <button
+                    type="button"
+                    className="btn btn--primary"
+                    onClick={() => window.openstream.app.openPrivacySettings(row.key)}
+                  >
+                    Open Settings
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
         {!verdict && (
-          <div className="row">
-            <span className="row-label">Checking…</span>
+          <div className="perm-item">
+            <div className="perm-item__body">
+              <div className="perm-item__title">Checking…</div>
+            </div>
           </div>
         )}
       </div>
 
-      <div className="row" style={{ padding: "0 2px", gap: 8 }}>
+      <div className="perm-footer">
         <button type="button" className="btn" onClick={recheck} disabled={checking}>
           {checking ? "Re-checking…" : "Re-check"}
         </button>
         {verdict?.ok && (
           <button type="button" className="btn btn--primary" onClick={onDone}>
-            Done
+            Continue
           </button>
         )}
       </div>
+
+      <p className="hint">
+        After granting, quit and reopen OpenStream so it picks up the change. Because OpenStream runs from source, a
+        rebuild resets these — if a switch looks stuck, remove the old OpenStream entry in System Settings first, then
+        add it again.
+      </p>
     </main>
   );
 }

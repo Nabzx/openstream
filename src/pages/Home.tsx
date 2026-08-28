@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import type { AppHealth, GrantState, ModelHealth, StoredSettings } from "../openstreamBridge";
 import type { Page } from "../nav";
 import KeyCaps from "../components/KeyCaps";
+import Mark from "../components/Mark";
 import StatusPill, { type PillTone } from "../components/StatusPill";
 import {
-  ClockIcon,
+  ChevronDownIcon,
   InputMonitorIcon,
   KeyboardIcon,
   MicIcon,
@@ -13,6 +14,24 @@ import {
 } from "../components/Icons";
 
 const HEALTH_POLL_MS = 4000;
+const DETAILS_KEY = "openstream.home.systemExpanded";
+
+function loadExpanded(): boolean {
+  try {
+    return window.localStorage.getItem(DETAILS_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function saveExpanded(value: boolean) {
+  try {
+    window.localStorage.setItem(DETAILS_KEY, value ? "1" : "0");
+  } catch {
+    // A locked-down renderer can throw on localStorage; the toggle still
+    // works for the session, it just won't be remembered.
+  }
+}
 
 function grantPill(state: GrantState): { tone: PillTone; label: string } {
   switch (state) {
@@ -33,13 +52,19 @@ function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
     : { tone: "wait", label: "Starting…" };
 }
 
+type Activity = "idle" | "recording" | "transcribing";
+
 export default function Home({ navigate }: { navigate: (page: Page) => void }) {
   const [settings, setSettings] = useState<StoredSettings | null>(null);
   const [health, setHealth] = useState<AppHealth | null>(null);
+  const [expanded, setExpanded] = useState(loadExpanded);
+  const [activity, setActivity] = useState<Activity>("idle");
 
   useEffect(() => {
     window.openstream.settings.get().then(setSettings);
   }, []);
+
+  useEffect(() => window.openstream.onDictationState((state) => setActivity(state as Activity)), []);
 
   useEffect(() => {
     let active = true;
@@ -91,17 +116,42 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
 
   const permissionsNeedAttention =
     health && (health.permissions.accessibility !== "granted" || health.permissions.inputMonitoring === "missing");
+  const ready =
+    health &&
+    !permissionsNeedAttention &&
+    health.transcriptionModel === "ready" &&
+    health.rewriteModel === "ready";
 
   return (
     <main className="page">
       <div className="hero">
-        <span className="beacon" data-state="idle" />
+        <Mark
+          tile
+          state={
+            permissionsNeedAttention ? "attention" : activity === "recording" ? "recording" : "idle"
+          }
+        />
         <div>
-          <h1>OpenStream is listening</h1>
+          <h1>
+            {activity === "recording"
+              ? "Listening…"
+              : activity === "transcribing"
+                ? "Transcribing…"
+                : permissionsNeedAttention
+                  ? "OpenStream needs a moment"
+                  : "OpenStream is listening"}
+          </h1>
           <p>
-            {settings ? (
+            {activity === "recording" ? (
               <>
-                Hold <KeyCaps hotkey={settings.hotkey} /> anywhere and speak — your words land at the cursor.
+                Release the key to transcribe. Press <kbd className="keycap">esc</kbd> to cancel.
+              </>
+            ) : activity === "transcribing" ? (
+              "Placing your words at the cursor."
+            ) : settings ? (
+              <>
+                Hold <KeyCaps hotkey={settings.hotkey} /> anywhere and speak — your words land at the cursor. Press{" "}
+                <kbd className="keycap">esc</kbd> to cancel a recording.
               </>
             ) : (
               "Loading…"
@@ -122,22 +172,38 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
       </div>
 
       <div className="card">
-        <div className="card-label">Status</div>
-        {permissionsNeedAttention && (
+        <div className="card-label">System</div>
+        {permissionsNeedAttention ? (
           <div className="row">
             <span className="row-label" style={{ color: "var(--err)" }}>
-              A required permission is missing — push-to-talk won't work.
+              A required permission is missing — push-to-talk won{"’"}t work.
             </span>
             <button type="button" className="btn btn--primary" onClick={() => navigate("permissions")}>
               Fix
             </button>
           </div>
-        )}
-        {rows.length === 0 ? (
-          <div className="row">
-            <span className="row-label">Checking…</span>
-          </div>
+        ) : ready ? (
+          <button
+            type="button"
+            className="row row--disclosure"
+            aria-expanded={expanded}
+            onClick={() => {
+              const next = !expanded;
+              setExpanded(next);
+              saveExpanded(next);
+            }}
+          >
+            <span className="row-label">Everything is ready</span>
+            <StatusPill tone="ok" label="All set" />
+            <ChevronDownIcon className="disclosure-chevron" />
+          </button>
         ) : (
+          <div className="row">
+            <span className="row-label">{health ? "Getting ready…" : "Checking…"}</span>
+            {health && <StatusPill tone="wait" label="Starting" />}
+          </div>
+        )}
+        {(expanded || !ready) &&
           rows.map((row) => (
             <div className="row" key={row.label}>
               {row.icon}
@@ -147,17 +213,13 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
               </span>
               <StatusPill tone={row.pill.tone} label={row.pill.label} />
             </div>
-          ))
-        )}
+          ))}
       </div>
 
-      <div className="card">
-        <div className="card-label">Recent</div>
-        <div className="empty">
-          <ClockIcon />
-          <span>Your recent dictations will appear here.</span>
-        </div>
-      </div>
+      <p className="hint">
+        OpenStream lives in the menu bar. Closing this window leaves it running; quit from the menu bar icon or the app
+        menu.
+      </p>
     </main>
   );
 }

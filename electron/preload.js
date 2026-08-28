@@ -8,6 +8,14 @@ function onNavigate(callback) {
   return () => ipcRenderer.removeListener("navigate", listener);
 }
 
+// Live dictation activity - "idle" | "recording" | "transcribing" - so the
+// Home page can reflect what the app is doing. Returns an unsubscribe.
+function onDictationState(callback) {
+  const listener = (_event, state) => callback(state);
+  ipcRenderer.on("dictation-state", listener);
+  return () => ipcRenderer.removeListener("dictation-state", listener);
+}
+
 // The renderer's only route to the main process, per contextIsolation - see
 // the settings window's webPreferences in main.js. First surface: settings
 // (#19). This will grow to cover the hotkey helper, the accessibility
@@ -34,4 +42,5 @@ contextBridge.exposeInMainWorld("openstream", {
     chooseFolder: () => ipcRenderer.invoke("vocabulary:choose-folder"),
   },
   onNavigate,
+  onDictationState,
 });

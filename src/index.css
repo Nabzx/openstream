@@ -1,75 +1,83 @@
 /* OpenStream desktop window - design tokens and shared components.
-   Ported from prototypes/desktop-ui-211 (issue #211). Extends the
-   push-to-talk overlay's language: Apple system-blue accent, SF, the
-   same corner radii, but a solid window that follows the OS light/dark
-   setting rather than glass. */
+   Started from prototypes/desktop-ui-211 (issue #211); a native Mac
+   window that follows the OS light/dark setting. Same system-blue accent
+   and corner language as the push-to-talk overlay, but a solid surface
+   rather than glass. */
 
 :root {
   color-scheme: light dark;
 
-  --bg: #ececec;
+  /* Neutrals carry a faint cool cast toward the blue accent, so the greys
+     read as chosen rather than default. */
+  --bg: #e9eaee;
   --surface: #ffffff;
-  --surface-2: #f5f5f7;
-  --toolbar: #f6f6f6;
-  --text: #1d1d1f;
-  --text-2: #6e6e73;
-  --sep: rgba(0, 0, 0, 0.1);
+  --surface-2: #f3f4f7;
+  --toolbar: rgba(247, 248, 250, 0.8);
+  --text: #1b1c1f;
+  --text-2: #64666e;
+  --text-3: #8b8d96;
+  --sep: rgba(0, 0, 0, 0.08);
+  --hairline: rgba(0, 0, 0, 0.11);
   --accent: #007aff;
-  --accent-text: #007aff;
+  --accent-text: #0067da;
   --accent-tint: rgba(0, 122, 255, 0.12);
-  --ok: #248a3d;
-  --ok-tint: rgba(52, 199, 89, 0.16);
+  --ok: #1e8b3b;
+  --ok-tint: rgba(52, 199, 89, 0.15);
   --wait: #9a6100;
-  --wait-tint: rgba(255, 159, 10, 0.18);
-  --err: #c0392b;
-  --err-tint: rgba(255, 59, 48, 0.16);
+  --wait-tint: rgba(255, 159, 10, 0.16);
+  --err: #c8342a;
+  --err-tint: rgba(255, 59, 48, 0.13);
   --field: #ffffff;
-  --field-border: rgba(0, 0, 0, 0.18);
+  --field-border: rgba(0, 0, 0, 0.16);
   --keycap: #ffffff;
-  --keycap-border: rgba(0, 0, 0, 0.16);
-  --switch-off: rgba(0, 0, 0, 0.16);
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+  --keycap-border: rgba(0, 0, 0, 0.14);
+  --switch-off: rgba(0, 0, 0, 0.15);
+  --shadow-card: 0 0 0 0.5px var(--hairline), 0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 16px -8px rgba(0, 0, 0, 0.12);
+  --shadow-control: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 1px 1.5px rgba(0, 0, 0, 0.06);
 
   --radius-control: 6px;
   --radius-button: 7px;
-  --radius-card: 10px;
+  --radius-card: 12px;
 
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
-  --space-6: 22px;
+  --space-6: 24px;
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #1e1e1e;
-    --surface: #2c2c2e;
-    --surface-2: #323234;
-    --toolbar: #282828;
-    --text: rgba(255, 255, 255, 0.92);
-    --text-2: rgba(255, 255, 255, 0.55);
-    --sep: rgba(255, 255, 255, 0.1);
+    --bg: #1c1c1f;
+    --surface: #2b2b2f;
+    --surface-2: #333338;
+    --toolbar: rgba(38, 38, 42, 0.8);
+    --text: rgba(255, 255, 255, 0.93);
+    --text-2: rgba(235, 235, 245, 0.58);
+    --text-3: rgba(235, 235, 245, 0.4);
+    --sep: rgba(255, 255, 255, 0.09);
+    --hairline: rgba(255, 255, 255, 0.13);
     --accent: #0a84ff;
-    --accent-text: #6cb4ff;
-    --accent-tint: rgba(10, 132, 255, 0.24);
-    --ok: #30d158;
+    --accent-text: #67b0ff;
+    --accent-tint: rgba(10, 132, 255, 0.26);
+    --ok: #34d158;
     --ok-tint: rgba(48, 209, 88, 0.2);
     --wait: #ffb340;
-    --wait-tint: rgba(255, 159, 10, 0.22);
+    --wait-tint: rgba(255, 159, 10, 0.2);
     --err: #ff6961;
     --err-tint: rgba(255, 69, 58, 0.2);
-    --field: #1c1c1e;
-    --field-border: rgba(255, 255, 255, 0.16);
-    --keycap: #3a3a3c;
-    --keycap-border: rgba(255, 255, 255, 0.16);
-    --switch-off: rgba(255, 255, 255, 0.18);
-    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 0 0.5px rgba(0, 0, 0, 0.5);
+    --field: #1d1d20;
+    --field-border: rgba(255, 255, 255, 0.15);
+    --keycap: #3a3a3e;
+    --keycap-border: rgba(255, 255, 255, 0.15);
+    --switch-off: rgba(255, 255, 255, 0.17);
+    --shadow-card: 0 0 0 0.5px var(--hairline), 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 20px -10px rgba(0, 0, 0, 0.5);
+    --shadow-control: 0 0 0 0.5px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -88,6 +96,11 @@ button {
   font: inherit;
 }
 
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* --- app shell --- */
 
 .shell {
@@ -104,6 +117,7 @@ button {
   /* room for the inset traffic lights on the left */
   padding: 0 var(--space-4) 0 92px;
   background: var(--toolbar);
+  backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--sep);
   -webkit-app-region: drag;
 }
@@ -112,7 +126,7 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  height: 30px;
+  height: 28px;
   padding: 0 var(--space-3);
   border: 0;
   border-radius: var(--radius-button);
@@ -121,6 +135,12 @@ button {
   font-weight: 500;
   -webkit-app-region: no-drag;
   cursor: default;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.navtab:hover:not([aria-current="page"]) {
+  background: var(--sep);
+  color: var(--text);
 }
 
 .navtab svg {
@@ -139,7 +159,7 @@ button {
   padding: var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-5);
 }
 
 /* --- building blocks --- */
@@ -147,35 +167,63 @@ button {
 .card {
   background: var(--surface);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-card);
 }
 
 .card-label {
-  padding: 10px 14px;
+  padding: 12px 16px 8px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--text-2);
+  color: var(--text-3);
 }
 
 .row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 11px 14px;
+  gap: 11px;
+  padding: 12px 16px;
   border-top: 1px solid var(--sep);
-  min-height: 44px;
+  min-height: 46px;
 }
 
 .row:first-child {
   border-top: 0;
 }
 
+/* A row that toggles a disclosure (Home's System card). */
+.row--disclosure {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--sep);
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: default;
+}
+
+.row--disclosure:hover {
+  background: var(--sep);
+}
+
+.disclosure-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--text-3);
+  transition: transform 0.15s ease;
+}
+
+.row--disclosure[aria-expanded="true"] .disclosure-chevron {
+  transform: rotate(180deg);
+}
+
 .row-icon {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
   color: var(--text-2);
 }
 
@@ -185,20 +233,22 @@ button {
 
 .row-label small {
   display: block;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-2);
+  margin-top: 1px;
 }
 
 .group {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: var(--space-2);
 }
 
 .group > h2 {
   margin: 0 2px;
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: -0.006em;
 }
 
 .group > .group-desc {
@@ -210,7 +260,7 @@ button {
 
 .mono {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 12px;
+  font-size: 11.5px;
 }
 
 /* --- controls --- */
@@ -219,31 +269,44 @@ button {
   height: 26px;
   padding: 0 12px;
   border-radius: var(--radius-button);
-  border: 1px solid var(--field-border);
+  border: 0;
   background: var(--field);
   color: var(--text);
   font-weight: 500;
   font-size: 12px;
   cursor: default;
-  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-control);
+  transition: filter 0.12s ease;
+}
+
+.btn:hover:not(:disabled) {
+  filter: brightness(0.97);
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 .btn--primary {
   background: var(--accent);
-  border-color: transparent;
   color: #fff;
   font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.06);
 }
 
 .btn--ghost {
   background: transparent;
-  border-color: transparent;
   box-shadow: none;
   color: var(--accent-text);
+}
+
+.btn--ghost:hover:not(:disabled) {
+  filter: none;
+  background: var(--accent-tint);
 }
 
 .linkbtn {
@@ -252,6 +315,12 @@ button {
   color: var(--accent-text);
   font-weight: 500;
   cursor: default;
+  padding: 2px 4px;
+  border-radius: 5px;
+}
+
+.linkbtn:hover {
+  background: var(--accent-tint);
 }
 
 /* A row of buttons that sits under a card, not inside it (#19). */
@@ -274,6 +343,12 @@ button {
   font-size: 12px;
 }
 
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
 .select {
   display: inline-flex;
   align-items: center;
@@ -285,7 +360,7 @@ button {
   background: var(--field);
   color: var(--text);
   font-size: 12px;
-  box-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--shadow-control);
 }
 
 .select svg {
@@ -304,6 +379,7 @@ button {
   background: var(--switch-off);
   position: relative;
   cursor: default;
+  transition: background 0.16s ease;
 }
 
 .switch[aria-checked="true"] {
@@ -320,7 +396,7 @@ button {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  transition: left 0.15s ease;
+  transition: left 0.16s cubic-bezier(0.3, 1.5, 0.6, 1);
 }
 
 .switch[aria-checked="true"]::after {
@@ -328,7 +404,7 @@ button {
 }
 
 .keys {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
@@ -353,16 +429,17 @@ button {
 .pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   padding: 3px 9px 3px 7px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .pill svg {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
 }
 
 .pill--ok {
@@ -389,54 +466,69 @@ button {
 
 .hero {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 14px;
-  padding: 4px 4px 2px;
+  padding: 6px 6px 2px;
 }
 
 .hero h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 19px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
 }
 
 .hero p {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   color: var(--text-2);
+  max-width: 52ch;
 }
 
-.beacon {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  flex: 0 0 12px;
+.hero p .keys {
+  margin: 0 1px;
 }
 
-.beacon::before,
-.beacon::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
+/* The app mark: a listening ring around a caret. Tile form sits in the
+   Home hero; the colour follows app state. */
+.mark {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  margin-top: 2px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-tint);
+  color: var(--accent-text);
 }
 
-.beacon::before {
-  inset: 0;
-  background: var(--ok);
+.mark svg {
+  width: 19px;
+  height: 19px;
 }
 
-.beacon::after {
-  inset: -6px;
-  border: 2px solid var(--ok);
-  opacity: 0.35;
+.mark--attention {
+  background: var(--err-tint);
+  color: var(--err);
 }
 
-.beacon[data-state="recording"]::before {
-  background: var(--accent);
+.mark--recording {
+  animation: mark-pulse 1.7s ease-out infinite;
 }
 
-.beacon[data-state="recording"]::after {
-  border-color: var(--accent);
+@keyframes mark-pulse {
+  from {
+    box-shadow: 0 0 0 0 var(--accent-tint);
+  }
+  to {
+    box-shadow: 0 0 0 11px transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mark--recording {
+    animation: none;
+  }
 }
 
 .empty {
@@ -444,15 +536,15 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 26px 14px 30px;
-  color: var(--text-2);
+  padding: 22px 14px 26px;
+  color: var(--text-3);
   text-align: center;
   font-size: 12px;
 }
 
 .empty svg {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   opacity: 0.7;
 }
 
@@ -480,33 +572,145 @@ button {
   margin: 6px 2px 0;
 }
 
-/* Kept for HotkeySettings.tsx, which still uses the pre-shell classes -
-   its restyle to the card system waits on the shortcut work landing
-   (#215). Everything else on the Settings page uses the tokens above. */
+/* --- permissions page --- */
+
+.perm-progress {
+  margin: -6px 2px 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perm-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.perm-item[data-granted="true"] {
+  opacity: 0.72;
+}
+
+.perm-item__icon {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.perm-item[data-granted="true"] .perm-item__icon {
+  background: var(--ok-tint);
+  color: var(--ok);
+}
+
+.perm-item__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.perm-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.perm-item__title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.perm-item__why {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.perm-item__action {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.perm-footer {
+  display: flex;
+  gap: 8px;
+  padding: 0 2px;
+}
+
+/* --- Push-to-talk shortcut section (HotkeySettings.tsx) ---
+   The component predates the card system and renders a bare
+   <section class="setting"> with an unstyled button. Its markup is
+   owned by the shortcut work (#214/#216); until that lands, this rule
+   set makes it read like the rest of the page - a headed group with a
+   card - using only CSS. */
 .setting {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .setting h2 {
+  margin: 0 2px;
   font-size: 13px;
   font-weight: 600;
-  margin: 0 0 0.4rem;
+  letter-spacing: -0.006em;
 }
 
 .setting-current {
-  font-size: 1.05rem;
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  font-size: 15px;
   font-weight: 600;
-  margin: 0 0 0.4rem;
 }
 
 .setting-guidance {
-  margin: 0 0 0.5rem;
+  margin: 0 2px;
   font-size: 12px;
   color: var(--text-2);
+  max-width: 62ch;
+}
+
+.setting button {
+  align-self: flex-start;
+  height: 26px;
+  padding: 0 12px;
+  border-radius: var(--radius-button);
+  border: 0;
+  background: var(--field);
+  color: var(--text);
+  font-weight: 500;
+  font-size: 12px;
+  cursor: default;
+  box-shadow: var(--shadow-control);
+}
+
+.setting button:disabled {
+  opacity: 0.4;
 }
 
 .setting-error {
   color: var(--err);
   font-size: 12px;
-  margin-top: 0.5rem;
+  margin: 0 2px;
 }
