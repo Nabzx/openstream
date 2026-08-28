@@ -15,6 +15,13 @@ public struct Config {
     // sub-1s dictation budget, so this is deliberately short: catch a
     // target that's a beat slow, fall back for one that's genuinely cold.
     public var axReadyBudgetMs: Double
+    // #227: the same idea on the injection path. decide() used to resolve
+    // the focused element once and, on a miss, drop to blind-paste-or-hold
+    // - so an Electron target whose AX tree wasn't up on the first read
+    // (VS Code, Slack; the #28 case) lost the dictation even though the
+    // tree came good a beat later. Shorter than axReadyBudgetMs because
+    // this sits on the release-to-cursor latency the product commits to.
+    public var axInjectBudgetMs: Double
     public var restoreMs: Double
     public var axValueMaxChars: Int
     public var longTextChars: Int
@@ -25,6 +32,7 @@ public struct Config {
         settleBudgetMs: Double = 1200,
         axDeadlineMs: Double = 150,
         axReadyBudgetMs: Double = 250,
+        axInjectBudgetMs: Double = 200,
         restoreMs: Double = 300,
         axValueMaxChars: Int = 2000,
         longTextChars: Int = 120,
@@ -34,6 +42,7 @@ public struct Config {
         self.settleBudgetMs = settleBudgetMs
         self.axDeadlineMs = axDeadlineMs
         self.axReadyBudgetMs = axReadyBudgetMs
+        self.axInjectBudgetMs = axInjectBudgetMs
         self.restoreMs = restoreMs
         self.axValueMaxChars = axValueMaxChars
         self.longTextChars = longTextChars

@@ -69,7 +69,17 @@ while let line = readLine(strippingNewline: true) {
             deadlineMs: config.axDeadlineMs,
             budgetMs: config.axReadyBudgetMs
         ) else {
-            emit(["id": id, "status": "error", "reason": "focused element unavailable"])
+            // Post-#181 a not-ready AX tree no longer lands here - it comes
+            // back as a context with axReady:false. This nil now means the
+            // tracker has no frontmost app or it carries no bundle id.
+            // trusted is included so a lost Accessibility grant (#46/#88)
+            // is distinguishable from a genuinely missing frontmost app.
+            emit([
+                "id": id,
+                "status": "error",
+                "reason": "no frontmost application",
+                "trusted": AXIsProcessTrusted(),
+            ])
             continue
         }
         emit([

@@ -77,11 +77,27 @@ function createDictationIntake(options) {
         throw new Error("context adapter returned an invalid focus context");
       }
       // #181: when the focused element wasn't AX-ready, isOneLineField is a
-      // safe guess (deny breaks), not the real role. Logged so we can see
-      // how often the fallback fires in practice.
+      // safe guess (deny breaks), not the real role. #227: the resolved
+      // bundle id goes out too, so one failed dictation's console log names
+      // the app context detection actually landed on.
+      emitDiagnostic("context.bundleId", focusContext.bundleId);
       emitDiagnostic("context.axReady", focusContext.axReady !== false);
     } catch (error) {
-      return failed("context", error);
+      // #227: a context read that fails outright (the helper is down, or
+      // nothing is frontmost) used to drop the transcript silently as a
+      // `failed` outcome. We have the words - hold them for manual paste,
+      // cleaned with the safe defaults (deny line breaks), exactly as a
+      // failed delivery does.
+      emitDiagnostic("context.failure", errorMessage(error));
+      const salvaged = cleanup(rawText, { oneLineBox: false, breakSafe: false });
+      if (!salvaged) {
+        return { status: "no-speech" };
+      }
+      return {
+        status: "held",
+        text: salvaged,
+        reason: `couldn't read the focused field: ${errorMessage(error)}`,
+      };
     }
 
     const breakSafe = isBreakSafeApplication(focusContext.bundleId);

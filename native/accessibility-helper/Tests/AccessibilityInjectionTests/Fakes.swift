@@ -42,13 +42,23 @@ final class FakeAccessibilityTarget: AccessibilityTarget {
 
 final class FakeFocusResolver: FocusResolving {
     var target: AccessibilityTarget?
+    // #227: the injection path now retries within a budget. A positive
+    // value here makes the first N reads miss, so a test can prove the
+    // retry recovers a briefly-not-ready AX tree.
+    var missesBeforeSuccess: Int
+    private(set) var callCount = 0
 
-    init(target: AccessibilityTarget?) {
+    init(target: AccessibilityTarget?, missesBeforeSuccess: Int = 0) {
         self.target = target
+        self.missesBeforeSuccess = missesBeforeSuccess
     }
 
     func resolveFocusedElement(deadlineMs _: Double) -> AccessibilityTarget? {
-        target
+        callCount += 1
+        if callCount <= missesBeforeSuccess {
+            return nil
+        }
+        return target
     }
 }
 

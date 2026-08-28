@@ -388,6 +388,14 @@ async function transcribeAndPrint(wavBuffer, timing) {
     return;
   }
 
+  // #227: one greppable line per dictation, so a single failed attempt on a
+  // real Mac names the stage that failed without piecing the diagnostics
+  // together by hand.
+  const summary = [`[dictation] outcome: ${result.status}`];
+  if (result.stage) summary.push(`stage=${result.stage}`);
+  if (result.reason) summary.push(`reason=${JSON.stringify(result.reason)}`);
+  console.log(summary.join(" "));
+
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");

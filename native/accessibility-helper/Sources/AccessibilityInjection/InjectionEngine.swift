@@ -48,7 +48,22 @@ public final class InjectionEngine {
             sleep(0.02)
         }
 
-        guard let focused = focusResolver.resolveFocusedElement(deadlineMs: config.axDeadlineMs) else {
+        // Resolve the focused element, retrying a not-yet-ready AX tree
+        // within a short budget (#227). #181 gave context detection this
+        // same treatment; the injection path had none, so an Electron
+        // target whose tree wasn't up on the first read (VS Code, Slack -
+        // the #28 case, common when OpenStream itself was launched from an
+        // IDE terminal) fell straight through to blind-paste-or-hold. Each
+        // attempt is still capped by axDeadlineMs; the retry only costs
+        // latency when the first read actually missed.
+        let focusDeadline = now().addingTimeInterval(config.axInjectBudgetMs / 1000.0)
+        var resolved = focusResolver.resolveFocusedElement(deadlineMs: config.axDeadlineMs)
+        while resolved == nil, now() < focusDeadline {
+            sleep(0.04)
+            resolved = focusResolver.resolveFocusedElement(deadlineMs: config.axDeadlineMs)
+        }
+
+        guard let focused = resolved else {
             // Rung 0 didn't answer, or nothing is frontmost at all. The
             // narrow exception settled on #62: a known app that has sat
             // still well past the settle guard is a much smaller unknown
