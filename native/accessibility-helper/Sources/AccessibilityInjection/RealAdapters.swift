@@ -41,6 +41,13 @@ public final class RealAXTarget: AccessibilityTarget {
         guard err == .success else { return nil }
         return valueRef as? String
     }
+
+    public func readSelectedText() -> String? {
+        var selectedRef: CFTypeRef?
+        let err = AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedRef)
+        guard err == .success else { return nil }
+        return selectedRef as? String
+    }
 }
 
 // Tracks when the frontmost app last changed, so delivery can be gated on it
@@ -153,6 +160,27 @@ public final class RealFocusResolver: FocusResolving {
 
         let role = focused.fieldInfo.role
         return (bundleId, role == "AXTextField" || role == "AXComboBox")
+    }
+
+    // Voice editing (#17): the focused field's current selection, plus the
+    // same bundle id / one-line-field context focusContext() returns.
+    // nil means the focused element or the attribute could not be read;
+    // an empty selectedText means there is simply nothing selected.
+    public func selectionContext(deadlineMs: Double) -> (bundleId: String, isOneLineField: Bool, selectedText: String)? {
+        guard let frontApp = tracker.currentFrontmostApp() else {
+            log("selectionContext: tracker has no frontmost app cached")
+            return nil
+        }
+        guard let bundleId = frontApp.bundleIdentifier else {
+            log("selectionContext: frontmost app has no bundle identifier")
+            return nil
+        }
+        guard let focused = resolveFocusedElement(deadlineMs: deadlineMs) else {
+            return nil
+        }
+        let role = focused.fieldInfo.role
+        let isOneLineField = role == "AXTextField" || role == "AXComboBox"
+        return (bundleId, isOneLineField, focused.readSelectedText() ?? "")
     }
 
     // Chromium's own AX tree is normally built lazily, only once Chromium
