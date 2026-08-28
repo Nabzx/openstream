@@ -254,6 +254,14 @@ button {
   cursor: default;
 }
 
+/* A row of buttons that sits under a card, not inside it (#19). */
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .field {
   flex: 1;
   height: 28px;
