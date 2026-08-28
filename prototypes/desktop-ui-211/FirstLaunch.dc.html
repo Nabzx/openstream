@@ -1,0 +1,130 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #007aff; text-decoration: none; }
+    a:hover { color: #0063cc; }
+
+    .win {
+      --bg: #ececec; --surface: #ffffff; --surface-2: #f5f5f7;
+      --toolbar: #f6f6f6; --text: #1d1d1f; --text-2: #6e6e73;
+      --sep: rgba(0,0,0,0.10); --accent: #007aff; --accent-tint: rgba(0,122,255,0.12);
+      --green: #34c759; --amber: #ff9f0a; --keycap: #ffffff; --keycap-b: rgba(0,0,0,0.16);
+      --field-b: rgba(0,0,0,0.18);
+      --shadow: 0 1px 2px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.05);
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      background: var(--bg); color: var(--text); border-radius: 12px; overflow: hidden;
+      position: relative; font-size: 13px; line-height: 1.4;
+    }
+    .traffic { position: absolute; top: 18px; left: 16px; display: flex; gap: 8px; z-index: 3; }
+    .traffic i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+    .traffic i:nth-child(1) { background: #ff5f57; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12); }
+    .traffic i:nth-child(2) { background: #febc2e; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12); }
+    .traffic i:nth-child(3) { background: #28c840; box-shadow: inset 0 0 0 0.5px rgba(0,0,0,0.12); }
+
+    .toolbar { height: 52px; flex: 0 0 52px; display: flex; align-items: center; gap: 4px; padding: 0 16px 0 92px; background: var(--toolbar); border-bottom: 1px solid var(--sep); }
+    .navitem { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px; border-radius: 7px; color: var(--text-2); font-weight: 500; cursor: default; }
+    .navitem svg { width: 16px; height: 16px; }
+    .navitem.is-active { background: var(--accent-tint); color: var(--accent); }
+
+    .body { flex: 1; overflow: auto; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+
+    .hero { padding: 6px 4px 2px; }
+    .hero h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; }
+    .hero p { margin: 4px 0 0; color: var(--text-2); max-width: 54ch; }
+
+    .card { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); }
+    .card-h { padding: 10px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); }
+    .row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--sep); min-height: 46px; }
+    .row:first-child { border-top: 0; }
+    .row .ic { width: 18px; height: 18px; color: var(--text-2); flex: 0 0 18px; }
+    .row .lbl { flex: 1; }
+    .row .lbl small { display: block; color: var(--text-2); font-size: 12px; }
+
+    .keys { display: flex; align-items: center; gap: 4px; }
+    .keycap { min-width: 22px; height: 22px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; background: var(--keycap); border: 1px solid var(--keycap-b); border-bottom-width: 2px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+
+    .btn { height: 26px; padding: 0 12px; border-radius: 7px; border: 1px solid transparent; background: var(--accent); color: #fff; font: inherit; font-weight: 600; font-size: 12px; cursor: default; }
+    .btn--sec { background: #fff; color: var(--text); border-color: var(--field-b); box-shadow: 0 1px 1.5px rgba(0,0,0,0.05); font-weight: 500; }
+    .linkbtn { color: var(--accent); font-weight: 500; cursor: default; }
+
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .pill svg { width: 13px; height: 13px; }
+    .pill--ok { background: rgba(52,199,89,0.16); color: #248a3d; }
+    .pill--wait { background: rgba(255,159,10,0.18); color: #9a6100; }
+
+    .foot { margin-top: auto; padding: 8px 4px 0; color: var(--text-2); font-size: 12px; display: flex; align-items: center; gap: 7px; }
+    .foot svg { width: 14px; height: 14px; }
+  </style>
+</helmet>
+
+<div class="win">
+  <div class="traffic"><i></i><i></i><i></i></div>
+
+  <div class="toolbar">
+    <div class="navitem is-active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/></svg>
+      Home
+    </div>
+    <div class="navitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M4.2 7l2.1 1.2M17.7 15.8l2.1 1.2M4.2 17l2.1-1.2M17.7 8.2l2.1-1.2"/></svg>
+      Settings
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="hero">
+      <h1>Welcome to OpenStream</h1>
+      <p>Dictate into any app &mdash; hold a key, speak, and the text lands at your cursor. Nothing leaves your Mac. Two macOS permissions are needed before the shortcut works.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-h">Permissions</div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>
+        <span class="lbl">Accessibility <small>Lets OpenStream place text at the cursor</small></span>
+        <button class="btn">Open Settings</button>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01"/></svg>
+        <span class="lbl">Input Monitoring <small>Lets the shortcut work in every app</small></span>
+        <button class="btn">Open Settings</button>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>
+        <span class="lbl">Microphone</span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Granted</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>
+        <span class="lbl">Push-to-talk shortcut</span>
+        <span class="keys"><span class="keycap">&#8963;</span><span class="keycap">&#8997;</span><span class="keycap">D</span></span>
+        <span class="linkbtn" style="margin-left:10px">Change</span>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-5 4 10 2-5h4"/></svg>
+        <span class="lbl">On-device models</span>
+        <span class="pill pill--wait">Warming up&#8230;</span>
+      </div>
+    </div>
+
+    <div class="foot">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      Close this window any time &mdash; OpenStream keeps running in the menu bar.
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

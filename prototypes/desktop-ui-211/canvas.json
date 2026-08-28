@@ -1,0 +1,24 @@
+{
+  "pages": [
+    { "id": "page-1", "name": "Screens" },
+    { "id": "page-2", "name": "System & nav option" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Home — light", "page": "page-1", "x": 0, "y": 0, "w": 760, "h": 580 },
+    { "file": "HomeDark.dc.html", "title": "Home — dark", "page": "page-1", "x": 840, "y": 0, "w": 760, "h": 580 },
+    { "file": "FirstLaunch.dc.html", "title": "First launch", "page": "page-1", "x": 1680, "y": 0, "w": 760, "h": 580 },
+    { "file": "Settings.dc.html", "title": "Settings — light", "page": "page-1", "x": 0, "y": 720, "w": 760, "h": 880 },
+    { "file": "SettingsDark.dc.html", "title": "Settings — dark", "page": "page-1", "x": 840, "y": 720, "w": 760, "h": 880 },
+    { "file": "NavAlternate.dc.html", "title": "Direction B — sidebar nav", "page": "page-2", "x": 0, "y": 0, "w": 760, "h": 580 },
+    { "file": "DesignSystem.dc.html", "title": "Design system", "page": "page-2", "x": 840, "y": 0, "w": 840, "h": 1280 }
+  ],
+  "annotations": [
+    { "id": "note-home", "page": "page-1", "x": 0, "y": -150, "w": 320, "text": "Direction A — toolbar tabs after the traffic lights. Home is the default page on open. All-green is the steady 'it's working' state." },
+    { "id": "note-dark", "page": "page-1", "x": 840, "y": -130, "w": 300, "text": "Dark palette — same layout, semantic colour swap only. Text at white 92% matches the overlay." },
+    { "id": "note-first", "page": "page-1", "x": 1680, "y": -170, "w": 340, "text": "First launch only; later launches go silent to the tray. The permission-REQUEST flow logic is #47 / #89 / #88 — this is only the window state a fresh install opens to." },
+    { "id": "note-settings", "page": "page-1", "x": -360, "y": 720, "w": 320, "text": "One scrolling page, macOS System Settings grouping. Startup (#135) and Microphone (#137) shown as designed-for slots; Vocabulary (#16) deliberately absent." },
+    { "id": "note-nav", "page": "page-2", "x": 0, "y": -160, "w": 340, "text": "Direction B — a 176px sidebar instead of toolbar tabs, with Quit pinned to the bottom. Open question from the map: a sidebar for two items may be heavy. Pick A or B before #212." },
+    { "id": "note-system", "page": "page-2", "x": 840, "y": -140, "w": 320, "text": "Tokens extend the push-to-talk overlay (system-blue accent, radii, SF). Solid window; vibrancy only on the 52px toolbar strip." }
+  ],
+  "launch": { "view": "canvas", "page": "page-1" }
+}

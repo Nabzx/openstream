@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #0a84ff; text-decoration: none; }
+    a:hover { color: #409cff; }
+
+    .win {
+      --bg: #1e1e1e; --surface: #2c2c2e; --surface-2: #323234;
+      --toolbar: #282828; --text: rgba(255,255,255,0.92); --text-2: rgba(255,255,255,0.55);
+      --sep: rgba(255,255,255,0.10); --accent: #0a84ff; --accent-tint: rgba(10,132,255,0.24);
+      --green: #30d158; --keycap: #3a3a3c; --keycap-b: rgba(255,255,255,0.16);
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(0,0,0,0.5);
+      width: 100%; height: 100%; display: flex; flex-direction: column;
+      background: var(--bg); color: var(--text); border-radius: 12px; overflow: hidden;
+      position: relative; font-size: 13px; line-height: 1.4;
+    }
+    .traffic { position: absolute; top: 18px; left: 16px; display: flex; gap: 8px; z-index: 3; }
+    .traffic i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+    .traffic i:nth-child(1) { background: #ff5f57; }
+    .traffic i:nth-child(2) { background: #febc2e; }
+    .traffic i:nth-child(3) { background: #28c840; }
+
+    .toolbar {
+      height: 52px; flex: 0 0 52px; display: flex; align-items: center; gap: 4px;
+      padding: 0 16px 0 92px; background: var(--toolbar);
+      border-bottom: 1px solid var(--sep);
+    }
+    .navitem {
+      display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px;
+      border-radius: 7px; color: var(--text-2); font-weight: 500; cursor: default;
+    }
+    .navitem svg { width: 16px; height: 16px; }
+    .navitem.is-active { background: var(--accent-tint); color: #6cb4ff; }
+
+    .body { flex: 1; overflow: auto; padding: 22px; display: flex; flex-direction: column; gap: 18px; }
+
+    .hero { display: flex; align-items: center; gap: 14px; padding: 4px 4px 2px; }
+    .beacon { position: relative; width: 12px; height: 12px; flex: 0 0 12px; }
+    .beacon i { position: absolute; inset: 0; border-radius: 50%; background: var(--green); }
+    .beacon i::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--green); opacity: 0.35; }
+    .hero h1 { margin: 0; font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
+    .hero p { margin: 2px 0 0; color: var(--text-2); }
+
+    .card { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); }
+    .card-h { padding: 10px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-2); }
+
+    .row { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-top: 1px solid var(--sep); }
+    .row:first-child { border-top: 0; }
+    .row .ic { width: 18px; height: 18px; color: var(--text-2); flex: 0 0 18px; }
+    .row .lbl { flex: 1; }
+    .row .lbl small { display: block; color: var(--text-2); font-size: 12px; }
+
+    .keys { display: flex; align-items: center; gap: 4px; }
+    .keycap {
+      min-width: 22px; height: 22px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center;
+      background: var(--keycap); border: 1px solid var(--keycap-b); border-bottom-width: 2px;
+      border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--text);
+    }
+
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 7px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+    .pill svg { width: 13px; height: 13px; }
+    .pill--ok { background: rgba(48,209,88,0.20); color: #30d158; }
+
+    .linkbtn { color: #6cb4ff; font-weight: 500; cursor: default; }
+
+    .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 26px 14px 30px; color: var(--text-2); text-align: center; }
+    .empty svg { width: 24px; height: 24px; opacity: 0.7; }
+    .empty span { font-size: 12px; }
+  </style>
+</helmet>
+
+<div class="win">
+  <div class="traffic"><i></i><i></i><i></i></div>
+
+  <div class="toolbar">
+    <div class="navitem is-active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 5l8 6.5"/><path d="M6 10v9h12v-9"/></svg>
+      Home
+    </div>
+    <div class="navitem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M4.2 7l2.1 1.2M17.7 15.8l2.1 1.2M4.2 17l2.1-1.2M17.7 8.2l2.1-1.2"/></svg>
+      Settings
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="hero">
+      <span class="beacon"><i></i></span>
+      <div>
+        <h1>OpenStream is listening</h1>
+        <p>Hold <b>&#8963;&#8997;D</b> anywhere and speak &mdash; your words land at the cursor.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>
+        <span class="lbl">Push-to-talk shortcut</span>
+        <span class="keys"><span class="keycap">&#8963;</span><span class="keycap">&#8997;</span><span class="keycap">D</span></span>
+        <span class="linkbtn" style="margin-left:10px">Change</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">Status</div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg>
+        <span class="lbl">Accessibility</span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Granted</span>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 11h.01M11 11h.01M15 11h.01"/></svg>
+        <span class="lbl">Input Monitoring</span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Granted</span>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4"/></svg>
+        <span class="lbl">Microphone</span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Granted</span>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-5 4 10 2-5h4"/></svg>
+        <span class="lbl">Transcription model <small>Local &middot; whisper.cpp</small></span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Ready</span>
+      </div>
+      <div class="row">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h4l2-5 4 10 2-5h4"/></svg>
+        <span class="lbl">Rewrite model <small>Local &middot; paragraph breaks</small></span>
+        <span class="pill pill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>Ready</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h">Recent</div>
+      <div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>Your recent dictations will appear here.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
