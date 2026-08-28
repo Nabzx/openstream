@@ -60,6 +60,44 @@ test("accessibility helper correlates context and insertion replies received out
   helper.stop();
 });
 
+test("getSelection returns the selection and focus context on an ok reply", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createAccessibilityHelper({ spawnProcess: () => child });
+  helper.start();
+
+  const selectionPromise = helper.getSelection();
+  await nextTurn();
+  assert.deepEqual(requests, [{ id: "1", cmd: "selection" }]);
+
+  child.stdout.write('{"id":"1","status":"ok","text":"getUserName","bundleId":"com.microsoft.VSCode","isOneLineField":false}\n');
+  assert.deepEqual(await selectionPromise, {
+    text: "getUserName",
+    focusContext: { bundleId: "com.microsoft.VSCode", isOneLineField: false },
+  });
+  helper.stop();
+});
+
+test("getSelection returns null on an empty reply, an error reply, or a timeout", async () => {
+  const child = fakeProcess();
+  const helper = createAccessibilityHelper({ spawnProcess: () => child, requestTimeoutMs: 20 });
+  helper.start();
+
+  const empty = helper.getSelection();
+  await nextTurn();
+  child.stdout.write('{"id":"1","status":"empty"}\n');
+  assert.equal(await empty, null);
+
+  const errored = helper.getSelection();
+  await nextTurn();
+  child.stdout.write('{"id":"2","status":"error","reason":"focused element unavailable"}\n');
+  assert.equal(await errored, null);
+
+  const timedOut = helper.getSelection();
+  assert.equal(await timedOut, null);
+  helper.stop();
+});
+
 test("accessibility helper returns a held insertion without retrying it", async () => {
   const child = fakeProcess();
   const requests = readRequests(child);

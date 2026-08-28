@@ -16,13 +16,26 @@ function setBars(levels) {
   bars.forEach((bar, i) => bar.style.setProperty("--level", levels[i]));
 }
 
+const STATUS_TEXT = { recording: "Listening", editing: "Editing…" };
+
 window.openstreamOverlay.onStateChange((state) => {
-  status.textContent = state === "recording" ? "Listening" : "Idle";
   document.body.dataset.state = state;
+  // A voice-edit message (edit-message) sets its own status text; don't
+  // stamp over it here.
+  if (state !== "edit-message") {
+    status.textContent = STATUS_TEXT[state] ?? "Idle";
+  }
   if (state !== "recording") {
     levelHistory.fill(IDLE_LEVEL);
     setBars(levelHistory);
   }
+});
+
+// #17: a brief message after a voice edit that wasn't applied - an
+// unrecognised command, or a selection that didn't fit the command.
+window.openstreamOverlay.onVoiceEditMessage((text) => {
+  status.textContent = text;
+  document.body.dataset.state = "edit-message";
 });
 
 window.openstreamOverlay.onSoundLevel((level) => {

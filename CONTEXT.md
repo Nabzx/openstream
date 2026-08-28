@@ -27,8 +27,16 @@ The finished text from a completed recording that could not be placed at the cur
 _Avoid_: Failed dictation, lost text
 
 **Voice edit**:
-A rewrite of text the user has already selected, requested by speaking a command such as "make this a bullet list". Distinct from dictation: the user asks for it explicitly and expects to wait.
-_Avoid_: Cleanup, correction, LLM pass
+A transform of text the user has already selected, requested by speaking a Voice-edit command such as "snake case" or "bullet list". Distinct from dictation: the user selects text first and asks for the change explicitly. In v0.3 the transforms are deterministic and run with no model - a semantic rewrite ("make this shorter") is out of scope until a capable model fills the rewrite model server role.
+_Avoid_: Cleanup, correction, LLM pass, rewrite
+
+**Voice-edit command**:
+The spoken phrase that selects a transform from the fixed grammar (`electron/voiceEditCommands.js`). Finite and explicit - a phrase the grammar does not recognise leaves the selection untouched.
+_Avoid_: Prompt, instruction
+
+**Held edit**:
+A completed Voice-edit result that could not be placed - the target moved, or it cannot take the line breaks the transform produced (a flattened bullet list is useless). Lives in the Push-to-talk overlay for manual copy, like a Held result.
+_Avoid_: Failed edit
 
 ### Model processes
 

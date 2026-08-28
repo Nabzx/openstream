@@ -8,6 +8,14 @@ public protocol AccessibilityTarget {
     var fieldInfo: FieldInfo { get }
     func writeAtCaret(_ text: String) -> Bool
     func readValue() -> String?
+    // The user's current selection (#17, voice editing). Distinct from
+    // readValue(), which returns the whole field. Optional with a nil
+    // default so fakes that don't care about selection needn't implement it.
+    func readSelectedText() -> String?
+}
+
+public extension AccessibilityTarget {
+    func readSelectedText() -> String? { nil }
 }
 
 public protocol FocusResolving {
