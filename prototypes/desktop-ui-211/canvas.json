@@ -10,7 +10,7 @@
     { "file": "Settings.dc.html", "title": "Settings — light", "page": "page-1", "x": 0, "y": 720, "w": 760, "h": 880 },
     { "file": "SettingsDark.dc.html", "title": "Settings — dark", "page": "page-1", "x": 840, "y": 720, "w": 760, "h": 880 },
     { "file": "NavAlternate.dc.html", "title": "Rejected — sidebar nav", "page": "page-2", "x": 0, "y": 0, "w": 760, "h": 580 },
-    { "file": "DesignSystem.dc.html", "title": "Design system", "page": "page-2", "x": 840, "y": 0, "w": 840, "h": 1280 }
+    { "file": "DesignSystem.dc.html", "title": "Design system", "page": "page-2", "x": 840, "y": 0, "w": 840, "h": 1680 }
   ],
   "annotations": [
     { "id": "note-home", "page": "page-1", "x": 0, "y": -150, "w": 320, "text": "Direction A — CHOSEN (2026-08-28). Toolbar tabs after the traffic lights. Home is the default page on open. All-green is the steady 'it's working' state." },
