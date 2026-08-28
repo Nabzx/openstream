@@ -108,7 +108,7 @@ npm run typecheck
 npm run build
 ```
 
-The global hotkey, macOS permission prompts, microphone capture, and insertion into other applications still need a real Mac and a human check. Run [`scripts/verify-dictation-pipeline.sh`](scripts/verify-dictation-pipeline.sh); the [manual-check notes](docs/testing/hotkey-transcribe-manual-check.md) explain what it measures.
+The global hotkey, macOS permission prompts, microphone capture, and insertion into other applications still need a real Mac and a human check. Run [`scripts/verify-dictation-pipeline.sh`](scripts/verify-dictation-pipeline.sh); the [pipeline notes](docs/testing/hotkey-transcribe-manual-check.md) explain what it measures. The [shortcut verification notes](docs/testing/settings-hotkey-remap-manual-check.md) contain the conditional-key matrix and replacement checks.
 
 ## Project status
 
