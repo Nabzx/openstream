@@ -5,6 +5,7 @@ const {
   BrowserWindow,
   clipboard,
   dialog,
+  globalShortcut,
   ipcMain,
   nativeImage,
   screen,
@@ -411,15 +412,35 @@ async function transcribeAndPrint(wavBuffer, timing) {
   }
 }
 
+// #134: Escape aborts a recording in progress. Registered only while
+// recording (a few seconds), so it isn't hijacking Escape from the app
+// the user is dictating into the rest of the time - and during a
+// dictation, an Escape press means "cancel this", not something in that
+// app the user is deliberately not touching.
+function armCancelShortcut() {
+  const registered = globalShortcut.register("Escape", () => pushToTalkCoordinator.cancel());
+  if (!registered) console.error("[dictation] couldn't register Escape to cancel - Escape won't abort a recording");
+}
+function disarmCancelShortcut() {
+  globalShortcut.unregister("Escape");
+}
+
 const pushToTalkCoordinator = createPushToTalkCoordinator({
   startCapture() {
     if (!captureWin) return;
     captureWin.webContents.send("start-recording");
-    console.log("[dictation] recording - release the hotkey to stop");
+    armCancelShortcut();
+    console.log("[dictation] recording - release the hotkey to stop, Escape to cancel");
   },
   stopCapture(timing) {
+    disarmCancelShortcut();
     if (!captureWin) return;
     captureWin.webContents.send("stop-recording", timing);
+  },
+  cancelCapture() {
+    disarmCancelShortcut();
+    if (captureWin) captureWin.webContents.send("cancel-recording");
+    console.log("[dictation] cancelled");
   },
   setUserVisibleState,
   onStuckRecording() {
@@ -730,6 +751,7 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
+  globalShortcut.unregisterAll();
   pushToTalkShortcut?.stop();
   accessibilityHelper.stop();
   whisperServer.stop();

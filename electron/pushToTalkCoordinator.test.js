@@ -95,6 +95,59 @@ test("a keyUp that never arrives is force-stopped by the safety timeout, and the
   assert.deepEqual(captureCommands, ["start", "stop", "start"]);
 });
 
+// #134: Escape mid-recording discards the audio without transcribing.
+test("cancel() during a recording discards the capture and returns to idle", () => {
+  const captureCommands = [];
+  const states = [];
+  const timers = createFakeTimers();
+  const coordinator = createPushToTalkCoordinator({
+    startCapture: () => captureCommands.push("start"),
+    stopCapture: () => captureCommands.push("stop"),
+    cancelCapture: () => captureCommands.push("cancel"),
+    setUserVisibleState: (state) => states.push(state),
+    setSafetyTimer: timers.setSafetyTimer,
+    clearSafetyTimer: timers.clearSafetyTimer,
+  });
+
+  coordinator.keyDown();
+  coordinator.cancel();
+
+  // No stopCapture, so no WAV is encoded and recording-complete never fires.
+  assert.deepEqual(captureCommands, ["start", "cancel"]);
+  assert.deepEqual(states, ["recording", "idle"]);
+  assert.equal(timers.isPending(), false);
+  assert.equal(coordinator.isRecording(), false);
+});
+
+test("cancel() with no recording in progress is a no-op", () => {
+  const captureCommands = [];
+  const coordinator = createPushToTalkCoordinator({
+    startCapture: () => captureCommands.push("start"),
+    stopCapture: () => captureCommands.push("stop"),
+    cancelCapture: () => captureCommands.push("cancel"),
+    setUserVisibleState: () => {},
+  });
+
+  coordinator.cancel();
+  assert.deepEqual(captureCommands, []);
+});
+
+test("a keyUp after a cancel does nothing - the recording is already over", () => {
+  const captureCommands = [];
+  const coordinator = createPushToTalkCoordinator({
+    startCapture: () => captureCommands.push("start"),
+    stopCapture: () => captureCommands.push("stop"),
+    cancelCapture: () => captureCommands.push("cancel"),
+    setUserVisibleState: () => {},
+  });
+
+  coordinator.keyDown();
+  coordinator.cancel();
+  coordinator.keyUp();
+
+  assert.deepEqual(captureCommands, ["start", "cancel"]);
+});
+
 test("a normal keyUp cancels the safety timeout instead of double-stopping later", () => {
   const captureCommands = [];
   const stuckEvents = [];
