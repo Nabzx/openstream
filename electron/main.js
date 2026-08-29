@@ -310,14 +310,10 @@ function createOverlayWindow() {
     focusable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    // Real macOS frosted-glass blur, not a flat dark box - "hud" is the
-    // vibrancy material Apple's own HUD-style floating panels use.
-    // visualEffectState defaults to "follow-window", which renders the
-    // dimmer inactive appearance for a window that's never focused (this
-    // one is always shown via showInactive()) - forcing "active" keeps the
-    // vibrancy at full strength regardless.
-    vibrancy: "hud",
-    visualEffectState: "active",
+    // No vibrancy: the terminal rebrand (#281) wants a solid near-black
+    // panel, not frosted glass. The window stays frameless + transparent so
+    // overlay.css paints the panel (solid --bg, a 1px phosphor border, a
+    // faint scanline) and the transparent margin around it disappears.
     webPreferences: {
       preload: path.join(__dirname, "overlay", "overlayPreload.js"),
       contextIsolation: true,
@@ -326,12 +322,6 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-  // Reapplied explicitly, not just passed to the constructor: on a
-  // frameless + transparent window this pairing has been unreliable at
-  // construction time on some Electron/macOS combinations, and calling
-  // setVibrancy() again once the native window actually exists is the
-  // documented workaround.
-  overlayWin.setVibrancy("hud");
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
