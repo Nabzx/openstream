@@ -82,6 +82,7 @@ See [docs/progress/phase-3-progress.md](docs/progress/phase-3-progress.md) for t
 - [x] **Window redesign** — the desktop window got a real visual pass: refreshed tokens, an app mark, a calmer Home page, a proper Permissions gate screen, live dictation activity ([#242](https://github.com/Nabzx/openstream/issues/242), and the app/menu-bar icons in [#244](https://github.com/Nabzx/openstream/issues/244)).
 - [x] **Track-A pipeline fixes** — Escape-to-cancel ([#134](https://github.com/Nabzx/openstream/issues/134)), the AX-readiness fallback so a slow Chromium tree no longer fails a dictation ([#181](https://github.com/Nabzx/openstream/issues/181)), and the IDE-terminal delivery gaps ([#227](https://github.com/Nabzx/openstream/issues/227)).
 - [x] **Short landing page** ([#21](https://github.com/Nabzx/openstream/issues/21)) — `site/index.html`. The demo GIF is still outstanding.
+- [ ] **Shrink the app** ([#249](https://github.com/Nabzx/openstream/issues/249)) — download models on first run instead of bundling them. OpenSuperWhisper's DMG is 11 MB; ours is ~1.3 GB. This is the single most damaging line in any comparison and it blocks a sane auto-update story. Reverses [#30](https://github.com/Nabzx/openstream/issues/30).
 - [ ] **Pre-launch manual verification pass** ([#228](https://github.com/Nabzx/openstream/issues/228)) — the checks CI cannot drive, against the near-final build: the voice-edit matrix, IDE-terminal dictation, end-to-end dictation + latency, the shortcut matrix, the break-safe apps setting. This is what stands between here and the tag.
 - [ ] **Demo GIF** — a short screen recording of a real dictation, into the README and the landing page.
 - [ ] **Real-dictation eval corpus** ([#171](https://github.com/Nabzx/openstream/issues/171)) — human-recorded clips for the rules-cleanup fixture. Clears the one deliberately-red test; can slip to a point release.
@@ -100,15 +101,24 @@ See [docs/progress/phase-4-progress.md](docs/progress/phase-4-progress.md) for t
 
 ## After v1.0
 
-Open to outside contributors. Backlog candidates: Linux/Windows ports, per-project config files, custom wake-word-free modes, team-shared vocabulary packs. Not scoped yet — revisit after launch feedback.
+The read on the competition is in [docs/competitive/opensuperwhisper.md](docs/competitive/opensuperwhisper.md): OpenSuperWhisper leads on distribution and model options; OpenStream leads on everything that happens *after* the transcript. The plan below closes the parity gap while pressing that advantage. Milestones `v1.1` and `v1.2` on the tracker hold these issues.
 
-### v1.1 candidates
+### v1.1 — parity + the quick wins their users are begging for
 
-- **Code signing + notarisation + Homebrew cask + `electron-updater`** ([#11](https://github.com/Nabzx/openstream/issues/11)) — the first thing that makes the DMG a real install path and fixes the rebuild-resets-grants problem ([#46](https://github.com/Nabzx/openstream/issues/46), [#88](https://github.com/Nabzx/openstream/issues/88)) for people who don't build from source.
-- **Parakeet TDT 0.6B v3 as the transcription model server** ([#176](https://github.com/Nabzx/openstream/issues/176), [#204](https://github.com/Nabzx/openstream/issues/204), [#205](https://github.com/Nabzx/openstream/issues/205)) — replace `whisper base.en`. The pipeline shape does not change ([ADR-0002](docs/adr/0002-no-one-model-dictation-engine.md)): Parakeet emits raw text, Rules cleanup still does all cleanup. The gate is proving a local runtime on Apple Silicon (NeMo-Speech.cpp / sherpa-onnx / parakeet-mlx are candidates; none built yet) and measuring latency, memory, and artifact size against the contract. [#178](https://github.com/Nabzx/openstream/issues/178) already rejected Parakeet as a *one-model* engine.
-- **Semantic voice edits** ([#222](https://github.com/Nabzx/openstream/issues/222)) — re-test a spoken rewrite command ("shorter", "fix grammar") against Qwen3-1.7B / Granite-3.3-2B in the rewrite role.
+- **Signing + notarisation + Homebrew + auto-update** ([#11](https://github.com/Nabzx/openstream/issues/11)) — the first thing that makes the DMG a real install path (`brew install` vs. "compile whisper.cpp yourself"). Pairs with [#249](https://github.com/Nabzx/openstream/issues/249) (shrinking the app). Strong candidate to pull into v1.0.
+- **Codebase vocabulary biasing** ([#250](https://github.com/Nabzx/openstream/issues/250)) — un-shelve [#16](https://github.com/Nabzx/openstream/issues/16). Already built; their users have asked for it twice and it was never shipped. Fastest possible lead.
+- **In-app model picker + download** ([#251](https://github.com/Nabzx/openstream/issues/251)), **multiple languages + auto-detect** ([#252](https://github.com/Nabzx/openstream/issues/252)), **drag-and-drop file transcription** ([#253](https://github.com/Nabzx/openstream/issues/253)).
+- **Parakeet TDT 0.6B v3 as the transcription model server** ([#176](https://github.com/Nabzx/openstream/issues/176), [#204](https://github.com/Nabzx/openstream/issues/204), [#205](https://github.com/Nabzx/openstream/issues/205)) — replace `whisper base.en`. Pipeline shape unchanged ([ADR-0002](docs/adr/0002-no-one-model-dictation-engine.md)); the gate is proving a local runtime on Apple Silicon. OpenSuperWhisper already ships Parakeet via FluidAudio's Swift/CoreML package.
+- **Polish parity** — surface model-server failures to the user ([#254](https://github.com/Nabzx/openstream/issues/254)), copy-to-clipboard option ([#255](https://github.com/Nabzx/openstream/issues/255)), completion chime + indicator position ([#256](https://github.com/Nabzx/openstream/issues/256)), idle model unload ([#257](https://github.com/Nabzx/openstream/issues/257)), mouse-button trigger ([#258](https://github.com/Nabzx/openstream/issues/258)), and the deferred [#136](https://github.com/Nabzx/openstream/issues/136) / [#137](https://github.com/Nabzx/openstream/issues/137).
+
+### v1.2 — the overtake features (neither app has them)
+
+- **Post-processing hooks after cleanup** ([#259](https://github.com/Nabzx/openstream/issues/259)) — their [#55]. Also the home for semantic voice edits ([#222](https://github.com/Nabzx/openstream/issues/222)).
+- **Per-app / profile behaviour** ([#260](https://github.com/Nabzx/openstream/issues/260)) — their [#203]. We already detect the frontmost app for break-safety; extend it.
+- **Coding-agent dictation mode** ([#261](https://github.com/Nabzx/openstream/issues/261)) — their [#188]. Our lane.
+- **Live partial-text display during recording** ([#262](https://github.com/Nabzx/openstream/issues/262)).
 
 ### Backlog
 
-- **Codebase vocabulary scanner** ([#16](https://github.com/Nabzx/openstream/issues/16)) — moved here from Phase 3. Built, not shipped: the scanning/caching/pipeline wiring exists and is tested (PR #185), the Settings UI is unhooked. Before re-enabling: confirm a live dictation with a configured project path actually gets the biased prompt end to end (a `vocabulary.promptLength` diagnostic exists for exactly this check and hasn't been read back yet).
-- **Recording history / replay last transcription** ([#136](https://github.com/Nabzx/openstream/issues/136)), **microphone device selector** ([#137](https://github.com/Nabzx/openstream/issues/137)), **crash reporting** ([#138](https://github.com/Nabzx/openstream/issues/138)).
+- **CLI** ([#263](https://github.com/Nabzx/openstream/issues/263)), **recording retention controls** ([#264](https://github.com/Nabzx/openstream/issues/264)), **auto-pause media during recording** ([#265](https://github.com/Nabzx/openstream/issues/265)), **crash reporting** ([#138](https://github.com/Nabzx/openstream/issues/138)).
+- Not scoped: Linux/Windows ports, Intel macOS, an iOS companion, speaker diarization, a CLI daemon.
