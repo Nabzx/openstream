@@ -386,10 +386,10 @@ footer a { color: var(--fg); }
     <p class="lede">Hold a key, talk, release. Nothing leaves the Mac &mdash; and a spoken line break never submits your terminal command by accident.</p>
 
     <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/Zazai840/openstream">Get it on GitHub</a>
+      <a class="btn btn-primary" href="https://github.com/Nabzx/openstream">Get it on GitHub</a>
       <a class="btn btn-ghost" href="#install">How to run it</a>
     </div>
-    <p class="keyline">Push-to-talk on a key you choose &mdash; <kbd>&#8963;</kbd><kbd>&#8997;</kbd><kbd>D</kbd> out of the box. <kbd>esc</kbd> aborts a recording.</p>
+    <p class="keyline">Push-to-talk on a key you choose &mdash; standalone <kbd>&#8997; Option</kbd> out of the box. <kbd>esc</kbd> aborts a recording.</p>
 
     <div class="demo" id="demo" aria-hidden="true">
       <div class="win">
@@ -452,6 +452,10 @@ footer a { color: var(--fg); }
         <p>Select text, hold the key, and say a command from a fixed set: &ldquo;snake case&rdquo;, &ldquo;camel case&rdquo;, &ldquo;wrap in backticks&rdquo;, &ldquo;bullet list&rdquo;. The transform is a plain string operation, so it is instant and never surprises you.</p>
       </div>
       <div class="feature">
+        <h3>Formatting you speak</h3>
+        <p>&ldquo;New paragraph&rdquo;, &ldquo;bullet points&rdquo;, &ldquo;smiley face emoji&rdquo;, &ldquo;scratch that&rdquo; to undo what you just said &mdash; deterministic rules, no model guessing at intent. The full list lives in a Commands tab in the app.</p>
+      </div>
+      <div class="feature">
         <h3>Escape to abort</h3>
         <p>Press <kbd>esc</kbd> while the key is held and the audio is discarded. Nothing is transcribed, nothing is inserted.</p>
       </div>
@@ -477,10 +481,10 @@ footer a { color: var(--fg); }
     <p class="eyebrow">Run it</p>
     <h2>Build from source</h2>
     <div class="section-body">
-      <p>OpenStream is pre-alpha and installs from source. You need an Apple Silicon Mac on macOS 13+, Node 20+, and Xcode Command Line Tools.</p>
+      <p>OpenStream installs from source. You need an Apple Silicon Mac on macOS 13+, Node 22.12+, and Xcode Command Line Tools.</p>
 <pre><span class="c"># clone and install &mdash; this also compiles whisper.cpp and</span>
 <span class="c"># downloads the transcription + rewrite models (~1.3 GiB)</span>
-git clone https://github.com/Zazai840/openstream.git
+git clone https://github.com/Nabzx/openstream.git
 cd openstream
 npm install
 npm start</pre>
@@ -503,10 +507,9 @@ npm start</pre>
     <h2>Honest status</h2>
     <div class="section-body">
       <ul class="plain">
-        <li>The core path &mdash; hotkey, transcription, cleanup, break-safety, delivery &mdash; runs from source today.</li>
-        <li>Installation, permission identity across rebuilds, and delivery recovery are still rough.</li>
+        <li>The full path runs from source today &mdash; hotkey, transcription, deterministic cleanup, break-safety, voice edits, delivery, and a real desktop window with a permissions gate and settings.</li>
+        <li>Distributes from source. The DMG is a convenience download; it is not signed or notarised yet, and a rebuild resets the macOS permission grants until it is &mdash; so <code>git clone</code> is the supported path.</li>
         <li>Codebase-aware vocabulary and semantic edits (&ldquo;make this shorter&rdquo;) are on the roadmap, not in the app.</li>
-        <li>Not signed or notarised yet &mdash; the supported install is <code>git clone</code>.</li>
       </ul>
     </div>
   </section>
@@ -515,12 +518,12 @@ npm start</pre>
 
 <footer class="wrap">
   <div class="links">
-    <a href="https://github.com/Zazai840/openstream">GitHub</a>
-    <a href="https://github.com/Zazai840/openstream/blob/main/CONTEXT.md">Vocabulary</a>
-    <a href="https://github.com/Zazai840/openstream/blob/main/ROADMAP.md">Roadmap</a>
-    <a href="https://github.com/Zazai840/openstream/tree/main/docs/progress">Engineering notes</a>
+    <a href="https://github.com/Nabzx/openstream">GitHub</a>
+    <a href="https://github.com/Nabzx/openstream/blob/main/CONTEXT.md">Vocabulary</a>
+    <a href="https://github.com/Nabzx/openstream/blob/main/ROADMAP.md">Roadmap</a>
+    <a href="https://github.com/Nabzx/openstream/tree/main/docs/progress">Engineering notes</a>
   </div>
-  <p>MIT licensed. Pre-alpha &mdash; not ready for everyday use or outside contributors yet.</p>
+  <p>MIT licensed. Local-first &mdash; no account, no cloud, no telemetry.</p>
 </footer>
 
 <script>
