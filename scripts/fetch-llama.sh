@@ -14,11 +14,16 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-LLAMA_TAG="b10639"
+# b10625 is the last macOS arm64 release before upstream added an
+# unconditional librdma.dylib dependency to the RPC library. That system
+# library is not available on the macOS versions OpenStream supports.
+LLAMA_TAG="b10625"
 LLAMA_ASSET="llama-$LLAMA_TAG-bin-macos-arm64.tar.gz"
 LLAMA_URL="https://github.com/ggml-org/llama.cpp/releases/download/$LLAMA_TAG/$LLAMA_ASSET"
-LLAMA_SHA256="9af0ea99b9221bd5db69c4341b442166d9697d35556708dba11ae44c85567a14"
+LLAMA_SHA256="f13c74d104c1ff2e37a14ecb2025afe5c9c4c148064badfd8116376018dd5159"
 LLAMA_SERVER_SHA256="c32a2010dec561243448447599b7c13789022052ed59a336005758fbacf03639"
+LLAMA_RPC_LIBRARY="libggml-rpc.0.22.0.dylib"
+LLAMA_RPC_SHA256="18ab240ea5456c8c9a4aeb6e30ff77dc4e7d31944659fb10b22393e397568238"
 
 # HuggingFaceTB/SmolLM2-1.7B-Instruct-GGUF - Apache 2.0, ungated (#32 rules
 # out anything gated or non-permissive).
@@ -30,6 +35,7 @@ MODEL_PATH="$MODEL_DIR/smollm2-1.7b-instruct-q4_k_m.gguf"
 
 BIN_DIR="$ROOT/resources/bin/llama"
 SERVER_BIN="$BIN_DIR/llama-server"
+RPC_LIBRARY="$BIN_DIR/$LLAMA_RPC_LIBRARY"
 
 sha256() {
   if command -v shasum >/dev/null 2>&1; then
@@ -40,7 +46,13 @@ sha256() {
 }
 
 echo "==> llama-server ($LLAMA_TAG, macos-arm64)"
-if [ -x "$SERVER_BIN" ] && [ "$(sha256 "$SERVER_BIN")" = "$LLAMA_SERVER_SHA256" ]; then
+# The server executable is unchanged between b10625 and b10639, while the
+# RPC dylib changed to link librdma. Verify both so an old incompatible bundle
+# cannot survive a release-pin change.
+if [ -x "$SERVER_BIN" ] \
+  && [ "$(sha256 "$SERVER_BIN")" = "$LLAMA_SERVER_SHA256" ] \
+  && [ -f "$RPC_LIBRARY" ] \
+  && [ "$(sha256 "$RPC_LIBRARY")" = "$LLAMA_RPC_SHA256" ]; then
   echo "    already present and verified, skipping fetch"
 else
   TMP_DIR="$(mktemp -d)"

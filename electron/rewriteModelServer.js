@@ -9,7 +9,11 @@ const CONTEXT_SIZE = 2048;
 const MODEL_FILE = "smollm2-1.7b-instruct-q4_k_m.gguf";
 
 function createRewriteModelServer(options = {}) {
-  const { root = resourcesRoot(), createSupervisor = createModelSupervisor } = options;
+  const {
+    root = resourcesRoot(),
+    createSupervisor = createModelSupervisor,
+    port = PORT,
+  } = options;
   // llama-server links its dylibs with an @loader_path rpath (see
   // fetch-llama.sh), so it has to run from inside the directory it was
   // extracted into, not just anywhere on disk.
@@ -27,7 +31,7 @@ function createRewriteModelServer(options = {}) {
       args: [
         "--model", resolveModelPath(MODEL_FILE, { bundledDir: path.join(root, "models") }),
         "--host", HOST,
-        "--port", String(PORT),
+        "--port", String(port),
         "--ctx-size", String(CONTEXT_SIZE),
       ],
     });
@@ -37,8 +41,8 @@ function createRewriteModelServer(options = {}) {
   return {
     start: () => ensureSupervisor().start(),
     stop: () => supervisor?.stop(),
-    healthUrl: () => `http://${HOST}:${PORT}/health`,
-    chatCompletionsUrl: () => `http://${HOST}:${PORT}/v1/chat/completions`,
+    healthUrl: () => `http://${HOST}:${port}/health`,
+    chatCompletionsUrl: () => `http://${HOST}:${port}/v1/chat/completions`,
   };
 }
 

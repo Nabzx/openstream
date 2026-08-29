@@ -1,12 +1,34 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 const rewriteModelServer = require("./rewriteModelServer");
 
-const BIN_PATH = path.join(__dirname, "..", "resources", "bin", "llama", "llama-server");
-const MODEL_PATH = path.join(__dirname, "..", "resources", "models", "smollm2-1.7b-instruct-q4_k_m.gguf");
-const hasFetchedAssets = fs.existsSync(BIN_PATH) && fs.existsSync(MODEL_PATH);
+const RESOURCES_ROOT = path.join(__dirname, "..", "resources");
+const LLAMA_DIR = path.join(RESOURCES_ROOT, "bin", "llama");
+const BIN_PATH = path.join(LLAMA_DIR, "llama-server");
+const MODEL_PATH = path.join(RESOURCES_ROOT, "models", "smollm2-1.7b-instruct-q4_k_m.gguf");
+const INTEGRATION_TEST_PORT = 18179;
+const hasRewriteModelBinary = process.platform === "darwin" && fs.existsSync(BIN_PATH);
+const hasRewriteModelAssets = hasRewriteModelBinary && fs.existsSync(MODEL_PATH);
+const binarySkipReason = hasRewriteModelBinary
+  ? undefined
+  : "rewrite model server binary is missing - run `npm run build:llama`";
+const assetSkipReason = hasRewriteModelAssets
+  ? undefined
+  : "rewrite model server artifacts are missing - run `npm run build:llama`";
+
+test("bundled rewrite model server launches without an unavailable macOS RDMA dependency", {
+  skip: binarySkipReason,
+}, () => {
+  assert.doesNotThrow(() =>
+    execFileSync(BIN_PATH, ["--help"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }),
+  );
+});
 
 test("configures the resident rewrite model server on loopback with a 2048-token context", () => {
   let supervisorOptions;
@@ -37,10 +59,10 @@ test("configures the resident rewrite model server on loopback with a 2048-token
   assert.deepEqual(events, ["start", "stop"]);
 });
 
-async function waitUntilReady(deadline) {
+async function waitUntilReady(healthUrl, deadline) {
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(rewriteModelServer.healthUrl());
+      const res = await fetch(healthUrl);
       if (res.ok) return;
     } catch {
       // not listening yet
@@ -56,13 +78,14 @@ async function waitUntilReady(deadline) {
 // clean checkout that hasn't run postinstall).
 test(
   "rewrite model server starts and answers a chat completion over HTTP",
-  { skip: !hasFetchedAssets && "rewrite model server artifacts are missing - run `npm run prepare:model-artifacts`" },
+  { skip: assetSkipReason },
   async () => {
-    rewriteModelServer.start();
+    const server = rewriteModelServer.createRewriteModelServer({ port: INTEGRATION_TEST_PORT });
+    server.start();
     try {
-      await waitUntilReady(Date.now() + 60_000);
+      await waitUntilReady(server.healthUrl(), Date.now() + 60_000);
 
-      const res = await fetch(rewriteModelServer.chatCompletionsUrl(), {
+      const res = await fetch(server.chatCompletionsUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -77,7 +100,7 @@ test(
       const content = body.choices[0].message.content;
       assert.match(content, /banana/i);
     } finally {
-      rewriteModelServer.stop();
+      server.stop();
     }
   }
 );
