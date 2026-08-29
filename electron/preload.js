@@ -16,6 +16,13 @@ function onDictationState(callback) {
   return () => ipcRenderer.removeListener("dictation-state", listener);
 }
 
+// #249: first-run model-download progress for the Setup screen.
+function onSetupProgress(callback) {
+  const listener = (_event, progress) => callback(progress);
+  ipcRenderer.on("setup-progress", listener);
+  return () => ipcRenderer.removeListener("setup-progress", listener);
+}
+
 // The renderer's only route to the main process, per contextIsolation - see
 // the settings window's webPreferences in main.js. First surface: settings
 // (#19). This will grow to cover the hotkey helper, the accessibility
@@ -27,6 +34,8 @@ contextBridge.exposeInMainWorld("openstream", {
     setLoginItem: (enabled) => ipcRenderer.invoke("app:set-login-item", enabled),
     checkPermissions: () => ipcRenderer.invoke("app:check-permissions"),
     openPrivacySettings: (key) => ipcRenderer.invoke("app:open-privacy-settings", key),
+    getSetupProgress: () => ipcRenderer.invoke("app:get-setup-progress"),
+    retryModelDownload: () => ipcRenderer.invoke("app:retry-model-download"),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
@@ -50,4 +59,5 @@ contextBridge.exposeInMainWorld("openstream", {
   },
   onNavigate,
   onDictationState,
+  onSetupProgress,
 });

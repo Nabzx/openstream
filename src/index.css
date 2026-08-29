@@ -572,6 +572,63 @@ button {
   margin: 6px 2px 0;
 }
 
+/* --- setup page --- */
+
+.setup-item {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.setup-item__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-weight: 500;
+}
+
+.setup-item__head .mono {
+  color: var(--text-2);
+}
+
+.setup-item__meta {
+  color: var(--text-3);
+  font-size: 11px;
+}
+
+.progress {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.progress__fill--indeterminate {
+  width: 35%;
+  animation: progress-slide 1.3s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  0% { margin-left: -35%; }
+  100% { margin-left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress__fill--indeterminate {
+    animation: none;
+    width: 100%;
+    opacity: 0.5;
+  }
+}
+
 /* --- commands page --- */
 
 .cmd-group-note {

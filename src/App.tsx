@@ -5,6 +5,7 @@ import Home from "./pages/Home";
 import Commands from "./pages/Commands";
 import Settings from "./pages/Settings";
 import Permissions from "./pages/Permissions";
+import Setup from "./pages/Setup";
 
 const TAB_META: Record<TabPage, { label: string; Icon: (props: { className?: string }) => JSX.Element }> = {
   home: { label: "Home", Icon: HomeIcon },
@@ -41,6 +42,7 @@ export default function App() {
       </nav>
       {page === "settings" && <Settings />}
       {page === "commands" && <Commands />}
+      {page === "setup" && <Setup onDone={() => setPage("home")} />}
       {page === "permissions" && <Permissions onDone={() => setPage("home")} />}
       {page === "home" && <Home navigate={(next) => setPage(next)} />}
     </div>

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { existsSync } from "node:fs";
-import { mkdir, rm, copyFile } from "node:fs/promises";
+import { mkdir, rm, copyFile, readdir, lstat, readlink, symlink } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile as execFileCallback } from "node:child_process";
@@ -156,7 +156,37 @@ export async function buildPinnedSource(source, tools = { run }, log = console.l
   await tools.run("cmake", ["--build", source.buildDirectory, "-j", "--config", "Release", "--target", source.target]);
   await mkdir(path.dirname(source.binary), { recursive: true });
   await copyFile(source.builtBinary, source.binary);
+  await stageDylibs(source, tools, log);
   log(`    built: ${source.binary}`);
+}
+
+// whisper-server links its dylibs by @rpath, and cmake bakes an absolute
+// build-dir rpath that only resolves on this machine. Stage the dylibs next
+// to the staged binary and add an @loader_path rpath, so resources/bin is
+// self-contained - the packaged app (#249) has no vendor/ tree to fall back
+// to. llama-server already ships this way (fetch-llama.sh).
+async function stageDylibs(source, tools, log) {
+  const builtDir = path.dirname(source.builtBinary);
+  const stagedDir = path.dirname(source.binary);
+  let count = 0;
+  for (const entry of await readdir(builtDir)) {
+    // Skip file-sync conflicted copies ("libggml 2.dylib") and non-dylibs.
+    if (!entry.endsWith(".dylib") || entry.includes(" ")) continue;
+    const from = path.join(builtDir, entry);
+    const to = path.join(stagedDir, entry);
+    await rm(to, { force: true });
+    const info = await lstat(from);
+    if (info.isSymbolicLink()) await symlink(await readlink(from), to);
+    else await copyFile(from, to);
+    count += 1;
+  }
+  try {
+    await tools.run("install_name_tool", ["-add_rpath", "@loader_path", source.binary]);
+  } catch (error) {
+    // A rebuild over an already-patched binary: @loader_path is present.
+    if (!/would duplicate path|already has|LC_RPATH/i.test(error.message ?? "")) throw error;
+  }
+  log(`    staged ${count} dylibs alongside ${path.basename(source.binary)}`);
 }
 
 export async function prepareModelArtifacts({ root, roles = modelRoles, tools = { run, sha256: fileSha256 }, log = console.log, build = true } = {}) {
