@@ -19,7 +19,7 @@ Planned, not yet in the app: codebase-vocabulary biasing (transcription weighted
 
 ## Install
 
-OpenStream installs from source. There is a convenience DMG on the [releases page](https://github.com/Nabzx/openstream/releases), but it is unsigned — Gatekeeper will warn, and every rebuild resets the macOS permission grants (see below) — so `git clone` is the supported path.
+OpenStream installs from source. There is a convenience DMG on the [releases page](https://github.com/Nabzx/openstream/releases) — it downloads the speech models (~1.2 GB) on first run rather than bundling them — but it is unsigned (Gatekeeper will warn) and every rebuild resets the macOS permission grants (see below), so `git clone` is the supported path.
 
 ### Requirements
 
