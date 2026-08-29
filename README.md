@@ -1,8 +1,17 @@
+<img src="assets/readme-banner.png" alt="OpenStream: local-first voice dictation for Apple Silicon" width="100%">
+
 # OpenStream
 
-OpenStream is a local-first voice dictation app for Apple Silicon Macs, built for developers. Hold a key, speak, release — the text lands in whatever app is frontmost. Audio and every model request stay on the machine.
+Local-first voice dictation for Apple Silicon, built for developers. Hold a key, talk, let go. The text lands in whatever app is frontmost. Audio and every model request stay on the machine.
 
-Its one firm opinion: **a spoken line break is denied by default.** A newline can submit a half-typed terminal command or send an unfinished chat message, so OpenStream checks the frontmost app and the focused field before it turns "new paragraph" into a real break. It only survives in apps you have allow-listed.
+It has one firm opinion: **a spoken line break is denied by default.** A newline can submit a half-typed terminal command or send an unfinished message, so OpenStream checks the frontmost app and the focused field before it turns "new paragraph" into a real break. It survives only in apps you have allow-listed.
+
+```
+$ openstream
+  press a key    hold it
+  talk           transcribed on device, nothing leaves your mac
+  let go         the words land at your cursor
+```
 
 ## Features
 

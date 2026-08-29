@@ -71,7 +71,14 @@
       "gatekeeperAssess": false
     },
     "dmg": {
-      "sign": false
+      "sign": false,
+      "background": "assets/dmg-background.png",
+      "window": { "width": 640, "height": 384 },
+      "iconSize": 112,
+      "contents": [
+        { "x": 170, "y": 188, "type": "file" },
+        { "x": 470, "y": 188, "type": "link", "path": "/Applications" }
+      ]
     }
   }
 }
