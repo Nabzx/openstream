@@ -76,14 +76,25 @@ See [docs/progress/phase-3-progress.md](docs/progress/phase-3-progress.md) for t
 
 ## Phase 4 — v1.0: Polish & launch (both, target: 1-2 weeks)
 
-- [ ] Code signing + notarization, Homebrew cask, `electron-updater` auto-update ([#11](https://github.com/Nabzx/openstream/issues/11)) - **moved here from Phase 2.** Signing/distribution choices are cheapest to keep open for as long as possible; committing to them before the app itself is ready to ship just locks in decisions early for no benefit
-- [ ] Permission state check - build script warns when the **Electron host bundle's** code identity changes (not the helpers': #46 measured that all three grants live on the host, so a helper hash is the wrong thing to watch), app tests all three grants at launch by **probing them functionally** (a System Settings toggle can read ON while the binary is denied) and blocks on Accessibility / Input Monitoring (#47, pending #88)
-- [ ] Settings UI complete (hotkey remapping, the user-editable break-safe app list) - **no mode rules** (#45) and **no model choice** (#30)
-- [ ] Release automation (GitHub Releases + Homebrew formula bump on tag, `electron-builder` pipeline)
-- [ ] README demo GIF, short landing page
-- [ ] Public launch (Show HN, r/macapps, etc.)
+- [x] **Permission state check** — the app probes all three grants at launch (functionally, since a System Settings toggle can read ON while the binary is denied) and blocks on Accessibility / Input Monitoring, opening on a Permissions screen; `npm run doctor` runs the same check from the terminal ([#47](https://github.com/Nabzx/openstream/issues/47)). The rebuild/TCC-identity problem ([#46](https://github.com/Nabzx/openstream/issues/46), [#88](https://github.com/Nabzx/openstream/issues/88)) is documented, not solved — it is a source-only fact of life.
+- [x] **Settings UI complete** — hotkey remapping (Zazai's [#218](https://github.com/Nabzx/openstream/issues/218)), the user-editable break-safe app list with a native app picker ([#19](https://github.com/Nabzx/openstream/issues/19)), and launch-at-login ([#135](https://github.com/Nabzx/openstream/issues/135)). No mode rules ([#45](https://github.com/Nabzx/openstream/issues/45)), no model choice ([#30](https://github.com/Nabzx/openstream/issues/30)).
+- [x] **Release automation** — a `v*` tag builds an unsigned arm64 DMG and cuts a GitHub release; hyphenated tags publish as pre-releases ([#20](https://github.com/Nabzx/openstream/issues/20), proven end to end with a `v0.4.0-rc.1` dry run). No Homebrew bump yet — that waits on signing.
+- [x] **Window redesign** — the desktop window got a real visual pass: refreshed tokens, an app mark, a calmer Home page, a proper Permissions gate screen, live dictation activity ([#242](https://github.com/Nabzx/openstream/issues/242), and the app/menu-bar icons in [#244](https://github.com/Nabzx/openstream/issues/244)).
+- [x] **Track-A pipeline fixes** — Escape-to-cancel ([#134](https://github.com/Nabzx/openstream/issues/134)), the AX-readiness fallback so a slow Chromium tree no longer fails a dictation ([#181](https://github.com/Nabzx/openstream/issues/181)), and the IDE-terminal delivery gaps ([#227](https://github.com/Nabzx/openstream/issues/227)).
+- [x] **Short landing page** ([#21](https://github.com/Nabzx/openstream/issues/21)) — `site/index.html`. The demo GIF is still outstanding.
+- [ ] **Pre-launch manual verification pass** ([#228](https://github.com/Nabzx/openstream/issues/228)) — the checks CI cannot drive, against the near-final build: the voice-edit matrix, IDE-terminal dictation, end-to-end dictation + latency, the shortcut matrix, the break-safe apps setting. This is what stands between here and the tag.
+- [ ] **Demo GIF** — a short screen recording of a real dictation, into the README and the landing page.
+- [ ] **Real-dictation eval corpus** ([#171](https://github.com/Nabzx/openstream/issues/171)) — human-recorded clips for the rules-cleanup fixture. Clears the one deliberately-red test; can slip to a point release.
+- [ ] **Public launch** ([#22](https://github.com/Nabzx/openstream/issues/22)) — Show HN, r/macapps, etc.
 
-**Definition of done:** something you'd hand to a stranger without caveats. Tag `v1.0`.
+**Deferred out of v1.0:**
+
+- **Code signing, notarisation, Homebrew cask, auto-update** ([#11](https://github.com/Nabzx/openstream/issues/11)) — v1.0 distributes from source ([#37](https://github.com/Nabzx/openstream/issues/37)), so committing to a signing identity and a cask buys nothing yet. First v1.1 item.
+- **Semantic voice edits** ([#222](https://github.com/Nabzx/openstream/issues/222)) — the deterministic command subset ships; "make this shorter" waits on a capable local rewrite model.
+
+**Definition of done:** something you'd hand to a stranger without caveats. Tag `v1.0.0` once [#228](https://github.com/Nabzx/openstream/issues/228) passes.
+
+See [docs/progress/phase-4-progress.md](docs/progress/phase-4-progress.md) for the full checkpoint.
 
 ---
 
@@ -91,4 +102,13 @@ See [docs/progress/phase-3-progress.md](docs/progress/phase-3-progress.md) for t
 
 Open to outside contributors. Backlog candidates: Linux/Windows ports, per-project config files, custom wake-word-free modes, team-shared vocabulary packs. Not scoped yet — revisit after launch feedback.
 
-- **Codebase vocabulary scanner** ([#16](https://github.com/Nabzx/openstream/issues/16)) - moved here from Phase 3. Built, not shipped: the scanning/caching/pipeline wiring exists and is tested (PR #185), the Settings UI is unhooked. Before re-enabling: confirm a live dictation with a configured project path actually gets the biased prompt end to end (a `vocabulary.promptLength` diagnostic exists for exactly this check and hasn't been read back yet).
+### v1.1 candidates
+
+- **Code signing + notarisation + Homebrew cask + `electron-updater`** ([#11](https://github.com/Nabzx/openstream/issues/11)) — the first thing that makes the DMG a real install path and fixes the rebuild-resets-grants problem ([#46](https://github.com/Nabzx/openstream/issues/46), [#88](https://github.com/Nabzx/openstream/issues/88)) for people who don't build from source.
+- **Parakeet TDT 0.6B v3 as the transcription model server** ([#176](https://github.com/Nabzx/openstream/issues/176), [#204](https://github.com/Nabzx/openstream/issues/204), [#205](https://github.com/Nabzx/openstream/issues/205)) — replace `whisper base.en`. The pipeline shape does not change ([ADR-0002](docs/adr/0002-no-one-model-dictation-engine.md)): Parakeet emits raw text, Rules cleanup still does all cleanup. The gate is proving a local runtime on Apple Silicon (NeMo-Speech.cpp / sherpa-onnx / parakeet-mlx are candidates; none built yet) and measuring latency, memory, and artifact size against the contract. [#178](https://github.com/Nabzx/openstream/issues/178) already rejected Parakeet as a *one-model* engine.
+- **Semantic voice edits** ([#222](https://github.com/Nabzx/openstream/issues/222)) — re-test a spoken rewrite command ("shorter", "fix grammar") against Qwen3-1.7B / Granite-3.3-2B in the rewrite role.
+
+### Backlog
+
+- **Codebase vocabulary scanner** ([#16](https://github.com/Nabzx/openstream/issues/16)) — moved here from Phase 3. Built, not shipped: the scanning/caching/pipeline wiring exists and is tested (PR #185), the Settings UI is unhooked. Before re-enabling: confirm a live dictation with a configured project path actually gets the biased prompt end to end (a `vocabulary.promptLength` diagnostic exists for exactly this check and hasn't been read back yet).
+- **Recording history / replay last transcription** ([#136](https://github.com/Nabzx/openstream/issues/136)), **microphone device selector** ([#137](https://github.com/Nabzx/openstream/issues/137)), **crash reporting** ([#138](https://github.com/Nabzx/openstream/issues/138)).
