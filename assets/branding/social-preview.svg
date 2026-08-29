@@ -1,0 +1,31 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0.5" cy="0.36" r="0.85">
+      <stop offset="0" stop-color="#0A160D"/>
+      <stop offset="1" stop-color="#020402"/>
+    </radialGradient>
+    <pattern id="scan" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="3" y="6" fill="#000000" opacity="0.20"/>
+    </pattern>
+    <filter id="glow" x="-45%" y="-45%" width="190%" height="190%">
+      <feGaussianBlur stdDeviation="10" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#scan)"/>
+  <rect x="24.5" y="24.5" width="1231" height="591" fill="none" stroke="#16241A" stroke-width="1"/>
+
+  <g transform="translate(640 214)" fill="none" stroke="#3DF65A" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <circle cx="0" cy="0" r="92"/>
+    <path d="M-40 22 0 -18 40 22"/>
+  </g>
+
+  <g font-family="Space Mono, monospace" text-anchor="middle">
+    <text x="640" y="404" font-size="82" font-weight="700" fill="#3DF65A" filter="url(#glow)">~ openstream</text>
+    <text x="640" y="460" font-size="26" fill="#9FB89F">local-first voice dictation for apple silicon</text>
+    <text x="640" y="510" font-size="22" fill="#56704F">a spoken line break never submits your terminal command</text>
+    <text x="640" y="566" font-size="19" fill="#1ED89A">open source &#183; on device &#183; no account &#183; MIT</text>
+  </g>
+</svg>
