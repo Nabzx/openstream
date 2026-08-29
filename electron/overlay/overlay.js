@@ -16,14 +16,14 @@ function setBars(levels) {
   bars.forEach((bar, i) => bar.style.setProperty("--level", levels[i]));
 }
 
-const STATUS_TEXT = { recording: "Listening", editing: "Editing…" };
+const STATUS_TEXT = { recording: "listening", editing: "editing" };
 
 window.openstreamOverlay.onStateChange((state) => {
   document.body.dataset.state = state;
   // A voice-edit message (edit-message) sets its own status text; don't
   // stamp over it here.
   if (state !== "edit-message") {
-    status.textContent = STATUS_TEXT[state] ?? "Idle";
+    status.textContent = STATUS_TEXT[state] ?? "idle";
   }
   if (state !== "recording") {
     levelHistory.fill(IDLE_LEVEL);
@@ -49,12 +49,12 @@ window.openstreamOverlay.onSoundLevel((level) => {
 
 window.openstreamOverlay.onHeldResult((text) => {
   heldText.textContent = text;
-  copyButton.textContent = "Copy";
+  copyButton.textContent = "copy";
   document.body.dataset.state = "held";
 });
 
 window.openstreamOverlay.onHeldResultCopied(() => {
-  copyButton.textContent = "Copied";
+  copyButton.textContent = "copied";
 });
 
 copyButton.addEventListener("click", () => {

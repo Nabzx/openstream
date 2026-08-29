@@ -10,6 +10,8 @@
   <body data-state="recording">
     <main class="overlay" aria-live="polite">
       <section class="recording" data-recording>
+        <span data-status>listening</span>
+        <span class="cur" aria-hidden="true"></span>
         <span class="waveform" aria-hidden="true">
           <span class="waveform__bar" data-bar></span>
           <span class="waveform__bar" data-bar></span>
@@ -19,15 +21,14 @@
           <span class="waveform__bar" data-bar></span>
           <span class="waveform__bar" data-bar></span>
         </span>
-        <span data-status>Listening</span>
       </section>
       <section class="held-result" data-held-result>
-        <h1>Couldn't insert this dictation</h1>
-        <p>Your text is still here. Copy it when you're ready.</p>
+        <h1>couldn't place text</h1>
+        <p>still here. copy it and paste it where you want it.</p>
         <pre data-held-text></pre>
         <div class="held-result__actions">
-          <button type="button" data-copy>Copy</button>
-          <button type="button" class="secondary" data-dismiss>Dismiss</button>
+          <button type="button" data-copy>copy</button>
+          <button type="button" class="secondary" data-dismiss>dismiss</button>
         </div>
       </section>
     </main>

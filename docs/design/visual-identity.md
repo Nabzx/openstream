@@ -104,13 +104,13 @@ Near-black terminal tile (radial `#0B1A0E` → `#020402`), the caret-in-ring mar
 
 **Settled:** idle stays a macOS *template* glyph (black; the OS tints it to the menu-bar theme, so it adapts to light/dark). **recording** is a non-template `--acc` glyph, **transcribing** a non-template `--acc-2` glyph. Amber is gone — the second green is the "working" signal. Wiring in `electron/main.js` (`TRAY_ICON_FILES`) is unchanged; only the PNGs were recoloured.
 
-### 5. Push-to-talk overlay — `electron/overlay/`
+### 5. Push-to-talk overlay — `electron/overlay/` — **done** ([#281](https://github.com/Nabzx/openstream/issues/281))
 
-- Drop the macOS `vibrancy: "hud"` glass (or tint it heavily green) for a solid `--bg` panel, `1px` green border, faint scanline.
-- Waveform bars → phosphor green (`--acc`), `--acc-2` when clipping.
-- "Listening" → `> listening █` in mono. "Editing…" → `> editing █`.
-- Held-result panel → a terminal error block: `┌─ couldn't place text ─┐`, the text in a `<pre>`, `[copy]` `[dismiss]` bracket buttons.
-- CSP allows only `'self'` — bundle the mono font or fall back to `ui-monospace`.
+- `vibrancy: "hud"` dropped in `createOverlayWindow`; the window stays frameless + transparent and `overlay.css` paints a solid `--bg` panel with a `1px --acc` border, a faint scanline and a soft outer glow. Hard edges.
+- Recording strip → `> listening` with a blinking block cursor (`.cur`), the waveform bars in `--acc` (no gradient). "Editing…" → `> editing`. Status text lowercased in `overlay.js`.
+- Held-result panel → an error block: an `--err` `──`-prefixed heading (`couldn't place text`), the text in a `<pre>` on `--screen`, `[copy]` / `[dismiss]` bracket buttons.
+- CSP is `default-src 'self'; style-src 'self'`, so Space Mono is bundled directly in `electron/overlay/` (`space-mono-{400,700}.woff2`) with a `@font-face` using a relative URL.
+- Clipping colour not wired — there's no clipping signal on the IPC boundary today; the level is just clamped. Left for later if a real clip flag lands.
 
 ### 6. Tray menu / notification wording
 
