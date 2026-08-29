@@ -33,6 +33,12 @@ export type AppHealth = {
   rewriteModel: ModelHealth;
 };
 
+// #249: first-run model download.
+export type SetupProgress =
+  | { phase: "check" | "download" | "done"; role: string; file: string; bytes: number; received?: number; total?: number }
+  | { phase: "ready" }
+  | { phase: "error"; message: string };
+
 export type VocabularyStatus = {
   path: string | null;
   termCount: number;
@@ -53,6 +59,8 @@ declare global {
         setLoginItem(enabled: boolean): Promise<boolean>;
         checkPermissions(): Promise<PermissionVerdict>;
         openPrivacySettings(key: PermissionKey): Promise<void>;
+        getSetupProgress(): Promise<SetupProgress | null>;
+        retryModelDownload(): Promise<void>;
       };
       settings: {
         get(): Promise<StoredSettings>;
@@ -71,6 +79,7 @@ declare global {
       };
       onNavigate(callback: (page: string) => void): () => void;
       onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
+      onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
     };
   }
 }

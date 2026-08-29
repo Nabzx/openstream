@@ -19,6 +19,7 @@ const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
 const whisperServer = require("./whisperServer");
 const rewriteModelServer = require("./rewriteModelServer");
+const { ensureModels, modelsMissing } = require("./modelStore");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
@@ -62,6 +63,11 @@ let trayState = "idle";
 let captureWin = null;
 let overlayWin = null;
 let hotkeyStarted = false;
+// #249: the hotkey only arms once the capture window is up AND the model
+// weights are in place (a packaged first run downloads them).
+let captureReady = false;
+let modelsReady = false;
+let retryModelDownload = () => {};
 let settingsStore = null;
 let pushToTalkShortcut = null;
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
@@ -179,6 +185,30 @@ function openWindowTo(page) {
   } else {
     win.webContents.once("did-finish-load", () => win.webContents.send("navigate", page));
   }
+}
+
+// #249: model-download progress for the Setup screen. Latched so the
+// window can re-read the last value when it (or the page) mounts mid-run.
+let lastSetupProgress = null;
+function sendSetupProgress(progress) {
+  lastSetupProgress = progress;
+  if (win && !win.isDestroyed()) {
+    if (win.webContents.isLoading()) {
+      win.webContents.once("did-finish-load", () => win.webContents.send("setup-progress", progress));
+    } else {
+      win.webContents.send("setup-progress", progress);
+    }
+  }
+}
+
+// The hotkey arms only once both the capture window is ready and the model
+// weights are in place.
+function maybeStartHotkey() {
+  if (hotkeyStarted || !captureReady || !modelsReady || !pushToTalkShortcut) return;
+  hotkeyStarted = true;
+  void pushToTalkShortcut.start().catch((error) => {
+    console.error("[hotkey-helper] active shortcut could not start:", error.message);
+  });
 }
 
 // A regular Dock app has a menu bar (issue #209). It's also what makes
@@ -568,11 +598,9 @@ function isCaptureSender(event) {
 }
 
 ipcMain.on("capture-ready", (event) => {
-  if (!isCaptureSender(event) || hotkeyStarted || !pushToTalkShortcut) return;
-  hotkeyStarted = true;
-  void pushToTalkShortcut.start().catch((error) => {
-    console.error("[hotkey-helper] active shortcut could not start:", error.message);
-  });
+  if (!isCaptureSender(event)) return;
+  captureReady = true;
+  maybeStartHotkey();
 });
 
 ipcMain.on("recording-complete", (event, arrayBuffer, timing) => {
@@ -687,6 +715,11 @@ ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
   return settings;
 });
 
+ipcMain.handle("app:get-setup-progress", () => lastSetupProgress);
+ipcMain.handle("app:retry-model-download", () => {
+  retryModelDownload();
+});
+
 ipcMain.handle("settings:reset-break-safe-apps", () => {
   const settings = settingsStore.setBreakSafeApps([...DEFAULT_BREAK_SAFE_BUNDLE_IDS]);
   setBreakSafeApplications(settings.breakSafeApps);
@@ -784,6 +817,20 @@ app.whenReady().then(() => {
   createOverlayWindow();
   accessibilityHelper.start();
 
+  // #47: if a hard grant is missing, the app silently does nothing on every
+  // push-to-talk - so open the window on the Permissions view and say so.
+  const checkPermissionsAndSurface = () =>
+    checkPermissions()
+      .then((verdict) => {
+        updateTrayForPermissions(verdict);
+        if (!verdict.ok) openWindowTo("permissions");
+        else if (isFirstLaunch && !launchedAtLogin) createWindow();
+      })
+      .catch((error) => {
+        console.error("[permissions] startup check failed:", error);
+        if (isFirstLaunch && !launchedAtLogin) createWindow();
+      });
+
   // #135: the two model servers stay resident for the app's life (#29), so
   // they start here rather than per-dictation. At login, hold them back a
   // few seconds so the ~15-20s Metal warm-up isn't competing with
@@ -792,24 +839,33 @@ app.whenReady().then(() => {
     whisperServer.start();
     rewriteModelServer.start();
   };
-  if (launchedAtLogin) setTimeout(startModelServers, 3000);
-  else startModelServers();
 
-  // #47: if a hard grant is missing, the app silently does nothing on every
-  // push-to-talk - so open the window on the Permissions view and say so,
-  // rather than leaving the user to wonder. Under source-only distribution
-  // every rebuild re-breaks the grant, so this is a normal recurring state,
-  // not just a first-run one.
-  checkPermissions()
-    .then((verdict) => {
-      updateTrayForPermissions(verdict);
-      if (!verdict.ok) openWindowTo("permissions");
-      else if (isFirstLaunch && !launchedAtLogin) createWindow();
-    })
-    .catch((error) => {
-      console.error("[permissions] startup check failed:", error);
-      if (isFirstLaunch && !launchedAtLogin) createWindow();
-    });
+  // #249: a packaged app ships without the model weights and fetches them
+  // on first run. Gate the servers - and the hotkey - on the weights being
+  // in place, and show the download on a Setup screen.
+  const bringUpModels = async () => {
+    try {
+      await ensureModels({ onProgress: sendSetupProgress });
+      modelsReady = true;
+      sendSetupProgress({ phase: "ready" });
+      startModelServers();
+      maybeStartHotkey();
+    } catch (error) {
+      console.error("[setup] model download failed:", error.message);
+      sendSetupProgress({ phase: "error", message: error.message });
+    }
+  };
+  retryModelDownload = bringUpModels;
+
+  if (modelsMissing()) {
+    createWindow();
+    openWindowTo("setup");
+    bringUpModels().then(checkPermissionsAndSurface);
+  } else {
+    if (launchedAtLogin) setTimeout(bringUpModels, 3000);
+    else bringUpModels();
+    checkPermissionsAndSurface();
+  }
 });
 
 app.on("will-quit", () => {
