@@ -40,7 +40,7 @@ For every accepted candidate, keep one evidence row with all of the following:
 | Field | Evidence |
 |---|---|
 | Candidate | The displayed key name, for example `Option` or `F13` |
-| Renderer capture | Accepted identity and displayed label |
+| Capture | Accepted identity and displayed label; Fn may arrive through native capture |
 | Native transition | Exactly one native `down` and one native `up` for one physical press; no repeat events |
 | Dictation | One Dictation began on down and completed when the final dictation text landed at the cursor |
 | Normal application behavior | The key's ordinary macOS/application behavior remained visible; record `not observable` when it has no visible action |
@@ -50,6 +50,11 @@ For every accepted candidate, keep one evidence row with all of the following:
 The Mac, keyboard, macOS version, and function-key mode fields apply to every
 accepted candidate. Copy them alongside each evidence row when the report is
 shared so conditional support is not mistaken for universal support.
+
+The settings window captures ordinary candidates from DOM key events. macOS does
+not reliably send a standalone Fn press to Chromium, so OpenStream listens for
+Fn with a temporary native helper during capture. The visible flow is the same:
+choose **Change shortcut**, press Fn, and wait for **Checking shortcut…**.
 
 To record the native pair directly, stop OpenStream and run the built helper for
 one candidate with its macOS virtual keycode and an empty modifier list:

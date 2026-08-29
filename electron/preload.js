@@ -31,6 +31,13 @@ contextBridge.exposeInMainWorld("openstream", {
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
     setShortcut: (shortcut) => ipcRenderer.invoke("settings:set-shortcut", shortcut),
+    startShortcutCapture: () => ipcRenderer.invoke("settings:start-shortcut-capture"),
+    stopShortcutCapture: () => ipcRenderer.invoke("settings:stop-shortcut-capture"),
+    onShortcutCaptured: (callback) => {
+      const listener = (_event, shortcut) => callback(shortcut);
+      ipcRenderer.on("settings:shortcut-captured", listener);
+      return () => ipcRenderer.removeListener("settings:shortcut-captured", listener);
+    },
     setBreakSafeApps: (apps) => ipcRenderer.invoke("settings:set-break-safe-apps", apps),
     resetBreakSafeApps: () => ipcRenderer.invoke("settings:reset-break-safe-apps"),
     pickBreakSafeApp: () => ipcRenderer.invoke("settings:pick-break-safe-app"),

@@ -32,6 +32,7 @@ const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
 const { createPushToTalkShortcutController } = require("./pushToTalkShortcutController");
+const { createFnShortcutCapture } = require("./shortcutCaptureController");
 const { sanitizeWindowBounds, WINDOW_STATE_DEFAULTS } = require("./windowState");
 const { evaluatePermissions, SETTINGS_URLS } = require("./permissions");
 
@@ -64,6 +65,23 @@ let overlayWin = null;
 let hotkeyStarted = false;
 let settingsStore = null;
 let pushToTalkShortcut = null;
+let shortcutCaptureSender = null;
+// Chromium does not reliably deliver a standalone Fn keydown. A one-shot
+// native helper listens for its flagsChanged transition only while Settings
+// is waiting for a new shortcut.
+const fnShortcutCapture = createFnShortcutCapture({
+  onCaptured: (shortcut) => {
+    const sender = shortcutCaptureSender;
+    shortcutCaptureSender = null;
+    if (!sender || sender.isDestroyed()) return;
+    try {
+      sender.send("settings:shortcut-captured", shortcut);
+    } catch (error) {
+      console.error(`[hotkey-helper] Fn shortcut capture could not notify settings: ${error.message}`);
+    }
+  },
+  onDiagnostic: (message) => console.error(`[hotkey-helper] ${message}`),
+});
 const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
@@ -161,8 +179,13 @@ function createWindow() {
     clearTimeout(boundsTimer);
     persistBounds();
   });
+  const windowContents = win.webContents;
   win.on("closed", () => {
-    win = null;
+    if (shortcutCaptureSender === windowContents) {
+      shortcutCaptureSender = null;
+      fnShortcutCapture.stop();
+    }
+    if (win?.webContents === windowContents) win = null;
   });
 }
 
@@ -667,6 +690,20 @@ ipcMain.handle("app:get-health", async () => {
   };
 });
 
+ipcMain.handle("settings:start-shortcut-capture", (event) => {
+  if (!win || win.isDestroyed() || event.sender !== win.webContents) return false;
+  shortcutCaptureSender = event.sender;
+  void fnShortcutCapture.start();
+  return true;
+});
+
+ipcMain.handle("settings:stop-shortcut-capture", (event) => {
+  if (shortcutCaptureSender !== event.sender) return false;
+  shortcutCaptureSender = null;
+  fnShortcutCapture.stop();
+  return true;
+});
+
 ipcMain.handle("settings:set-shortcut", (event, shortcut) => {
   if (!pushToTalkShortcut) {
     return {
@@ -814,6 +851,8 @@ app.whenReady().then(() => {
 
 app.on("will-quit", () => {
   globalShortcut.unregisterAll();
+  fnShortcutCapture.stop();
+  shortcutCaptureSender = null;
   pushToTalkShortcut?.stop();
   accessibilityHelper.stop();
   whisperServer.stop();

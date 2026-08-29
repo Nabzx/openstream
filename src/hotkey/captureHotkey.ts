@@ -29,7 +29,9 @@ function hasAdditionalModifier(event: CapturedKeyEvent, keyCode: number): boolea
 
 // Kept separate from the DOM/React capture UI so the decision - which key
 // events are acceptable as a global hotkey, and why one isn't - is testable
-// without a browser. A component wires this to a real keydown listener.
+// without a browser. The component wires ordinary candidates to keydown;
+// standalone Fn is captured through the native helper because macOS does not
+// reliably expose it to the DOM.
 export function captureHotkeyFromEvent(event: CapturedKeyEvent): CaptureResult {
   const keyCode = macKeyCodeForDomCode(event.code);
   if (keyCode === undefined || !isStandaloneKeyCode(keyCode) || hasAdditionalModifier(event, keyCode)) {

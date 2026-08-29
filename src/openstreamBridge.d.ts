@@ -57,6 +57,9 @@ declare global {
       settings: {
         get(): Promise<StoredSettings>;
         setShortcut(shortcut: StoredHotkey): Promise<SetShortcutResult>;
+        startShortcutCapture(): Promise<boolean>;
+        stopShortcutCapture(): Promise<boolean>;
+        onShortcutCaptured(callback: (shortcut: StoredHotkey) => void): () => void;
         setBreakSafeApps(apps: string[]): Promise<StoredSettings>;
         resetBreakSafeApps(): Promise<StoredSettings>;
         pickBreakSafeApp(): Promise<{ bundleId: string; name: string } | null>;

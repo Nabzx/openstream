@@ -22,19 +22,21 @@ export default function HotkeySettings() {
   useEffect(() => {
     if (!recording) return;
 
-    function onKeyDown(event: KeyboardEvent) {
-      event.preventDefault();
-      const result = captureHotkeyFromEvent(event);
-      if (!result.ok) {
-        setError(result.reason);
-        return;
-      }
+    let captureOpen = true;
 
+    function stopNativeCapture() {
+      void window.openstream.settings.stopShortcutCapture().catch(() => {});
+    }
+
+    function applyShortcut(nextShortcut: StoredHotkey) {
+      if (!captureOpen) return;
+      captureOpen = false;
+      stopNativeCapture();
       setError(null);
       setRecording(false);
       setShortcutChangePending(true);
       window.openstream.settings
-        .setShortcut(result.hotkey)
+        .setShortcut(nextShortcut)
         .then((change) => {
           if (change.ok) {
             setShortcut(change.settings.hotkey);
@@ -46,8 +48,28 @@ export default function HotkeySettings() {
         .finally(() => setShortcutChangePending(false));
     }
 
+    function onKeyDown(event: KeyboardEvent) {
+      event.preventDefault();
+      const result = captureHotkeyFromEvent(event);
+      if (!result.ok) {
+        setError(result.reason);
+        return;
+      }
+      applyShortcut(result.hotkey);
+    }
+
+    // macOS exposes standalone Fn as a native modifier transition rather
+    // than a reliable DOM keydown, so the main process captures it separately.
+    const unsubscribe = window.openstream.settings.onShortcutCaptured(applyShortcut);
     window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
+    void window.openstream.settings.startShortcutCapture().catch(() => {});
+
+    return () => {
+      captureOpen = false;
+      window.removeEventListener("keydown", onKeyDown, true);
+      unsubscribe();
+      stopNativeCapture();
+    };
   }, [recording]);
 
   const buttonLabel = recording
