@@ -96,13 +96,13 @@ The page **is** a terminal. What shipped, after iteration:
 - Copy is untouched this pass — the Commands `man openstream` voice and `> listening █` states are a later copy pass.
 - Disclosure chevron stays the SVG, rotated on expand.
 
-### 3. App icon — `assets/icon.svg` → `assets/icon.icns`
+### 3. App icon — `assets/icon.svg` → `assets/icon.icns` — **done** ([#280](https://github.com/Nabzx/openstream/issues/280))
 
-Black squircle tile, phosphor-green mark, a subtle scanline and a soft outer glow. Regenerate via `scripts/build-icons.sh`.
+Near-black terminal tile (radial `#0B1A0E` → `#020402`), the caret-in-ring mark in `--acc` with a Gaussian glow and a smooth radial bloom behind it, a faint scanline pattern, a `--line-hi` hairline frame. Same glyph geometry as before, recoloured. Regenerate via `scripts/build-icons.sh`.
 
-### 4. Menu-bar (tray) icon — `electron/icons/`
+### 4. Menu-bar (tray) icon — `electron/icons/` — **done** ([#280](https://github.com/Nabzx/openstream/issues/280))
 
-`iconTemplate.png` is currently a macOS *template* image (monochrome, OS-tinted — green can't show). **Decision needed:** switch it to a non-template coloured icon so the phosphor green reads in the menu bar, or keep it template (safe, adapts to light/dark menu bars) and let colour show only in the recording/transcribing states. Recommend: keep idle as a template glyph; make **recording** a bright-green (`--acc`) glyph and **transcribing** second-green (`--acc-2`) (they're already non-template). *(Amber is gone — the second green is the "working" signal now.)*
+**Settled:** idle stays a macOS *template* glyph (black; the OS tints it to the menu-bar theme, so it adapts to light/dark). **recording** is a non-template `--acc` glyph, **transcribing** a non-template `--acc-2` glyph. Amber is gone — the second green is the "working" signal. Wiring in `electron/main.js` (`TRAY_ICON_FILES`) is unchanged; only the PNGs were recoloured.
 
 ### 5. Push-to-talk overlay — `electron/overlay/`
 
