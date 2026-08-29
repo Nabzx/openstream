@@ -572,6 +572,48 @@ button {
   margin: 6px 2px 0;
 }
 
+/* --- commands page --- */
+
+.cmd-group-note {
+  margin: 2px 2px 6px;
+  font-size: 11.5px;
+  color: var(--text-2);
+  max-width: 62ch;
+}
+
+.cmd-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--sep);
+}
+
+.cmd-row:first-child {
+  border-top: 0;
+}
+
+.cmd-say {
+  flex: 0 0 42%;
+  font-weight: 500;
+}
+
+.cmd-arrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+
+.cmd-becomes {
+  flex: 1;
+  color: var(--text-2);
+}
+
+.cmd-becomes.mono {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
 /* --- permissions page --- */
 
 .perm-progress {

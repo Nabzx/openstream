@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { coercePage, TAB_PAGES, type Page, type TabPage } from "./nav";
-import { HomeIcon, SettingsIcon } from "./components/Icons";
+import { CommandsIcon, HomeIcon, SettingsIcon } from "./components/Icons";
 import Home from "./pages/Home";
+import Commands from "./pages/Commands";
 import Settings from "./pages/Settings";
 import Permissions from "./pages/Permissions";
 
 const TAB_META: Record<TabPage, { label: string; Icon: (props: { className?: string }) => JSX.Element }> = {
   home: { label: "Home", Icon: HomeIcon },
+  commands: { label: "Commands", Icon: CommandsIcon },
   settings: { label: "Settings", Icon: SettingsIcon },
 };
 
@@ -38,6 +40,7 @@ export default function App() {
         })}
       </nav>
       {page === "settings" && <Settings />}
+      {page === "commands" && <Commands />}
       {page === "permissions" && <Permissions onDone={() => setPage("home")} />}
       {page === "home" && <Home navigate={(next) => setPage(next)} />}
     </div>

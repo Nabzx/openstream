@@ -70,6 +70,13 @@ export const ClockIcon = svg(
   </>,
 );
 
+export const CommandsIcon = svg(
+  <>
+    <path d="M4 5.5h16v10H8.5L4 20z" />
+    <path d="M8 9.5h8M8 12.5h5" />
+  </>,
+);
+
 export const CheckIcon = svg(<path d="M5 13l4 4L19 7" />, 3);
 
 export const ChevronDownIcon = svg(<path d="M6 9l6 6 6-6" />, 2.5);
