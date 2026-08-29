@@ -116,9 +116,15 @@ Can't theme the OS chrome, but the copy matches the voice: tray tooltip `openstr
 
 Can run in parallel with the [#228](https://github.com/Nabzx/openstream/issues/228) verification pass — only step 2+ touches app code.
 
-## Open decisions
+## Decisions (settled August 2026, via grilling)
 
-1. **App window: keep macOS structure recoloured, or fully custom chrome?** — recommend keep + recolour (lower risk, still reads hacker).
-2. **Drop light mode entirely?** — recommend yes.
-3. **Exact green** — `#4AF626` proposed (softer than Matrix `#00FF41`, still neon). And the amber second signal — keep, or go single-colour green-only?
-4. **Tray icon** — coloured (green shows) or template (adapts) for the idle state?
+- **Reference direction**: 90s phosphor CRT with modern-minimal discipline — committed colour, real CRT texture, hard-edged and dense. **Not** glitch / RGB-split / synthwave.
+- **Tone**: serious infrastructure tooling with dry wit. The copy earns trust by being precise, never by being a bit.
+- **Colour**: `#4AF626` primary green, locked. Amber `#FFB000` **only** as the warning/attention signal. No red, no blue, no third colour. **Dark-only** — no light variant.
+- **Name**: stays *OpenStream*. Brand/marketing surfaces and the wordmark render it lowercase `openstream`; the macOS `.app` bundle name stays `OpenStream`.
+- **App window**: keep the macOS structure (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) and recolour it. No custom chrome. Keep every layout, flow, and the Permissions gate — swap the skin only.
+- **Landing page**: a static page that reads as a terminal, with **one** animated hero (a boot + demo sequence). Not an interactive shell.
+- **Hero demo**: a CSS/JS recreation of the terminal session is the primary hero; the real screen-recording GIF ([#21](https://github.com/Nabzx/openstream/issues/21)) drops into a lower "see it for real" section once recorded.
+- **Fonts**: bundle JetBrains Mono (~200 KB woff2) for the app and the overlay (both CSP `'self'`) as well as the landing page. The size fight is models + Electron, not a font.
+- **Tray icon**: idle stays a macOS *template* glyph (adapts to the menu-bar theme); the recording state is bright green, transcribing is amber.
+- **Scope, staged**: pass 1 = landing page + app window + app icon + menu-bar icons + overlay. Pass 2 = DMG installer background + the GitHub repo social-preview image + README styling. Later = `[dictation]` console formatting and the held-result / error copy in the terminal voice.
