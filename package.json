@@ -60,7 +60,7 @@
       "package.json"
     ],
     "extraResources": [
-      { "from": "resources", "to": "resources" }
+      { "from": "resources/bin", "to": "resources/bin" }
     ],
     "mac": {
       "category": "public.app-category.productivity",
