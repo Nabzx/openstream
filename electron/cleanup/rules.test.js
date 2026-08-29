@@ -188,6 +188,15 @@ test("bullet point / new bullet start a markdown list, break-safe only", () => {
   assert.equal(outAlt, "Shopping list\n- Milk\n- Eggs.");
 });
 
+test("the natural bullet variants all start a list item", () => {
+  for (const phrase of ["bullet points", "next bullet", "new bullet point"]) {
+    const out = cleanup(`list ${phrase} milk ${phrase} eggs`, { breakSafe: true });
+    assert.equal(out, "List\n- Milk\n- Eggs.", `variant: ${phrase}`);
+  }
+  // "bulletin" must not be mistaken for a bullet command.
+  assert.equal(cleanup("the bulletin points to a bug", { breakSafe: true }), "The bulletin points to a bug.");
+});
+
 test("bullet point outside a break-safe app degrades to flowing prose, no dash leaks in", () => {
   const out = cleanup("shopping list bullet point milk bullet point eggs");
   assert.equal(out, "Shopping list milk eggs.");

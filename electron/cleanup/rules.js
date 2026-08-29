@@ -34,7 +34,11 @@ const SPOKEN_PUNCT = [
   // are. Also scoped to bullets only, not numbered lists - a "1. 2. 3."
   // marker needs a running counter across matches, a different shape of
   // transformation than this table's stateless single-token replace.
-  [/\b(bullet point|new bullet)\b/gi, "\n- "],
+  // "bullet point", "bullet points", "new bullet", "next bullet",
+  // "new bullet point" - the natural variants people reach for. All are
+  // explicit list commands, unlikely in ordinary prose; the plural
+  // "bullet points" is the one people say most and was missing.
+  [/\b(?:bullet points?|(?:new|next) bullets?(?: points?)?)\b/gi, "\n- "],
   [/\bfull stop\b/gi, "."],
   [/\bperiod\b/gi, "."],
   [/\bcomma\b/gi, ","],
