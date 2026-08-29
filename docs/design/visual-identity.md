@@ -22,28 +22,36 @@ Falling-glyph "Matrix rain" background · full CRT screen-curvature filter · pu
 
 ## Tokens
 
+*Landing page shipped first ([#278](https://github.com/Nabzx/openstream/issues/278)) and settled the real values; the app window ([#279](https://github.com/Nabzx/openstream/issues/279)) ports the same set. The table below is what actually shipped — it supersedes the earlier `#4AF626` + amber + JetBrains Mono sketch.*
+
 ### Colour
 
 | Token | Hex | Use |
 |---|---|---|
-| `--bg` | `#0A0E0A` | ground — near-black, faint green cast, never pure `#000` |
-| `--bg-raised` | `#0F150F` | panels, cards |
-| `--fg` | `#C8FFC8` | body text — dim phosphor |
-| `--fg-bright` | `#4AF626` | primary green — headings, prompts, the live state |
-| `--fg-dim` | `#5C7A5C` | secondary text, captions, disabled |
-| `--line` | `#1E3A1E` | borders, rules, box-drawing |
-| `--glow` | `rgba(74, 246, 38, 0.35)` | text-shadow bloom on bright green |
-| `--amber` | `#FFB000` | attention / warning / "break dropped" — replaces red |
-| `--amber-dim` | `#5A4400` | amber borders/tints |
+| `--bg` | `#020402` | ground — near-black with a faint green cast, never pure `#000` |
+| `--screen` | `#050805` | panels, cards, fields |
+| `--screen-2` | `#0A100A` | icon tiles, insets |
+| `--acc` | `#3DF65A` | primary green — headings, prompts, the live state, primary buttons |
+| `--acc-2` | `#1ED89A` | secondary green — pending / "starting" state, small tags |
+| `--fg` | `#9FB89F` | body text — dim phosphor |
+| `--fg-hi` | `#D2E6D2` | headings, active labels |
+| `--muted` | `#56704F` | captions, secondary text, disabled |
+| `--faint` | `#3C4E3B` | rule marks, bracket glyphs, empty-state text |
+| `--line` | `#16241A` | hairlines between rows |
+| `--line-hi` | `#24382A` | visible borders |
+| `--glow` | `rgba(61, 246, 90, 0.16)` | text-shadow / box-shadow bloom on bright green |
 
-One accent hue (green), one warm signal (amber). No blue, no red, no third colour. Deliberately **dark-only** — a hacker theme is dark by definition.
+Two greens carry the whole hierarchy — primary and secondary state, no amber. **No blue.** Deliberately **dark-only** — a hacker theme is dark by definition.
+
+**App-only deviation — `--err` `#F0503C`.** The landing page has no error state; the window does (a missing permission, a dead model server). An ANSI-terminal red, used only for genuine blocking failures — never as decoration and never on the landing page.
 
 ### Type
 
-- **Mono, everywhere.** [JetBrains Mono](https://www.jetbrains.com/lp/mono/) (Google Fonts) as the workhorse — has real character, ligatures off. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
-- **Wordmark / big headings**: a bitmap/pixel face for one distinctive note — [Departure Mono](https://departuremono.com/) or a chunky mono at heavy weight. Used sparingly (the logo, the hero H1).
+- **[Space Mono](https://fonts.google.com/specimen/Space+Mono)**, everywhere — regular `400` and bold `700`. Distinctive without tipping into kitsch; ligatures off. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
+- Bundled, not fetched: the landing page pulls it from Google Fonts, the **app and overlay carry `space-mono-400.woff2` + `space-mono-700.woff2` locally** (`src/fonts/`, ~37 KB total) so a first-run offline machine still renders correctly. The size fight is models + Electron, not a 37 KB font.
+- No separate display face — the wordmark is Space Mono bold at a larger size. One family keeps the terminal illusion intact.
 - Scale: tight. `13px` base in the app, `15–16px` on the landing page. Headings step up modestly — this look doesn't do giant heroes.
-- Uppercase labels get `letter-spacing: 0.08em`. Body copy stays short enough that full-mono never tires.
+- Uppercase labels get `letter-spacing: 0.08–0.14em`. Body copy stays short enough that full-mono never tires.
 
 ### Structure & motion
 
@@ -64,28 +72,29 @@ Or the mark alone: a filled block `▮` / a `>` caret. The current caret-in-a-ri
 
 ## Per-surface plan
 
-### 1. Landing page — `site/index.html` *(do first)*
+### 1. Landing page — `site/index.html` — **done** ([#278](https://github.com/Nabzx/openstream/issues/278))
 
-The page **is** a terminal. Full rewrite of the current file's styling; keep the content, reframe it.
+The page **is** a terminal. What shipped, after iteration:
 
-- **Hero**: a terminal window (black, green border, three-dot chrome in green/dim/amber). A short boot sequence — `$ openstream` → a waveform → the demo. The existing two-window demo (line break kept in a notes app, dropped in a terminal) recoloured as two terminal panes, the "break dropped" verdict in amber.
-- **Sections** as man-page blocks: `SYNOPSIS` (the pitch), `SAFETY` (deny-by-default), `LOCAL` (nothing leaves the machine), `COMMANDS` (what you can say), `INSTALL` (the `git clone` block, already real), `STATUS`.
-- ASCII / box-drawing for the one diagram (the app → break-decision table).
-- Google Fonts (JetBrains Mono + the pixel face) — the landing page has no CSP restriction.
+- **Hero** is 100vh: the wordmark bar, an eyebrow, a two-line H1, and a framed terminal running a looping boot-and-dictation demo (`$ openstream` → `● listening` → a Star Wars line typed out → an on-device note). Space Mono, two greens, `#020402` ground, a static scanline.
+- **Sections** as rule-headed blocks (`── UPPERCASE ────`): the 40-vs-150 wpm hook with ASCII bars, `$ openstream --what` positioning against Wispr Flow, the safe-target vs everywhere-else grid, the local `0`, the commands list, the `git clone` install block, a status list. A tmux/vim-style fixed status bar at the foot.
+- British English, no em- or en-dashes, "two students who just graduated" voice.
+- Google Fonts for Space Mono — the landing page has no CSP restriction.
 - Keep the demo-GIF slot ([#21](https://github.com/Nabzx/openstream/issues/21)).
 
-### 2. App window — `src/index.css` + all pages
+### 2. App window — `src/index.css` — **done** ([#279](https://github.com/Nabzx/openstream/issues/279))
 
-Port the token layer to the palette above. **Keep the macOS window structure** (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) — recoloured, not replaced. Drop the `prefers-color-scheme` light path entirely.
+`src/index.css` rewritten to the shipped token set. Class names all kept, so no `.tsx` churn. **macOS window structure kept** (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) — recoloured, not replaced. `prefers-color-scheme` light path dropped entirely. Space Mono bundled locally (`src/fonts/`, `@font-face` in `index.css`).
 
-- Toolbar tabs → mono, `[ home ]` `[ commands ]` `[ settings ]` bracket style, active tab in bright green.
-- Cards → `--bg-raised` with a `1px` green border, no radius, no shadow.
-- `StatusPill` → `[OK]` / `[!!]` bracket tags, not rounded pills.
-- `Toggle` → `[x]` / `[ ]` or an on/off block switch, hard-edged.
-- `Mark` → the glyph recoloured phosphor green with a `--glow` text-shadow.
-- `KeyCaps` → mono keycaps, green border.
-- The Commands tab leans all the way in — it's already a reference list; make it read like `man openstream`.
-- The disclosure chevron → `▸` / `▾`.
+- Toolbar tabs → `[ home ]` `[ commands ]` `[ settings ]` bracket style (icons hidden, lowercase), active tab in `--acc` with a glow.
+- Cards → `--screen` with a `1px --line-hi` border, no radius, no shadow. `.card-label` prefixed `──`.
+- `StatusPill` → hard-edged `1px` bracket tags coloured per tone (`--acc` / `--acc-2` / `--err` / `--muted`), not rounded pills.
+- `Toggle` → hard-edged block switch, green when on.
+- `Mark` → the glyph in `--acc` with a `--glow` drop-shadow; red in the attention state.
+- `KeyCaps` → square mono keycaps, `--line-hi` border.
+- `.linkbtn` → prefixed `>`.
+- Copy is untouched this pass — the Commands `man openstream` voice and `> listening █` states are a later copy pass.
+- Disclosure chevron stays the SVG, rotated on expand.
 
 ### 3. App icon — `assets/icon.svg` → `assets/icon.icns`
 
@@ -93,12 +102,12 @@ Black squircle tile, phosphor-green mark, a subtle scanline and a soft outer glo
 
 ### 4. Menu-bar (tray) icon — `electron/icons/`
 
-`iconTemplate.png` is currently a macOS *template* image (monochrome, OS-tinted — green can't show). **Decision needed:** switch it to a non-template coloured icon so the phosphor green reads in the menu bar, or keep it template (safe, adapts to light/dark menu bars) and let colour show only in the recording/transcribing states. Recommend: keep idle as a template glyph; make **recording** a bright-green glyph and **transcribing** amber (they're already non-template).
+`iconTemplate.png` is currently a macOS *template* image (monochrome, OS-tinted — green can't show). **Decision needed:** switch it to a non-template coloured icon so the phosphor green reads in the menu bar, or keep it template (safe, adapts to light/dark menu bars) and let colour show only in the recording/transcribing states. Recommend: keep idle as a template glyph; make **recording** a bright-green (`--acc`) glyph and **transcribing** second-green (`--acc-2`) (they're already non-template). *(Amber is gone — the second green is the "working" signal now.)*
 
 ### 5. Push-to-talk overlay — `electron/overlay/`
 
 - Drop the macOS `vibrancy: "hud"` glass (or tint it heavily green) for a solid `--bg` panel, `1px` green border, faint scanline.
-- Waveform bars → phosphor green (`--fg-bright`), amber when clipping.
+- Waveform bars → phosphor green (`--acc`), `--acc-2` when clipping.
 - "Listening" → `> listening █` in mono. "Editing…" → `> editing █`.
 - Held-result panel → a terminal error block: `┌─ couldn't place text ─┐`, the text in a `<pre>`, `[copy]` `[dismiss]` bracket buttons.
 - CSP allows only `'self'` — bundle the mono font or fall back to `ui-monospace`.
@@ -120,11 +129,11 @@ Can run in parallel with the [#228](https://github.com/Nabzx/openstream/issues/2
 
 - **Reference direction**: 90s phosphor CRT with modern-minimal discipline — committed colour, real CRT texture, hard-edged and dense. **Not** glitch / RGB-split / synthwave.
 - **Tone**: serious infrastructure tooling with dry wit. The copy earns trust by being precise, never by being a bit.
-- **Colour**: `#4AF626` primary green, locked. Amber `#FFB000` **only** as the warning/attention signal. No red, no blue, no third colour. **Dark-only** — no light variant.
+- **Colour**: `#3DF65A` primary green + `#1ED89A` secondary green (state), locked by the landing page. No amber — the second green does the "pending" work. No blue. **Dark-only** — no light variant. The app window adds one ANSI red `#F0503C` for genuine blocking errors only; it never appears on the landing page.
 - **Name**: stays *OpenStream*. Brand/marketing surfaces and the wordmark render it lowercase `openstream`; the macOS `.app` bundle name stays `OpenStream`.
 - **App window**: keep the macOS structure (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) and recolour it. No custom chrome. Keep every layout, flow, and the Permissions gate — swap the skin only.
 - **Landing page**: a static page that reads as a terminal, with **one** animated hero (a boot + demo sequence). Not an interactive shell.
 - **Hero demo**: a CSS/JS recreation of the terminal session is the primary hero; the real screen-recording GIF ([#21](https://github.com/Nabzx/openstream/issues/21)) drops into a lower "see it for real" section once recorded.
-- **Fonts**: bundle JetBrains Mono (~200 KB woff2) for the app and the overlay (both CSP `'self'`) as well as the landing page. The size fight is models + Electron, not a font.
-- **Tray icon**: idle stays a macOS *template* glyph (adapts to the menu-bar theme); the recording state is bright green, transcribing is amber.
+- **Fonts**: Space Mono (`400` + `700`). The landing page pulls it from Google Fonts; the app and overlay bundle the two woff2 files locally (~37 KB total, `src/fonts/`) so an offline first run still renders. No separate display face — the wordmark is Space Mono bold, larger. The size fight is models + Electron, not a font.
+- **Tray icon**: idle stays a macOS *template* glyph (adapts to the menu-bar theme); the recording state is bright green (`--acc`), transcribing is the second green (`--acc-2`).
 - **Scope, staged**: pass 1 = landing page + app window + app icon + menu-bar icons + overlay. Pass 2 = DMG installer background + the GitHub repo social-preview image + README styling. Later = `[dictation]` console formatting and the held-result / error copy in the terminal voice.
