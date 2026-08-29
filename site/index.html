@@ -64,10 +64,14 @@ a:hover { background: var(--acc); color: var(--bg); }
 @media (prefers-reduced-motion: reduce) { .cur { animation: none; } }
 
 /* ---- top strip ---- */
-.top { position: fixed; top: 0; left: 0; right: 0; z-index: 100; }
-.top .wrap { display: flex; justify-content: space-between; align-items: center; height: 50px; font-size: 14px; }
-.top .brand { color: var(--fg-hi); }
-.top .brand b { color: var(--acc); }
+.top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  background: linear-gradient(180deg, var(--bg) 45%, rgba(2, 4, 2, 0.7) 78%, transparent);
+}
+.top .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; font-size: 13px; }
+.top .brand { color: var(--fg-hi); font-size: 18px; letter-spacing: -0.01em; }
+.top .brand b { color: var(--acc); text-shadow: 0 0 16px var(--glow); }
+.top .brand .cur { width: 0.5em; height: 1em; }
 .top a.gh { color: var(--muted); }
 .top a.gh:hover { color: var(--acc); background: none; }
 
@@ -117,10 +121,10 @@ a:hover { background: var(--acc); color: var(--bg); }
 @media (prefers-reduced-motion: reduce) { .term .body .l::before { animation: none; } }
 
 .hero h1 {
-  margin: 34px 0 26px; font-weight: 400; font-size: clamp(1.1rem, 2.7vw, 1.35rem);
-  color: var(--fg-hi); line-height: 1.7; max-width: 44ch;
+  margin: 0 0 34px; font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.6rem);
+  color: var(--fg-hi); line-height: 1.2; letter-spacing: -0.02em;
 }
-.hero h1 .acc { font-weight: 700; }
+.hero h1 .acc { text-shadow: 0 0 26px var(--glow); }
 
 .cta { display: flex; gap: 18px; align-items: center; justify-content: center; font-size: 14px; }
 .cta .btn { border: 1px solid var(--acc); color: var(--acc); padding: 9px 22px; }
@@ -225,13 +229,13 @@ footer a:hover { color: var(--acc); background: none; }
 
   <section class="hero">
     <span class="k">local-first voice dictation</span>
+    <h1>press a key. talk. <span class="acc">let go.</span></h1>
     <div class="termwrap">
       <div class="term" aria-hidden="true">
-        <div class="bar"><i></i><i></i><i></i><span>zsh</span></div>
+        <div class="bar"><i></i><i></i><i></i><span>openstream</span></div>
         <div class="body" id="demo"></div>
       </div>
     </div>
-    <h1>speak. it lands at your cursor.<br>a spoken line break <span class="acc">won't</span> run your command.</h1>
     <div class="cta">
       <a class="btn" href="#install">install</a>
       <a class="plain" href="#hook">why &#8595;</a>
@@ -346,8 +350,8 @@ footer a:hover { color: var(--acc); background: none; }
     el.innerHTML =
       '<span class="p">$</span> openstream\n' +
       '<span class="l">listening</span>\n' +
-      '<span class="p">$</span> git commit -m "fix the null deref"\n' +
-      '  <span class="h">&#8627; newline held, not a safe target</span>\n' +
+      'the parser throws on an empty file and on a null path too.\n' +
+      '  <span class="h">&#8627; "new line" held here, a shell prompt is not a safe target</span>\n' +
       '<span class="p">$</span> <span class="cur"></span>';
   }
   if (el) {
@@ -356,10 +360,10 @@ footer a:hover { color: var(--acc); background: none; }
       var lines = [], i = 0;
       var render = function () { el.innerHTML = lines.join("\n"); };
       var q = [
-        { t: "l", h: '<span class="p">$</span> openstream', a: 320 },
+        { t: "l", h: '<span class="p">$</span> openstream', a: 340 },
         { t: "l", h: '<span class="l">listening</span>', a: 900 },
-        { t: "ty", pre: '<span class="p">$</span> ', txt: 'git commit -m "fix the null deref"', s: 34, a: 480 },
-        { t: "l", h: '  <span class="h">&#8627; newline held, not a safe target</span>', a: 460 },
+        { t: "ty", pre: '', txt: 'the parser throws on an empty file and on a null path too.', s: 30, a: 620 },
+        { t: "l", h: '  <span class="h">&#8627; "new line" held here, a shell prompt is not a safe target</span>', a: 560 },
         { t: "l", h: '<span class="p">$</span> <span class="cur"></span>', a: 0 }
       ];
       var next = function () {
