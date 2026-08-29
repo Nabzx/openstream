@@ -116,6 +116,14 @@ Near-black terminal tile (radial `#0B1A0E` → `#020402`), the caret-in-ring mar
 
 Can't theme the OS chrome, but the copy matches the voice: tray tooltip `openstream — idle` / `openstream — listening`, menu items lowercase.
 
+### 7. Launch surfaces — DMG background, repo social image, README — **done** ([#282](https://github.com/Nabzx/openstream/issues/282))
+
+Sources in `assets/branding/*.svg`, rasterised by `scripts/build-branding.sh` (rsvg-convert + Space Mono).
+
+- **DMG window** — `assets/dmg-background.png` (+`@2x`), a 640×384 near-black panel with a phosphor frame, the `~ openstream` wordmark and a `→` between the icon slots. Wired via `dmg.background` / `dmg.window` / `dmg.contents` in `package.json`. Needs a real `npm run dist` to eyeball.
+- **Social preview** — `assets/social-preview.png` (1280×640): the mark, the wordmark, the one-line pitch and the line-break thesis, phosphor on black. Uploaded by hand in repo Settings → Social preview (no API for it).
+- **README** — a PNG banner at the top, a `$ openstream` synopsis block, the intro tightened to the terminal voice. Body em-dashes left for a later copy pass.
+
 ## Sequence
 
 1. **Landing page** — isolated, no risk to the shipping app, fastest feedback. This is also the launch page ([#21](https://github.com/Nabzx/openstream/issues/21) / [#22](https://github.com/Nabzx/openstream/issues/22)).
@@ -136,4 +144,4 @@ Can run in parallel with the [#228](https://github.com/Nabzx/openstream/issues/2
 - **Hero demo**: a CSS/JS recreation of the terminal session is the primary hero; the real screen-recording GIF ([#21](https://github.com/Nabzx/openstream/issues/21)) drops into a lower "see it for real" section once recorded.
 - **Fonts**: Space Mono (`400` + `700`). The landing page pulls it from Google Fonts; the app and overlay bundle the two woff2 files locally (~37 KB total, `src/fonts/`) so an offline first run still renders. No separate display face — the wordmark is Space Mono bold, larger. The size fight is models + Electron, not a font.
 - **Tray icon**: idle stays a macOS *template* glyph (adapts to the menu-bar theme); the recording state is bright green (`--acc`), transcribing is the second green (`--acc-2`).
-- **Scope, staged**: pass 1 = landing page + app window + app icon + menu-bar icons + overlay. Pass 2 = DMG installer background + the GitHub repo social-preview image + README styling. Later = `[dictation]` console formatting and the held-result / error copy in the terminal voice.
+- **Scope, staged**: pass 1 = landing page + app window + app icon + menu-bar icons + overlay *(done)*. Pass 2 = DMG installer background + the GitHub repo social-preview image + README styling *(done, #282)*. Later = `[dictation]` console formatting, the held-result / error copy in the terminal voice, and a full de-dash of the README body.
