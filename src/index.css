@@ -4,21 +4,15 @@
    (traffic lights, hidden-inset title bar) stays; everything inside it is
    recoloured. */
 
-/* Space Mono is bundled, not fetched - the app is local-first and runs
-   offline. Vite hashes these into dist/assets at build time. */
+/* JetBrains Mono is bundled, not fetched - the app is local-first and runs
+   offline. One variable woff2 (latin subset) covers the whole weight
+   range; Vite hashes it into dist/assets at build time. */
 @font-face {
-  font-family: "Space Mono";
+  font-family: "JetBrains Mono";
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100 800;
   font-display: swap;
-  src: url("./fonts/space-mono-400.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Space Mono";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url("./fonts/space-mono-700.woff2") format("woff2");
+  src: url("./fonts/jetbrains-mono.woff2") format("woff2");
 }
 
 :root {
@@ -48,7 +42,7 @@
   --space-5: 20px;
   --space-6: 24px;
 
-  font-family: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13px;
   line-height: 1.62;
 }
