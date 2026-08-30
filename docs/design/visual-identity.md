@@ -72,7 +72,7 @@ Cards and panels also carry `backdrop-filter: blur(20px) saturate(1.4)`. The **o
 ~ openstream █
 ```
 
-The caret-in-a-ring **mark** is the glyph (icon, tray, the app's Home hero), recoloured to `--acc` blue with a `--glow` bloom.
+The **mark** is a stream through a listening ring, a play on the name, recoloured to `--acc` blue with a `--glow` bloom. The app icon carries the full two-line stream; the Home hero and the menu-bar icon, which render at ~18px, carry a single wave, since two lines tangle into a blob that small. `src/components/Mark.tsx`, `assets/icon.svg` and `scripts/build-icons.sh` hold the three, kept in step.
 
 ## Per-surface
 
@@ -88,7 +88,7 @@ The overlay window gets its vibrancy back: `vibrancy: "hud"`, `visualEffectState
 
 ### 3. App icon + menu-bar icons — `assets/icon.svg`, `electron/icons/` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 
-Navy tile with a soft radial, the caret-in-ring mark in `--acc` with a Gaussian glow. Menu bar: idle stays a black macOS *template* glyph; recording is `#5CB8FF`, transcribing `#4FE0D4`. Regenerate via `scripts/build-icons.sh`.
+Navy tile with a soft radial, the stream-in-ring mark in `--acc` with a Gaussian glow (two-line stream on the tile, single wave in the menu bar). Menu bar: idle stays a black macOS *template* glyph; recording is `#5CB8FF`, transcribing `#4FE0D4`. Regenerate via `scripts/build-icons.sh`.
 
 ### 4. Launch surfaces — DMG background, social image, README banner — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 

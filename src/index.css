@@ -413,7 +413,7 @@ button { font: inherit; }
 }
 .hero p .keys { margin: 0 1px; }
 
-/* the mark: a caret in a listening ring */
+/* the mark: a stream (two counter-phase lines) in a listening ring */
 .mark {
   width: 34px;
   height: 34px;

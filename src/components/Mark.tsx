@@ -1,7 +1,7 @@
-// The OpenStream mark: an upward caret - the insertion point where
-// dictated text lands - inside a listening ring. Monoline, on the same
-// 24px grid and stroke weight as the icon set, so it can also be
-// rasterised into the tray and app icon later.
+// The OpenStream mark: a stream through a listening ring, a play on the
+// name. This UI/tray size carries a single wave (scripts/build-icons.sh
+// matches it); the app icon (assets/icon.svg) has room for the full
+// two-line stream. Monoline, on the same 24px grid as the icon set.
 //
 // `state` only shifts the colour: "idle" (accent) is the resting look,
 // "attention" (red) flags a blocking permission.
@@ -19,7 +19,7 @@ export default function Mark({
   const glyph = (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="8.5" />
-      <path d="M8.4 13.6 12 10l3.6 3.6" />
+      <path strokeWidth={2} d="M6 12q3 -5.2 6 0t6 0" />
     </svg>
   );
 
