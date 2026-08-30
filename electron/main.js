@@ -48,6 +48,37 @@ if (!app.requestSingleInstanceLock()) {
   process.exit(0);
 }
 
+// An uncaught exception in the main process pops Electron's default error
+// dialog - which, on window close or app teardown, reads to a user as "the
+// app crashed" even when nothing important broke. Log the full stack to the
+// terminal instead, and only re-raise the dialog for an error that isn't
+// part of shutdown. See #294/#295 for the class of teardown race this
+// catches; the log line is what a repro needs to pin the next one.
+let quitting = false;
+app.on("before-quit", () => {
+  quitting = true;
+});
+// Launched from an editor's integrated terminal, closing that editor sends
+// the app a signal rather than going through before-quit. Treat it as a
+// quit so teardown races don't surface as a crash dialog.
+for (const signal of ["SIGTERM", "SIGINT", "SIGHUP"]) {
+  process.on(signal, () => {
+    quitting = true;
+    app.quit();
+  });
+}
+process.on("uncaughtException", (error) => {
+  const stack = error && error.stack ? error.stack : String(error);
+  console.error(`[main] uncaught exception${quitting ? " during shutdown" : ""}:\n${stack}`);
+  if (!quitting) {
+    dialog.showErrorBox("OpenStream hit an unexpected error", stack);
+  }
+});
+process.on("unhandledRejection", (reason) => {
+  const stack = reason && reason.stack ? reason.stack : String(reason);
+  console.error(`[main] unhandled promise rejection${quitting ? " during shutdown" : ""}:\n${stack}`);
+});
+
 const isDev = process.env.NODE_ENV === "development";
 
 const TRAY_ICON_FILES = {
