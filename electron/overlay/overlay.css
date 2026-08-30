@@ -1,7 +1,8 @@
-/* Push-to-talk overlay - matches the app window (src/index.css) and the
-   landing page. Its own file, its own CSP (default-src 'self'; style-src
-   'self'), so JetBrains Mono is bundled right here rather than pulled from
-   Google Fonts. One variable woff2 covers the weight range. */
+/* Push-to-talk overlay - blue-glass, matching the app window
+   (src/index.css) and the landing page. Its own file, its own CSP
+   (default-src 'self'; style-src 'self'), so JetBrains Mono is bundled
+   right here rather than pulled from Google Fonts. One variable woff2
+   covers the weight range. */
 
 @font-face {
   font-family: "JetBrains Mono";
@@ -15,17 +16,16 @@
   color-scheme: dark;
   font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --bg: #020402;
-  --screen: #050805;
-  --acc: #3DF65A;
-  --acc-2: #1ED89A;
-  --err: #F0503C;
-  --fg: #9FB89F;
-  --fg-hi: #D2E6D2;
-  --muted: #56704F;
-  --faint: #3C4E3B;
-  --line-hi: #24382A;
-  --glow: rgba(61, 246, 90, 0.16);
+  --screen: rgba(6, 16, 32, 0.55);
+  --acc: #9BD3FF;
+  --acc-2: #4FE0D4;
+  --err: #FF7A63;
+  --fg: #DCE8FA;
+  --fg-hi: #FFFFFF;
+  --muted: #9DB4D2;
+  --faint: #6F8CB4;
+  --line-hi: rgba(155, 200, 255, 0.28);
+  --glow: rgba(120, 200, 255, 0.7);
 }
 
 html,
@@ -39,14 +39,14 @@ body {
   display: flex;
 }
 
-/* The overlay window is frameless + transparent with no vibrancy. This
-   paints the panel: solid near-black, a 1px phosphor border, a faint
-   scanline, a hairline inner highlight. Hard edges - no radius. It fills
-   the window exactly (main.js sizes the window to the panel), so the
-   border sits flush on all four sides. No outer glow: the window bounds
-   would clip it and it would read as a broken frame. Shared by the
-   recording strip and the held-result panel; the window resizes between
-   them rather than swapping. */
+/* The overlay window carries a native macOS vibrancy material (see
+   createOverlayWindow: vibrancy + roundedCorners + hasShadow). This paints
+   the glass on top of it: a translucent blue wash, a bright rim light, an
+   inner glow. The window is rounded and sized to the panel, so the panel
+   fills it with a matching radius. Shared by the recording strip and the
+   held-result panel; the window resizes between them rather than swapping.
+   Users with Reduce Transparency on, or on a bright wallpaper, get the
+   more opaque fallback the wash already provides. */
 .overlay {
   box-sizing: border-box;
   position: relative;
@@ -54,20 +54,17 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-radius: 13px;
   color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--acc);
-  box-shadow: inset 0 1px 0 rgb(61 246 90 / 14%);
+  background: linear-gradient(180deg, rgba(120, 180, 255, 0.18), rgba(30, 60, 110, 0.16));
+  -webkit-backdrop-filter: blur(14px) saturate(1.7) brightness(1.08);
+  backdrop-filter: blur(14px) saturate(1.7) brightness(1.08);
+  border: 1px solid rgba(180, 220, 255, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(230, 244, 255, 0.6),
+    inset 0 0 26px -8px rgba(180, 220, 255, 0.5),
+    0 12px 40px rgba(0, 0, 0, 0.4);
   font-size: 13px;
-}
-
-.overlay::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgb(0 0 0 / 16%) 3px, transparent 4px);
 }
 
 /* --- recording / editing strip --- */
@@ -77,7 +74,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 15px;
+  padding: 0 16px;
   white-space: nowrap;
 }
 .recording::before {
@@ -87,19 +84,20 @@ body {
 }
 
 [data-status] {
-  color: var(--acc);
+  color: var(--fg-hi);
   font-weight: 700;
   text-transform: lowercase;
   letter-spacing: 0.02em;
-  text-shadow: 0 0 10px var(--glow);
+  text-shadow: 0 0 12px var(--glow), 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 .cur {
   width: 7px;
   height: 15px;
   margin-left: -4px;
-  background: var(--acc);
-  box-shadow: 0 0 8px var(--glow);
+  border-radius: 2px;
+  background: var(--fg-hi);
+  box-shadow: 0 0 10px var(--glow);
   animation: cur-blink 1.05s steps(1) infinite;
 }
 @keyframes cur-blink {
@@ -118,28 +116,31 @@ body {
 .waveform__bar {
   width: 3px;
   height: 100%;
-  background: var(--acc);
+  border-radius: 2px;
+  background: var(--fg-hi);
+  box-shadow: 0 0 6px var(--glow);
   transform: scaleY(var(--level, 0.08));
   transform-origin: center;
   transition: transform 90ms ease-out;
 }
 
-/* --- held-result panel: a terminal error block --- */
+/* --- held-result panel: an error block --- */
 
 .held-result {
   display: none;
   flex-direction: column;
   flex: 1;
-  padding: 13px 15px 15px;
+  padding: 13px 16px 15px;
 }
 
 .held-result h1 {
   margin: 0 0 4px;
   font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
   text-transform: lowercase;
   color: var(--err);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 .held-result h1::before { content: "\2500\2500  "; color: var(--line-hi); }
 
@@ -156,9 +157,10 @@ body {
   max-height: 160px;
   margin: 0;
   overflow: auto;
-  padding: 9px 10px;
+  padding: 9px 11px;
+  border-radius: 8px;
   color: var(--fg-hi);
-  background: var(--screen);
+  background: rgba(6, 16, 30, 0.5);
   border: 1px solid var(--line-hi);
   font: 12px/1.5 "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   white-space: pre-wrap;
@@ -174,9 +176,10 @@ body {
 }
 
 button {
-  padding: 4px 10px;
-  color: var(--acc);
-  background: transparent;
+  padding: 5px 11px;
+  border-radius: 7px;
+  color: var(--fg-hi);
+  background: rgba(120, 190, 255, 0.14);
   border: 1px solid var(--line-hi);
   font: inherit;
   font-size: 12px;
@@ -186,12 +189,12 @@ button {
 button::before { content: "["; color: var(--faint); }
 button::after { content: "]"; color: var(--faint); }
 button:hover {
-  background: var(--acc);
-  color: var(--bg);
-  border-color: var(--acc);
+  background: rgba(155, 211, 255, 0.9);
+  color: #06162c;
+  border-color: rgba(200, 230, 255, 0.8);
 }
-button.secondary { color: var(--muted); }
-button.secondary:hover { color: var(--bg); }
+button.secondary { color: var(--muted); background: transparent; }
+button.secondary:hover { color: #06162c; }
 
 /* --- state wiring (unchanged behaviour) --- */
 
@@ -206,11 +209,12 @@ body[data-state="edit-message"] [data-status] {
   color: var(--fg);
   font-weight: 400;
   text-transform: none;
-  text-shadow: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 body[data-state="idle"] .waveform__bar {
   background: var(--faint);
+  box-shadow: none;
   transform: scaleY(0.15);
   transition: transform 300ms ease-out;
 }

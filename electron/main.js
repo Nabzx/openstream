@@ -311,19 +311,19 @@ function createOverlayWindow() {
     show: false,
     frame: false,
     transparent: true,
-    // The panel fills the window edge to edge with a 1px phosphor border,
-    // so the native rounded-corner mask must be off or it clips the
-    // border's corners, and the native drop shadow off or it haloes a
-    // hard-edged panel. See #281 / the overlay polish pass.
-    roundedCorners: false,
-    hasShadow: false,
+    // #300: the blue-glass overlay sits on a native macOS vibrancy
+    // material. "hud" is the floating-panel material; visualEffectState
+    // "active" keeps it bright even though the window is only ever shown
+    // via showInactive(). Rounded corners + a native shadow so it reads as
+    // a real glass panel; overlay.css matches the panel radius.
+    vibrancy: "hud",
+    visualEffectState: "active",
+    roundedCorners: true,
+    hasShadow: true,
     resizable: false,
     focusable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    // No vibrancy: the terminal rebrand (#281) wants a solid near-black
-    // panel, not frosted glass. overlay.css paints it (solid --bg, a 1px
-    // phosphor border, a faint scanline).
     webPreferences: {
       preload: path.join(__dirname, "overlay", "overlayPreload.js"),
       contextIsolation: true,
@@ -332,6 +332,10 @@ function createOverlayWindow() {
   });
   overlayWin.setIgnoreMouseEvents(true);
   overlayWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Reapplied after the native window exists - on a frameless + transparent
+  // window the constructor pairing has been unreliable on some
+  // Electron/macOS combinations.
+  overlayWin.setVibrancy("hud");
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
