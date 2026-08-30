@@ -232,7 +232,7 @@ a:hover { background: var(--acc); color: var(--bg); }
     <div class="wrap">
       <div class="rule">what<span class="x"></span></div>
       <div class="prose">
-        <p>OpenStream is a free, open-source take on Wispr Flow that runs entirely on your Mac. Whisper transcribes your speech on the machine, so <b>nothing you say is sent anywhere</b>, and there is no account to make.</p>
+        <p>OpenStream is a free, open-source take on Wispr Flow that runs entirely on your Mac. A local model (Parakeet, on the Neural Engine) transcribes your speech on the machine, so <b>nothing you say is sent anywhere</b>, and there is no account to make.</p>
         <p>It also has one rule worth knowing. A spoken "new paragraph" only becomes a real line break in apps where a line break is safe. In a terminal or a chat box a stray newline can fire off something half-finished, so <b>there the words just carry on</b>.</p>
       </div>
     </div>
@@ -241,10 +241,10 @@ a:hover { background: var(--acc); color: var(--bg); }
   <section class="sec install" id="install">
     <div class="wrap">
       <div class="rule">install<span class="x"></span></div>
-<pre><span class="c"># apple silicon, macOS 13+, node 22.12+, xcode CLT</span>
+<pre><span class="c"># apple silicon, macOS 14+, node 22.12+, xcode CLT</span>
 <span class="p">$</span> git clone https://github.com/Nabzx/openstream.git
 <span class="p">$</span> cd openstream && npm install && npm start</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:12px">models download on first launch, about 1.2 GB. <span class="acc">npm run doctor</span> checks the permissions.</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:12px">the transcription model downloads on first launch, about 470 MB. <span class="acc">npm run doctor</span> checks the permissions.</p>
     </div>
   </section>
 
@@ -253,7 +253,7 @@ a:hover { background: var(--acc); color: var(--bg); }
       <div class="rule">status<span class="x"></span></div>
       <ul>
         <li><b>beta release.</b> pre-1.0; the core path runs from source today.</li>
-        <li>source install for now. the DMG is unsigned; signing is next.</li>
+        <li>a GitHub repo you clone and build, not an app you download. that is the point for now: open, auditable, yours to change.</li>
         <li>no account, no cloud, no telemetry, and that won't change.</li>
       </ul>
     </div>
