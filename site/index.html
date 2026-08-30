@@ -7,24 +7,24 @@
 <meta property="og:title" content="openstream">
 <meta property="og:description" content="Local-first voice dictation for people who live in a terminal. Open source, free, on-device.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#0B1D3A">
+<meta name="theme-color" content="#05070C">
 <title>openstream: local-first voice dictation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 :root {
-  --bg: #0B1D3A;
-  --bg-hi: #163A6B;
-  --screen: #12294A;
-  --acc: #5CB8FF;
-  --acc-2: #4FE0D4;
+  --bg: #05070C;
+  --bg-hi: #0B1826;
+  --screen: #0A1119;
+  --acc: #7EC8FF;
+  --acc-2: #5FE6DC;
   --fg: #DCE8FA;
   --fg-hi: #FFFFFF;
   --muted: #8AA3C4;
-  --line: #1E3A5F;
-  --line-hi: #2E4E7A;
-  --glow: rgba(92, 184, 255, 0.36);
+  --line: #152538;
+  --line-hi: #233C58;
+  --glow: rgba(126, 200, 255, 0.34);
   --bar: 28px;
 }
 
@@ -32,7 +32,7 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
-  background: radial-gradient(120% 70% at 28% -6%, var(--bg-hi) 0%, var(--bg) 46%, #0A1730 100%) fixed;
+  background: radial-gradient(120% 70% at 28% -6%, var(--bg-hi) 0%, var(--bg) 46%, #040609 100%) fixed;
   color: var(--fg);
   font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13px;
@@ -66,7 +66,7 @@ a:hover { background: var(--acc); color: var(--bg); }
 /* ---- top strip ---- */
 .top {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: linear-gradient(180deg, var(--bg) 45%, rgba(11, 29, 58, 0.7) 78%, transparent);
+  background: linear-gradient(180deg, var(--bg) 45%, rgba(6, 9, 14, 0.72) 78%, transparent);
 }
 .top .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; font-size: 13px; }
 .top .brand { color: var(--fg-hi); font-size: 18px; letter-spacing: -0.01em; }
@@ -168,37 +168,10 @@ a:hover { background: var(--acc); color: var(--bg); }
 .bars .b.slow .n { color: var(--muted); }
 
 /* what */
-.what pre {
-  font-size: 13px; line-height: 2; color: var(--fg);
-  border-left: 1px solid var(--line-hi); padding-left: 16px;
-}
-.what pre .p { color: var(--acc); }
-.what pre .g { color: var(--acc-2); }
-.what pre .m { color: var(--muted); }
-
-/* safe */
-.safe .grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-hi); }
-@media (max-width: 520px) { .safe .grid { grid-template-columns: 1fr; } }
-.safe .col { padding: 16px; }
-.safe .col + .col { border-left: 1px solid var(--line); }
-@media (max-width: 520px) { .safe .col + .col { border-left: 0; border-top: 1px solid var(--line); } }
-.safe .col .t { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
-.safe .col.y .t { color: var(--acc); }
-.safe .col.n .t { color: var(--acc-2); }
-.safe .col .r { color: var(--muted); font-size: 12px; }
-.safe .col .r b { color: var(--fg); font-weight: 400; }
-.safe .col .out { margin-top: 10px; font-size: 12px; }
-.safe .col.y .out { color: var(--acc); }
-.safe .col.n .out { color: var(--acc-2); }
-
-/* local */
-.local .big { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
-.local .big .n { font-size: clamp(2.6rem, 9vw, 4.4rem); font-weight: 700; color: var(--acc); line-height: 1; letter-spacing: -0.04em; text-shadow: 0 0 34px var(--glow); }
-.local .big .l { color: var(--muted); max-width: 30ch; font-size: 12px; }
-.local .kv { font-size: 12px; }
-.local .kv .r { display: grid; grid-template-columns: 16ch 1fr; gap: 14px; padding: 5px 0; border-bottom: 1px solid var(--line); }
-.local .kv .r .k { color: var(--acc); }
-.local .kv .r .v { color: var(--muted); }
+.what .prose { border-left: 1px solid var(--line-hi); padding-left: 18px; max-width: 62ch; }
+.what .prose p { color: var(--fg); font-size: 13.5px; line-height: 1.9; }
+.what .prose p + p { margin-top: 14px; }
+.what .prose b { color: var(--fg-hi); font-weight: 500; }
 
 /* install */
 .install pre {
@@ -213,10 +186,6 @@ a:hover { background: var(--acc); color: var(--bg); }
 .st li { padding: 4px 0 4px 16px; position: relative; color: var(--muted); }
 .st li::before { content: "\00B7"; position: absolute; left: 4px; color: var(--acc); }
 .st li b { color: var(--fg); font-weight: 400; }
-
-footer { padding: 40px 0 30px; font-size: 11px; color: var(--muted); border-top: 1px solid var(--line); }
-footer a { color: var(--muted); padding: 0 4px; }
-footer a:hover { color: var(--acc); background: none; }
 
 :focus-visible { outline: 1px solid var(--acc); outline-offset: 2px; }
 </style>
@@ -249,7 +218,7 @@ footer a:hover { color: var(--acc); background: none; }
 
   <section class="sec hook" id="hook">
     <div class="wrap">
-      <div class="rule">throughput<span class="x"></span></div>
+      <div class="rule">why<span class="x"></span></div>
       <h2>you type at 40. you talk at <span class="acc">150</span>.</h2>
       <p class="sub">words per minute. dictation is roughly four times faster, if it lands clean.</p>
       <div class="bars">
@@ -262,43 +231,9 @@ footer a:hover { color: var(--acc); background: none; }
   <section class="sec what">
     <div class="wrap">
       <div class="rule">what<span class="x"></span></div>
-<pre><span class="p">$</span> openstream --what
-
-<span class="g">wispr flow, but:</span>
-  open source   <span class="m">MIT, all of it</span>
-  free          <span class="m">no plan, no seats, no trial</span>
-  local         <span class="m">whisper on your machine, nothing leaves it</span>
-  yours         <span class="m">clone it, read it, change it</span></pre>
-    </div>
-  </section>
-
-  <section class="sec safe">
-    <div class="wrap">
-      <div class="rule">safety<span class="x"></span></div>
-      <div class="grid">
-        <div class="col y">
-          <div class="t">safe target</div>
-          <div class="r"><b>iA Writer</b>, <b>Notes</b>, an editor</div>
-          <div class="out">"new line"  &#8594;  \n</div>
-        </div>
-        <div class="col n">
-          <div class="t">everywhere else</div>
-          <div class="r">a <b>terminal</b>, <b>Slack</b>, a one-line field</div>
-          <div class="out">"new line"  &#8594;  dropped</div>
-        </div>
-      </div>
-      <p style="color:var(--muted);font-size:12px;margin-top:14px">a newline can submit a half-typed command. openstream checks where the cursor is first.</p>
-    </div>
-  </section>
-
-  <section class="sec local">
-    <div class="wrap">
-      <div class="rule">local<span class="x"></span></div>
-      <div class="big"><span class="n">0</span><span class="l">network calls between your voice and the cursor</span></div>
-      <div class="kv">
-        <div class="r"><span class="k">speech</span><span class="v">whisper.cpp, on the GPU, resident</span></div>
-        <div class="r"><span class="k">cleanup</span><span class="v">deterministic rules, sub-1ms, no model rewrites your words</span></div>
-        <div class="r"><span class="k">account</span><span class="v">none. nothing phones home.</span></div>
+      <div class="prose">
+        <p>OpenStream is a free, open-source take on Wispr Flow that runs entirely on your Mac. Whisper transcribes your speech on the machine, so <b>nothing you say is sent anywhere</b>, and there is no account to make.</p>
+        <p>It also has one rule worth knowing. A spoken "new paragraph" only becomes a real line break in apps where a line break is safe. In a terminal or a chat box a stray newline can fire off something half-finished, so <b>there the words just carry on</b>.</p>
       </div>
     </div>
   </section>
@@ -324,14 +259,6 @@ footer a:hover { color: var(--acc); background: none; }
     </div>
   </section>
 
-  <footer>
-    <div class="wrap">
-      <a href="https://github.com/Nabzx/openstream">github</a> ·
-      <a href="https://github.com/Nabzx/openstream/blob/main/ROADMAP.md">roadmap</a> ·
-      <a href="https://github.com/Nabzx/openstream/tree/main/docs/progress">notes</a>
-      &nbsp;&nbsp;<span class="mut">~ a spoken newline is a suggestion, not a command.</span>
-    </div>
-  </footer>
 
 </main>
 
