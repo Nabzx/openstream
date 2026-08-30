@@ -152,13 +152,13 @@ function createWindow() {
     titleBarStyle: "hiddenInset",
     title: "OpenStream",
     // #301: the blue-glass window sits on a native "under-window" vibrancy
-    // material so the desktop shows through translucent panels. When macOS
-    // can't render it (Reduce Transparency), the window falls back to this
-    // solid navy so it still looks intentional. index.css keeps every
-    // panel semi-transparent to let the material read.
+    // material so the desktop shows through translucent panels. The window
+    // background MUST be transparent or the opaque fill paints over the
+    // material and the glass never shows. Reduce Transparency then flattens
+    // the material; index.css's body wash keeps that fallback on-brand.
     vibrancy: "under-window",
     visualEffectState: "active",
-    backgroundColor: "#14335F",
+    backgroundColor: "#00000000",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

@@ -54,12 +54,13 @@
 
 * { box-sizing: border-box; }
 
-/* Transparent so the native "under-window" vibrancy shows; a faint blue
-   wash unifies it and keeps contrast when the desktop behind is bright.
-   With Reduce Transparency on, the window's solid --bg shows instead. */
+/* Semi-transparent so the native "under-window" vibrancy shows through as
+   glass; the blue wash unifies it and holds contrast over a bright
+   desktop. With Reduce Transparency on, the material flattens and this
+   wash (plus --bg behind it) is what keeps the fallback on-brand. */
 body {
   margin: 0;
-  background: linear-gradient(180deg, rgba(32, 74, 132, 0.30), rgba(16, 40, 78, 0.40));
+  background: linear-gradient(180deg, rgba(22, 50, 92, 0.42), rgba(13, 34, 68, 0.5));
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "liga" 0;
