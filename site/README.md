@@ -4,9 +4,9 @@ A single self-contained landing page for OpenStream. No build step, no
 dependencies; `index.html` inlines its own CSS and JS and pulls only
 JetBrains Mono from Google Fonts.
 
-Design direction: `docs/design/visual-identity.md`. Blue glass; JetBrains
-Mono, white text on navy with blue and aqua accents, a looping boot demo
-in the hero.
+Design direction: `docs/design/visual-identity.md`. Near-black terminal
+ground, a lighter blue accent, JetBrains Mono, a looping boot demo in
+the hero. Sections: hero, why, what, install, status.
 
 ## Preview locally
 

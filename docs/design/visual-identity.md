@@ -94,9 +94,9 @@ Navy tile with a soft radial, the caret-in-ring mark in `--acc` with a Gaussian 
 
 Sources in `assets/branding/*.svg`, rasterised by `scripts/build-branding.sh` (rsvg-convert + JetBrains Mono). Navy gradient grounds, blue wordmark and mark. The social preview PNG is uploaded by hand in repo Settings.
 
-### 5. Landing page — `site/index.html` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
+### 5. Landing page — `site/index.html` — **done**
 
-`:root` recoloured to the blue ramp with a fixed top-glow gradient; the scanline dialled down; JetBrains Mono from Google Fonts. Structure (100vh hero, the looping demo terminal, the rule-headed sections, the tmux status bar, the "beta release" markers) is unchanged from #278.
+Near-black ground (`#05070C`), a lighter blue accent (`#7EC8FF`), a faint top glow, JetBrains Mono from Google Fonts. Structure: a 100vh hero with the looping demo terminal, then `why` (the 40-vs-150 wpm bars), `what` (two short British-English sentences covering local + the line-break rule), `install`, `status`. Rule-headed sections, the fixed tmux status bar, the "beta release" markers. The `safety` and `local` sections and the footer link row were cut to keep it terse.
 
 ### 6. Tray menu / notification wording
 
