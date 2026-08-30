@@ -209,6 +209,37 @@ test("bullet point in a one-line field also degrades, even if the app is break-s
   assert.equal(out, "Milk eggs");
 });
 
+test("#320: a break command Parakeet wrapped in punctuation leaves no stray mark", () => {
+  // Parakeet punctuates from prosody: a pause around the command makes it
+  // its own sentence.
+  assert.equal(
+    cleanup("testing one two three. New paragraph. Testing four five six.", { breakSafe: true }),
+    "Testing one two three.\n\nTesting four five six.",
+  );
+  assert.equal(
+    cleanup("first line. New line. Second line.", { breakSafe: true }),
+    "First line.\nSecond line.",
+  );
+  // A leading comma is a Parakeet artifact and gets eaten; a leading full
+  // stop closed the previous thought and stays.
+  assert.equal(
+    cleanup("buy milk, new paragraph, buy eggs", { breakSafe: true }),
+    "Buy milk\n\nBuy eggs.",
+  );
+});
+
+test("#320: a Parakeet-punctuated bullet run starts a clean list", () => {
+  const out = cleanup("shopping list. Bullet point. Milk. Bullet point. Eggs.", { breakSafe: true });
+  assert.equal(out, "Shopping list.\n- Milk.\n- Eggs.");
+});
+
+test("#320: the punctuation-eating still degrades to a space outside a break-safe app", () => {
+  assert.equal(
+    cleanup("testing one two three. New paragraph. Testing four.", { breakSafe: false }),
+    "Testing one two three. Testing four.",
+  );
+});
+
 test("converts spoken symbols", () => {
   const cases = [
     ["fifty percent off", "Fifty% off."],
