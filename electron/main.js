@@ -17,7 +17,7 @@ const http = require("http");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeBottomCenteredPosition } = require("./overlayPosition");
-const whisperServer = require("./whisperServer");
+const transcriptionHelper = require("./transcriptionHelper");
 const rewriteModelServer = require("./rewriteModelServer");
 const { ensureModels, modelsMissing } = require("./modelStore");
 const hotkeyHelper = require("./hotkeyHelper");
@@ -25,7 +25,6 @@ const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { setBreakSafeApplications, DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { createBundleIdReader } = require("./appBundleId");
-const { createTranscriptionHttpAdapter } = require("./transcriptionHttpAdapter");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
 const { createVoiceEditIntake } = require("./voiceEditCoordinator");
@@ -88,7 +87,9 @@ const fnShortcutCapture = createFnShortcutCapture({
   },
   onDiagnostic: (message) => console.error(`[hotkey-helper] ${message}`),
 });
-const transcription = createTranscriptionHttpAdapter({ inferenceUrl: whisperServer.inferenceUrl });
+// #204: the Swift transcription helper is itself the adapter - it exposes
+// transcribe(wavBuffer, prompt) over its stdio protocol.
+const transcription = transcriptionHelper;
 const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
 });
@@ -719,7 +720,7 @@ ipcMain.handle("app:open-privacy-settings", (event, key) => {
 
 ipcMain.handle("app:get-health", async () => {
   const [transcription, rewrite, permissions] = await Promise.all([
-    probeHttp(whisperServer.healthUrl()),
+    transcriptionHelper.isReady(),
     probeHttp(rewriteModelServer.healthUrl()),
     checkPermissions(),
   ]);
@@ -885,7 +886,7 @@ app.whenReady().then(() => {
   // few seconds so the ~15-20s Metal warm-up isn't competing with
   // everything else macOS is starting.
   const startModelServers = () => {
-    whisperServer.start();
+    transcriptionHelper.start();
     rewriteModelServer.start();
   };
 
@@ -923,7 +924,7 @@ app.on("will-quit", () => {
   shortcutCaptureSender = null;
   pushToTalkShortcut?.stop();
   accessibilityHelper.stop();
-  whisperServer.stop();
+  transcriptionHelper.stop();
   rewriteModelServer.stop();
 });
 
