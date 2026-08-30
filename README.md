@@ -12,7 +12,6 @@ The words land at your cursor and never leave your Mac.
 
 </div>
 
-
 <img src="assets/demo.gif" alt="Into Apple Notes: a voice edit that wraps a selection in quotes and uppercases it, then dictation with a spoken paragraph break." width="100%">
 
 ## Why
@@ -49,17 +48,26 @@ Rebuilding the app resets these grants, so delete the old OpenStream under Syste
 
 ## Status
 
-Beta, feature-complete for 1.0. A final on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is what stands between here and the `v1.0.0` tag.
+Beta, `v1.0.0` tagged. The on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is done. Known rough edges are on the [v1.1 milestone](https://github.com/Nabzx/openstream/milestone/6): accuracy on short clips, spoken numbers coming through spelled out, and a slower first dictation right after launch.
 
 ## Development
 
 ```bash
-npm run dev      # Vite renderer + Electron
-npm test         # unit tests
-npm run dist     # unsigned DMG under release/
+npm run dev       # Vite renderer + Electron
+npm test          # vitest + node --test
+npm run typecheck
+npm run dist      # unsigned DMG under release/
 ```
 
-More: [ROADMAP](ROADMAP.md), [CONTEXT](CONTEXT.md), [progress notes](docs/progress/).
+More: [ROADMAP](ROADMAP.md), [CONTEXT](CONTEXT.md), [progress notes](docs/progress/), [ADRs](docs/adr/).
+
+## Contributing
+
+Issues are tagged by milestone. Anything on [v1.1](https://github.com/Nabzx/openstream/milestone/6) is fair game. Pick one, say so on the issue so nobody doubles up, then open a PR from a branch.
+
+Every PR gets a review before it merges, and CI (`npm run build`) has to pass. Run `npm test` and `npm run typecheck` locally first. Keep commits small and the messages plain.
+
+Before a change that touches how the pipeline behaves, read the matching doc: `CONTEXT.md` is the glossary, `docs/adr/` records the decisions and why they went that way, `docs/progress/` is the running history. `AGENTS.md` lists the few hard invariants.
 
 ## Licence
 
