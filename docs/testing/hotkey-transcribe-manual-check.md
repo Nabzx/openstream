@@ -21,13 +21,13 @@ The automated coverage behind the wizard also includes:
 - Four overlay-positioning tests covering centering, the bottom margin, offset work areas, and a custom margin. Run them with `node --test electron/overlayPosition.test.js`. The actual Dock clearance still needs a human check.
 - `node --check` passing for all new and changed JavaScript files.
 
-The overlay's terminal panel and live waveform (#281: a solid near-black panel with a 1px phosphor border, `> listening` with a block cursor) has no automated coverage beyond `node --check` and `npm run build` passing - how the panel and waveform look and feel while speaking needs a human on a real screen, not a headless session.
+The overlay's blue-glass panel and live waveform (#300: a translucent blue vibrancy panel with a bright rim, rounded corners, `> listening` with a block cursor) has no automated coverage beyond `node --check` and `npm run build` passing - how the glass, panel and waveform look and feel while speaking needs a human on a real screen, not a headless session.
 
 The wizard checks the build, then walks through seven stages:
 
 1. Check that the Electron runtime has not been revoked by Gatekeeper, then run the automated test suite and typecheck on an Apple Silicon Mac.
 2. Start OpenStream and grant Microphone, Input Monitoring, and Accessibility permissions.
-3. Use standalone `Option` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock: a solid near-black panel with a 1px phosphor-green border and a faint scanline (no blur - the frosted glass was dropped in #281), reading `> listening` with a blinking block cursor and a green waveform that reacts to your voice. Confirm the transparent margin around the panel is fully clear, with no dark rectangle bleeding past the border. On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it.
+3. Use standalone `Option` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock: a rounded translucent blue glass panel (the desktop behind it is visibly blurred), a bright rim light, reading `> listening` with a blinking block cursor and a white waveform that reacts to your voice. Check it stays legible over a bright / busy wallpaper and with System Settings > Accessibility > Display > Reduce Transparency on (it falls back to the more opaque wash). On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it.
 4. Dictate into TextEdit and confirm the finished text is inserted once.
 5. Inspect both model-server listeners and sample their TCP connections during a dictation. Ports 8178 and 8179 must stay on `127.0.0.1`.
 6. Measure three warm dictations from key release to confirmed insertion. Every measurement must be below 1000 ms.
