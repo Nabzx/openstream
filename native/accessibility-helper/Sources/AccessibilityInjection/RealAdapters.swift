@@ -144,25 +144,50 @@ public final class RealFocusResolver: FocusResolving {
     // The tracker stays for the settle guard (#62), which is about timing
     // stability, not identity. Falls back to the tracker if the AX read
     // fails.
-    private func frontmostApp(deadlineMs: Double) -> NSRunningApplication? {
+    //
+    // That read can return kAXErrorCannotComplete (-25204) transiently -
+    // a messaging timeout, most likely right after the transcription model
+    // has had the machine busy. Falling straight back to the tracker there
+    // reintroduces the exact bug this method exists to fix, so retry within
+    // a budget first (the same shape as resolveFocusedElementWithin). The
+    // happy path still returns on the first attempt and costs nothing.
+    private func frontmostApp(deadlineMs: Double, budgetMs: Double) -> NSRunningApplication? {
+        let start = Date()
+        var lastError = AXError.success
+        while true {
+            let (app, err) = frontmostAppOnce(deadlineMs: deadlineMs)
+            if let app {
+                return app
+            }
+            lastError = err
+            if Date().timeIntervalSince(start) * 1000 >= budgetMs {
+                break
+            }
+            Thread.sleep(forTimeInterval: 0.04)
+        }
+
+        let fallback = tracker.currentFrontmostApp()
+        log("frontmostApp: system-wide focused application unavailable (AXError \(lastError.rawValue)), " +
+            "falling back to the tracker (\(fallback?.bundleIdentifier ?? "none"))")
+        return fallback
+    }
+
+    private func frontmostAppOnce(deadlineMs: Double) -> (NSRunningApplication?, AXError) {
         let systemWide = AXUIElementCreateSystemWide()
         AXUIElementSetMessagingTimeout(systemWide, Float(deadlineMs / 1000.0))
 
         var appRef: CFTypeRef?
         let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
-        if err == .success, let appRef {
-            var pid: pid_t = 0
-            if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, // swiftlint:disable:this force_cast
-               pid > 0,
-               let app = NSRunningApplication(processIdentifier: pid) {
-                return app
-            }
+        guard err == .success, let appRef else {
+            return (nil, err)
         }
-
-        let fallback = tracker.currentFrontmostApp()
-        log("frontmostApp: system-wide focused application unavailable (AXError \(err.rawValue)), " +
-            "falling back to the tracker (\(fallback?.bundleIdentifier ?? "none"))")
-        return fallback
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, // swiftlint:disable:this force_cast
+              pid > 0,
+              let app = NSRunningApplication(processIdentifier: pid) else {
+            return (nil, err)
+        }
+        return (app, .success)
     }
 
     // Resolves the focused element once per dictation. #12 folded this into
@@ -172,7 +197,10 @@ public final class RealFocusResolver: FocusResolving {
     // (InjectionEngine's fallback chain) reuses this same target rather
     // than re-asking.
     public func resolveFocusedElement(deadlineMs: Double) -> AccessibilityTarget? {
-        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+        // This is the injection path - keep the retry budget tight (one extra
+        // attempt) so a wedged AX read can't add much latency to delivery.
+        // Context detection, below, gives it the full budget instead.
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs, budgetMs: deadlineMs) else {
             log("resolveFocusedElement: no frontmost app from AX or the tracker")
             return nil
         }
@@ -216,7 +244,7 @@ public final class RealFocusResolver: FocusResolving {
     // the safe direction for an unknown target) - rather than a hard nil
     // that would fail the whole dictation. See #181.
     public func focusContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, axReady: Bool)? {
-        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs, budgetMs: budgetMs) else {
             log("focusContext: no frontmost app from AX or the tracker")
             return nil
         }
@@ -238,7 +266,7 @@ public final class RealFocusResolver: FocusResolving {
     // nil means the focused element or the attribute could not be read;
     // an empty selectedText means there is simply nothing selected.
     public func selectionContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, selectedText: String)? {
-        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs, budgetMs: budgetMs) else {
             log("selectionContext: no frontmost app from AX or the tracker")
             return nil
         }
