@@ -128,6 +128,33 @@ public final class RealFocusResolver: FocusResolving {
         self.log = log
     }
 
+    // #228 verification: the very first system-wide AX read after launch
+    // times out (kAXErrorCannotComplete / -25204) and keeps timing out
+    // through the whole retry budget, so the first dictation falls back to
+    // the NSWorkspace tracker - the exact path #318 exists to avoid. Once
+    // warm it is instant. This primes that connection with one generous
+    // read at startup, off the main thread so it never delays `ready`.
+    public func warmUp() {
+        let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, 3.0)
+        var appRef: CFTypeRef?
+        let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
+        if err == .success, let appRef {
+            // Touch the focused element too - that is the read the injection
+            // path makes, and it warms the same messaging channel.
+            var pid: pid_t = 0
+            if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, pid > 0 { // swiftlint:disable:this force_cast
+                let appElement = AXUIElementCreateApplication(pid)
+                AXUIElementSetMessagingTimeout(appElement, 3.0)
+                var focusedRef: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+            }
+            log("focus resolver warmed up")
+        } else {
+            log("focus resolver warm-up read failed (AXError \(err.rawValue)) - the first dictation may fall back to the tracker")
+        }
+    }
+
     // The application that owns the focused UI element, read straight from
     // the system-wide AX element rather than the NSWorkspace tracker.
     //

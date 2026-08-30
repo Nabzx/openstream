@@ -39,6 +39,11 @@ Thread {
 
 let config = Config()
 let focusResolver = RealFocusResolver(tracker: tracker, log: eprint)
+
+// Prime the AX messaging channel so the first dictation doesn't spend its
+// whole retry budget timing out (#228). Off-thread - it must not hold up
+// the `ready` line below.
+Thread { focusResolver.warmUp() }.start()
 let engine = InjectionEngine(
     config: config,
     focusResolver: focusResolver,
