@@ -4,8 +4,8 @@
 # background, the GitHub social-preview card, the README banner - from
 # assets/branding/*.svg.
 #
-# Needs rsvg-convert (brew install librsvg) and Space Mono on the system
-# (put SpaceMono-Regular.ttf / SpaceMono-Bold.ttf in ~/Library/Fonts).
+# Needs rsvg-convert (brew install librsvg) and JetBrains Mono on the system
+# (put JetBrainsMono-Regular.ttf / JetBrainsMono-Bold.ttf in ~/Library/Fonts).
 # Not part of any build - run it by hand when the artwork changes, then
 # commit the PNGs.
 set -euo pipefail
@@ -14,7 +14,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 command -v rsvg-convert >/dev/null || { echo "need rsvg-convert (brew install librsvg)" >&2; exit 1; }
-fc-match "Space Mono" | grep -qi "space mono" || echo "warning: Space Mono not found by fontconfig - text will fall back" >&2
+fc-match "JetBrains Mono" | grep -qi "jetbrains mono" || echo "warning: JetBrains Mono not found by fontconfig - text will fall back" >&2
 
 src=assets/branding
 

@@ -1,147 +1,111 @@
-# Visual identity: terminal / phosphor
+# Visual identity: blue glass
 
-*Direction for the launch rebrand — landing page first, then the app, the icons, and the overlay.*
+*Direction for the app, the overlay, the icons, and the landing page.*
+
+## History
+
+This identity has moved twice. Phase 4's window pass (#242) gave the app a macOS-native look. The launch rebrand (#276, #278–#282) then committed to **terminal / phosphor** — Space Mono, phosphor green on near-black, hard edges, a scanline. Days later (#300, August 2026) the direction changed again to **blue glass**: the terminal structure stays, but the green rotates to blue, the geometry softens, the font changes, and the push-to-talk overlay becomes a real macOS glass panel. This doc describes the blue-glass identity as shipped; the earlier passes are in the git history.
 
 ## The direction in one line
 
-OpenStream is a dictation tool for people who live in a terminal, and its whole thesis is that **a spoken line break should never submit your command**. The identity is that context rendered honestly: a phosphor-green terminal on black, not "a dark site with a green accent".
+OpenStream is a dictation tool whose whole thesis is that **a spoken line break should never submit your command**. The identity is calm, precise, and a little bit luminous: white text on a deep navy ground, blue and aqua accents that glow, soft-cornered panels, and one genuinely translucent surface — the push-to-talk bar.
 
-## Why black + neon green needs care
+## Why navy + blue-glow needs care
 
-This palette is on the list of looks that read as AI-generated — specifically *"near-black with a lone acid-green pop"*. That version fails because it's half-committed: a safe dark theme, one loud accent, everything else neutral, soft, rounded, floating. We avoid that by committing to a whole coherent world:
+This palette sits right next to a look that reads as generated: *the cyberpunk dashboard* — navy background, bright cyan accent, glow on everything, a grid or scanline. It's the same trap the phosphor green fell into (near-black + a lone acid pop). Blue glass avoids it the same way: by being a coherent, restrained world rather than a dark theme with a loud accent.
 
-- **Green is the body text colour**, not an accent. Phosphor on black. Hierarchy comes from *shades of green*, not from green-vs-grey.
-- **The surface has materiality** — a faint scanline, a slight bloom on headings, a barely-there vignette. AI-generated dark themes are dead flat; a CRT never is.
-- **Monospace is the system**, not a code font. Box-drawing characters (`┌─┐ │ └─┘`) and ASCII rules as structure, not hairline `<div>` borders.
-- **Hard geometry** — `border-radius: 0`, `1px` solid borders, no drop shadows (or one hard offset shadow, DOS-style). No gradients except the glow.
-- **Terse, man-page copy.** `SYNOPSIS / SAFETY / INSTALL`. No marketing throat-clearing.
+- **Glow is a highlight, not a coat of paint.** It belongs on the live state (the mark, the listening text), the primary action, and headings — not on every border and every label. If everything glows, nothing reads.
+- **One translucent surface.** The overlay is glass because it floats over the desktop and wants to feel light. The window is opaque navy. Do not glass the window.
+- **Hierarchy is shades of blue-grey**, not blue-vs-grey. `--fg` is a warm off-white; `--muted` and `--faint` step down through blue-greys; the two accents (`--acc`, `--acc-2`) are the only saturated colour.
+- **Soft, not round.** `10px` radius, `7px` on small controls, pill on toggles and tags. Not pronounced, not pill-shaped buttons.
+- **Terse, man-page copy.** `SYNOPSIS / SAFETY / INSTALL`. No marketing throat-clearing. The `> ` prompt prefix and `──` rule marks survive as quiet nods to where this tool lives.
 
 ### Anti-references — do not do these
 
-Falling-glyph "Matrix rain" background · full CRT screen-curvature filter · pure `#00FF00` (too harsh) · typing animations on every element · fake fisheye terminal chrome · a green-on-black theme that's still all rounded cards and soft shadows underneath.
+Animated grid / "tron" lines · a full glow on every element · gradient-mesh backgrounds · pure `#00BFFF` cyan (too electric) · glassmorphism on the window itself · pronounced `border-radius: 16px+` everywhere · a second bright hue competing with the blue.
 
 ## Tokens
-
-*Landing page shipped first ([#278](https://github.com/Nabzx/openstream/issues/278)) and settled the real values; the app window ([#279](https://github.com/Nabzx/openstream/issues/279)) ports the same set. The table below is what actually shipped — it supersedes the earlier `#4AF626` + amber + JetBrains Mono sketch.*
 
 ### Colour
 
 | Token | Hex | Use |
 |---|---|---|
-| `--bg` | `#020402` | ground — near-black with a faint green cast, never pure `#000` |
-| `--screen` | `#050805` | panels, cards, fields |
-| `--screen-2` | `#0A100A` | icon tiles, insets |
-| `--acc` | `#3DF65A` | primary green — headings, prompts, the live state, primary buttons |
-| `--acc-2` | `#1ED89A` | secondary green — pending / "starting" state, small tags |
-| `--fg` | `#9FB89F` | body text — dim phosphor |
-| `--fg-hi` | `#D2E6D2` | headings, active labels |
-| `--muted` | `#56704F` | captions, secondary text, disabled |
-| `--faint` | `#3C4E3B` | rule marks, bracket glyphs, empty-state text |
-| `--line` | `#16241A` | hairlines between rows |
-| `--line-hi` | `#24382A` | visible borders |
-| `--glow` | `rgba(61, 246, 90, 0.16)` | text-shadow / box-shadow bloom on bright green |
+| `--bg` | `#0B1D3A` | navy ground; the window paints a soft top glow over it (`--bg-hi` `#163A6B` → `--bg` → `#0A1730`) |
+| `--screen` | `#12294A` | panels, cards, fields (the app renders cards as a faint gradient over this) |
+| `--screen-2` | `#17335A` | keycaps, icon tiles, insets |
+| `--acc` | `#5CB8FF` | primary: headings' glow, prompts, the live state, primary button |
+| `--acc-2` | `#4FE0D4` | secondary: "starting" / pending state, small tags, the DMG arrow |
+| `--err` | `#F0503C` | genuine errors only: a missing permission, a dead server. Never decoration. |
+| `--fg` | `#DCE8FA` | body text — warm off-white |
+| `--fg-hi` | `#FFFFFF` | headings, active labels |
+| `--muted` | `#8AA3C4` | captions, secondary text, disabled |
+| `--faint` | `#5B76A0` | rule marks, prompt glyphs, empty-state text |
+| `--line` | `#1E3A5F` | hairlines between rows |
+| `--line-hi` | `#2E4E7A` | visible borders |
+| `--glow` | `rgba(92, 184, 255, 0.40)` | box-shadow / text-shadow bloom on the accent |
 
-Two greens carry the whole hierarchy — primary and secondary state, no amber. **No blue.** Deliberately **dark-only** — a hacker theme is dark by definition.
-
-**App-only deviation — `--err` `#F0503C`.** The landing page has no error state; the window does (a missing permission, a dead model server). An ANSI-terminal red, used only for genuine blocking failures — never as decoration and never on the landing page.
+**Overlay tokens differ** — the glass panel works against a native vibrancy material, so its surface is `rgba` and its text is white with a strong shadow for legibility over any wallpaper. See the overlay section.
 
 ### Type
 
-- **[Space Mono](https://fonts.google.com/specimen/Space+Mono)**, everywhere — regular `400` and bold `700`. Distinctive without tipping into kitsch; ligatures off. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
-- Bundled, not fetched: the landing page pulls it from Google Fonts, the **app and overlay carry `space-mono-400.woff2` + `space-mono-700.woff2` locally** (`src/fonts/`, ~37 KB total) so a first-run offline machine still renders correctly. The size fight is models + Electron, not a 37 KB font.
-- No separate display face — the wordmark is Space Mono bold at a larger size. One family keeps the terminal illusion intact.
-- Scale: tight. `13px` base in the app, `15–16px` on the landing page. Headings step up modestly — this look doesn't do giant heroes.
-- Uppercase labels get `letter-spacing: 0.08–0.14em`. Body copy stays short enough that full-mono never tires.
+- **[JetBrains Mono](https://www.jetbrains.com/lp/mono/)**, everywhere — rounder letterforms than Space Mono and far easier on paragraphs, which is why the switch happened. Ligatures off.
+- Bundled, not fetched: the app and overlay carry one variable `jetbrains-mono.woff2` (latin subset, ~56 KB) locally so an offline first run still renders; the landing page pulls it from Google Fonts. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
+- No separate display face — the wordmark is JetBrains Mono bold, larger.
+- Scale: `13px` base in the app, `15–16px` on the landing page, `line-height` ~`1.65`. Headings step up modestly.
+- Uppercase labels get `letter-spacing: 0.05–0.13em`.
 
-### Structure & motion
+### Geometry & motion
 
-- `border-radius: 0` (or `2px` max on interactive controls only).
-- Borders: `1px solid var(--line)`. Box-drawing characters for framed content where it reads well.
-- Shadows: none, or a single hard `2px 2px 0 var(--line)`.
-- **Motion budget: one orchestrated moment per page.** The landing hero gets a boot-and-demo sequence. Everywhere else: a blinking block cursor `█`, a scanline that doesn't move, and nothing else. Respect `prefers-reduced-motion`.
+- `--r: 10px` (cards, panels, the mark), `--r-sm: 7px` (buttons, fields, keycaps, tabs), `999px` (pills, the toggle, tags).
+- Borders `1px solid var(--line-hi)`. `──` box-drawing marks on card labels and the held-result heading.
+- Shadows: a soft downward drop on cards (`0 8px 24px -14px rgba(0,0,0,0.55)`) plus a hairline inner top highlight. Glow shadows on the accent elements only.
+- **Motion budget: one orchestrated moment per surface.** The landing hero gets its boot-and-demo sequence. In the app: the blinking block cursor, the mark's pulse while recording, the waveform. The scanline does not move and is dialled almost to nothing. Respect `prefers-reduced-motion`.
 
 ### The wordmark
 
-`openstream` lowercase in mono, shell-prompt prefix and a block cursor:
+`~ openstream` lowercase in JetBrains Mono, shell-prompt prefix and a blinking block cursor:
 
 ```
 ~ openstream █
 ```
 
-Or the mark alone: a filled block `▮` / a `>` caret. The current caret-in-a-ring mark can stay as the *glyph* (icon, tray) recoloured to phosphor green; the wordmark is the text treatment above.
+The caret-in-a-ring **mark** is the glyph (icon, tray, the app's Home hero), recoloured to `--acc` blue with a `--glow` bloom.
 
-## Per-surface plan
+## Per-surface
 
-### 1. Landing page — `site/index.html` — **done** ([#278](https://github.com/Nabzx/openstream/issues/278))
+### 1. App window — `src/index.css` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 
-The page **is** a terminal. What shipped, after iteration:
+The token ramp recoloured to white-on-navy with blue/aqua accents and glow; `--r` / `--r-sm` radius added across cards, buttons, fields, keycaps, the mark; pills, the toggle and tags go full-round. Cards get a faint gradient fill and a soft drop shadow. The navtab bracket glyphs give way to a tinted rounded pill on the active tab. The scanline is dialled to `rgba(0,0,0,0.05)`. Every class name kept — no `.tsx` churn. The macOS window structure (traffic lights, hidden-inset title bar) stays.
 
-- **Hero** is 100vh: the wordmark bar, an eyebrow, a two-line H1, and a framed terminal running a looping boot-and-dictation demo (`$ openstream` → `● listening` → a Star Wars line typed out → an on-device note). Space Mono, two greens, `#020402` ground, a static scanline.
-- **Sections** as rule-headed blocks (`── UPPERCASE ────`): the 40-vs-150 wpm hook with ASCII bars, `$ openstream --what` positioning against Wispr Flow, the safe-target vs everywhere-else grid, the local `0`, the commands list, the `git clone` install block, a status list. A tmux/vim-style fixed status bar at the foot.
-- British English, no em- or en-dashes, "two students who just graduated" voice.
-- Google Fonts for Space Mono — the landing page has no CSP restriction.
-- Keep the demo-GIF slot ([#21](https://github.com/Nabzx/openstream/issues/21)).
+### 2. Push-to-talk overlay — `electron/overlay/` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300) / [#301](https://github.com/Nabzx/openstream/issues/301))
 
-### 2. App window — `src/index.css` — **done** ([#279](https://github.com/Nabzx/openstream/issues/279))
+The overlay window gets its vibrancy back: `vibrancy: "hud"`, `visualEffectState: "active"` (it's only ever shown `showInactive()`), `roundedCorners: true`, `hasShadow: true` — reverting the #295 hard edge. `overlay.css` paints the glass on top: a translucent blue wash (`rgba(120,180,255,0.18)` → `rgba(30,60,110,0.16)`), `backdrop-filter: blur(14px) saturate(1.7) brightness(1.08)`, a bright rim light, an inner glow, `13px` radius to match the rounded window. Status text and the waveform are white with a strong glow + shadow so they read over any wallpaper. Reduce-Transparency and bright-wallpaper users fall back to the wash, which is already fairly opaque. This is the **"level 2 / glass"** point on the frost→clear range, not the more opaque frosted look and not fully clear.
 
-`src/index.css` rewritten to the shipped token set. Class names all kept, so no `.tsx` churn. **macOS window structure kept** (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) — recoloured, not replaced. `prefers-color-scheme` light path dropped entirely. Space Mono bundled locally (`src/fonts/`, `@font-face` in `index.css`).
+**Not shipped: true Liquid Glass.** The macOS 26 material (`NSGlassEffectView`) is not exposed to Electron. A native Swift overlay ([#301](https://github.com/Nabzx/openstream/issues/301), post-launch) is the only way to get it, and carries real upside (drops a Chromium view, sharper waveform) — but it's a 1–2 week project with a `NSVisualEffectView` fallback for macOS 13–25.
 
-- Toolbar tabs → `[ home ]` `[ commands ]` `[ settings ]` bracket style (icons hidden, lowercase), active tab in `--acc` with a glow.
-- Cards → `--screen` with a `1px --line-hi` border, no radius, no shadow. `.card-label` prefixed `──`.
-- `StatusPill` → hard-edged `1px` bracket tags coloured per tone (`--acc` / `--acc-2` / `--err` / `--muted`), not rounded pills.
-- `Toggle` → hard-edged block switch, green when on.
-- `Mark` → the glyph in `--acc` with a `--glow` drop-shadow; red in the attention state.
-- `KeyCaps` → square mono keycaps, `--line-hi` border.
-- `.linkbtn` → prefixed `>`.
-- Copy is untouched this pass — the Commands `man openstream` voice and `> listening █` states are a later copy pass.
-- Disclosure chevron stays the SVG, rotated on expand.
+### 3. App icon + menu-bar icons — `assets/icon.svg`, `electron/icons/` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 
-### 3. App icon — `assets/icon.svg` → `assets/icon.icns` — **done** ([#280](https://github.com/Nabzx/openstream/issues/280))
+Navy tile with a soft radial, the caret-in-ring mark in `--acc` with a Gaussian glow. Menu bar: idle stays a black macOS *template* glyph; recording is `#5CB8FF`, transcribing `#4FE0D4`. Regenerate via `scripts/build-icons.sh`.
 
-Near-black terminal tile (radial `#0B1A0E` → `#020402`), the caret-in-ring mark in `--acc` with a Gaussian glow and a smooth radial bloom behind it, a faint scanline pattern, a `--line-hi` hairline frame. Same glyph geometry as before, recoloured. Regenerate via `scripts/build-icons.sh`.
+### 4. Launch surfaces — DMG background, social image, README banner — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 
-### 4. Menu-bar (tray) icon — `electron/icons/` — **done** ([#280](https://github.com/Nabzx/openstream/issues/280))
+Sources in `assets/branding/*.svg`, rasterised by `scripts/build-branding.sh` (rsvg-convert + JetBrains Mono). Navy gradient grounds, blue wordmark and mark. The social preview PNG is uploaded by hand in repo Settings.
 
-**Settled:** idle stays a macOS *template* glyph (black; the OS tints it to the menu-bar theme, so it adapts to light/dark). **recording** is a non-template `--acc` glyph, **transcribing** a non-template `--acc-2` glyph. Amber is gone — the second green is the "working" signal. Wiring in `electron/main.js` (`TRAY_ICON_FILES`) is unchanged; only the PNGs were recoloured.
+### 5. Landing page — `site/index.html` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300))
 
-### 5. Push-to-talk overlay — `electron/overlay/` — **done** ([#281](https://github.com/Nabzx/openstream/issues/281))
-
-- `vibrancy: "hud"` dropped in `createOverlayWindow`; the window stays frameless + transparent and `overlay.css` paints a solid `--bg` panel with a `1px --acc` border, a faint scanline and a soft outer glow. Hard edges.
-- Recording strip → `> listening` with a blinking block cursor (`.cur`), the waveform bars in `--acc` (no gradient). "Editing…" → `> editing`. Status text lowercased in `overlay.js`.
-- Held-result panel → an error block: an `--err` `──`-prefixed heading (`couldn't place text`), the text in a `<pre>` on `--screen`, `[copy]` / `[dismiss]` bracket buttons.
-- CSP is `default-src 'self'; style-src 'self'`, so Space Mono is bundled directly in `electron/overlay/` (`space-mono-{400,700}.woff2`) with a `@font-face` using a relative URL.
-- Clipping colour not wired — there's no clipping signal on the IPC boundary today; the level is just clamped. Left for later if a real clip flag lands.
+`:root` recoloured to the blue ramp with a fixed top-glow gradient; the scanline dialled down; JetBrains Mono from Google Fonts. Structure (100vh hero, the looping demo terminal, the rule-headed sections, the tmux status bar, the "beta release" markers) is unchanged from #278.
 
 ### 6. Tray menu / notification wording
 
-Can't theme the OS chrome, but the copy matches the voice: tray tooltip `openstream — idle` / `openstream — listening`, menu items lowercase.
+Can't theme the OS chrome. Copy matches the voice: tray tooltip `openstream — idle` / `openstream — listening`, menu items lowercase.
 
-### 7. Launch surfaces — DMG background, repo social image, README — **done** ([#282](https://github.com/Nabzx/openstream/issues/282))
+## Decisions
 
-Sources in `assets/branding/*.svg`, rasterised by `scripts/build-branding.sh` (rsvg-convert + Space Mono).
-
-- **DMG window** — `assets/dmg-background.png` (+`@2x`), a 640×384 near-black panel with a phosphor frame, the `~ openstream` wordmark and a `→` between the icon slots. Wired via `dmg.background` / `dmg.window` / `dmg.contents` in `package.json`. Needs a real `npm run dist` to eyeball.
-- **Social preview** — `assets/social-preview.png` (1280×640): the mark, the wordmark, the one-line pitch and the line-break thesis, phosphor on black. Uploaded by hand in repo Settings → Social preview (no API for it).
-- **README** — a PNG banner at the top, a `$ openstream` synopsis block, the intro tightened to the terminal voice. Body em-dashes left for a later copy pass.
-
-## Sequence
-
-1. **Landing page** — isolated, no risk to the shipping app, fastest feedback. This is also the launch page ([#21](https://github.com/Nabzx/openstream/issues/21) / [#22](https://github.com/Nabzx/openstream/issues/22)).
-2. **App token layer + pages** — one PR for `index.css` + the component/page restyles.
-3. **Icons** — SVG + `build-icons.sh` + the tray PNGs.
-4. **Overlay** — its own CSS, its own CSP.
-
-Can run in parallel with the [#228](https://github.com/Nabzx/openstream/issues/228) verification pass — only step 2+ touches app code.
-
-## Decisions (settled August 2026, via grilling)
-
-- **Reference direction**: 90s phosphor CRT with modern-minimal discipline — committed colour, real CRT texture, hard-edged and dense. **Not** glitch / RGB-split / synthwave.
-- **Tone**: serious infrastructure tooling with dry wit. The copy earns trust by being precise, never by being a bit.
-- **Colour**: `#3DF65A` primary green + `#1ED89A` secondary green (state), locked by the landing page. No amber — the second green does the "pending" work. No blue. **Dark-only** — no light variant. The app window adds one ANSI red `#F0503C` for genuine blocking errors only; it never appears on the landing page.
-- **Name**: stays *OpenStream*. Brand/marketing surfaces and the wordmark render it lowercase `openstream`; the macOS `.app` bundle name stays `OpenStream`.
-- **App window**: keep the macOS structure (traffic lights, `titleBarStyle: "hiddenInset"`, the toolbar) and recolour it. No custom chrome. Keep every layout, flow, and the Permissions gate — swap the skin only.
-- **Landing page**: a static page that reads as a terminal, with **one** animated hero (a boot + demo sequence). Not an interactive shell.
-- **Hero demo**: a CSS/JS recreation of the terminal session is the primary hero; the real screen-recording GIF ([#21](https://github.com/Nabzx/openstream/issues/21)) drops into a lower "see it for real" section once recorded.
-- **Fonts**: Space Mono (`400` + `700`). The landing page pulls it from Google Fonts; the app and overlay bundle the two woff2 files locally (~37 KB total, `src/fonts/`) so an offline first run still renders. No separate display face — the wordmark is Space Mono bold, larger. The size fight is models + Electron, not a font.
-- **Tray icon**: idle stays a macOS *template* glyph (adapts to the menu-bar theme); the recording state is bright green (`--acc`), transcribing is the second green (`--acc-2`).
-- **Scope, staged**: pass 1 = landing page + app window + app icon + menu-bar icons + overlay *(done)*. Pass 2 = DMG installer background + the GitHub repo social-preview image + README styling *(done, #282)*. Later = `[dictation]` console formatting, the held-result / error copy in the terminal voice, and a full de-dash of the README body.
+- **Reference direction**: *(Aug 30 2026)* blue glass — calm, luminous, soft-cornered. Supersedes the terminal / phosphor direction settled two weeks earlier, which itself superseded the macOS-native look. Each pivot was the maintainer's call, made against prototypes.
+- **Colour**: `#5CB8FF` primary blue + `#4FE0D4` aqua secondary on a `#0B1D3A` navy ground, white text. One ANSI red `#F0503C` for genuine errors. No second bright hue. **Dark-only** — no light variant.
+- **Font**: JetBrains Mono, bundled locally for the app and overlay (one variable woff2), Google Fonts on the landing page. No separate display face.
+- **Geometry**: `10px` / `7px` / pill radius. Soft, not round.
+- **Overlay**: native `vibrancy: "hud"` + rounded + shadow; CSS glass on top at the "level 2" translucency point. True Liquid Glass is a post-launch native rewrite ([#301](https://github.com/Nabzx/openstream/issues/301)), not blocking v1.0.
+- **Name**: stays *OpenStream*. A rename ([#299](https://github.com/Nabzx/openstream/issues/299)) is parked — not coupled to this and not for v1.0.
+- **App window**: keep the macOS structure (traffic lights, hidden-inset title bar). No custom chrome. Keep every layout, flow, and the Permissions gate — swap the skin only.
+- **Scope**: this pivot is a pre-launch pass — token recolour, geometry, font, overlay glass, icons, brand art, landing. It does not move layout or behaviour, so [#228](https://github.com/Nabzx/openstream/issues/228)'s functional checks are unaffected; the overlay `vibrancy` change gets one manual-verification line.

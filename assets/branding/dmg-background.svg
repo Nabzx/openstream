@@ -1,12 +1,10 @@
 <svg width="640" height="384" viewBox="0 0 640 384" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="0.5" cy="0.32" r="0.9">
-      <stop offset="0" stop-color="#0A160D"/>
-      <stop offset="1" stop-color="#020402"/>
+    <radialGradient id="bg" cx="0.5" cy="0.28" r="0.95">
+      <stop offset="0" stop-color="#1B4A82"/>
+      <stop offset="0.5" stop-color="#0B1D3A"/>
+      <stop offset="1" stop-color="#0A1730"/>
     </radialGradient>
-    <pattern id="scan" width="10" height="10" patternUnits="userSpaceOnUse">
-      <rect width="10" height="2" y="4" fill="#000000" opacity="0.20"/>
-    </pattern>
     <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
       <feGaussianBlur stdDeviation="4" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -14,17 +12,16 @@
   </defs>
 
   <rect width="640" height="384" fill="url(#bg)"/>
-  <rect width="640" height="384" fill="url(#scan)"/>
-  <rect x="14.5" y="14.5" width="611" height="355" fill="none" stroke="#24382A" stroke-width="1"/>
+  <rect x="14.5" y="14.5" width="611" height="355" rx="12" fill="none" stroke="#2E4E7A" stroke-width="1"/>
 
-  <g font-family="Space Mono, monospace" fill="#3DF65A">
+  <g font-family="JetBrains Mono, monospace" fill="#5CB8FF">
     <text x="34" y="52" font-size="17" font-weight="700" filter="url(#glow)">~ openstream</text>
-    <text x="34" y="352" font-size="12" fill="#56704F">to install: drag openstream onto Applications</text>
+    <text x="34" y="352" font-size="12" fill="#8AA3C4">to install: drag openstream onto Applications</text>
   </g>
 
   <!-- arrow between the app icon (left) and the Applications alias (right);
        electron-builder overlays the real icons at these positions -->
-  <g transform="translate(320 186)" fill="none" stroke="#1ED89A" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+  <g transform="translate(320 186)" fill="none" stroke="#4FE0D4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
     <path d="M-34 0 H30"/>
     <path d="M14 -15 30 0 14 15"/>
   </g>

@@ -32,8 +32,8 @@ echo "==> assets/icon.icns"
 # --- menu-bar icons: the glyph, one colour per state ---------------------
 # idle stays a macOS *template* glyph (black; the OS tints it to the menu-bar
 # theme). recording and transcribing are non-template, coloured to match
-# docs/design/visual-identity.md: primary green while listening, the second
-# green while it places the text.
+# docs/design/visual-identity.md: primary blue while listening, aqua while
+# it places the text.
 glyph() {
   cat <<SVG
 <svg width="44" height="44" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -53,5 +53,5 @@ emit() { # name colour
 }
 
 emit iconTemplate "#000000"
-emit icon-recording "#3DF65A"
-emit icon-transcribing "#1ED89A"
+emit icon-recording "#5CB8FF"
+emit icon-transcribing "#4FE0D4"

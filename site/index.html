@@ -7,24 +7,24 @@
 <meta property="og:title" content="openstream">
 <meta property="og:description" content="Local-first voice dictation for people who live in a terminal. Open source, free, on-device.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#020402">
+<meta name="theme-color" content="#0B1D3A">
 <title>openstream: local-first voice dictation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 :root {
-  --bg: #020402;
-  --screen: #050805;
-  --acc: #3DF65A;
-  --acc-2: #1ED89A;
-  --fg: #9FB89F;
-  --fg-hi: #D2E6D2;
-  --muted: #4C614B;
-  --line: #16241 4;
-  --line: #16241A;
-  --line-hi: #24382A;
-  --glow: rgba(61, 246, 90, 0.14);
+  --bg: #0B1D3A;
+  --bg-hi: #163A6B;
+  --screen: #12294A;
+  --acc: #5CB8FF;
+  --acc-2: #4FE0D4;
+  --fg: #DCE8FA;
+  --fg-hi: #FFFFFF;
+  --muted: #8AA3C4;
+  --line: #1E3A5F;
+  --line-hi: #2E4E7A;
+  --glow: rgba(92, 184, 255, 0.36);
   --bar: 28px;
 }
 
@@ -32,9 +32,9 @@
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
-  background: var(--bg);
+  background: radial-gradient(120% 70% at 28% -6%, var(--bg-hi) 0%, var(--bg) 46%, #0A1730 100%) fixed;
   color: var(--fg);
-  font-family: "Space Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 13px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
@@ -43,7 +43,7 @@ body {
 
 body::before {
   content: ""; position: fixed; inset: 0; z-index: 300; pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.13) 3px, transparent 4px);
+  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.05) 3px, transparent 4px);
 }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
@@ -66,7 +66,7 @@ a:hover { background: var(--acc); color: var(--bg); }
 /* ---- top strip ---- */
 .top {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  background: linear-gradient(180deg, var(--bg) 45%, rgba(2, 4, 2, 0.7) 78%, transparent);
+  background: linear-gradient(180deg, var(--bg) 45%, rgba(11, 29, 58, 0.7) 78%, transparent);
 }
 .top .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; font-size: 13px; }
 .top .brand { color: var(--fg-hi); font-size: 18px; letter-spacing: -0.01em; }
