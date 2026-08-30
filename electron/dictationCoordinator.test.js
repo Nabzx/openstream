@@ -153,12 +153,51 @@ test("a not-AX-ready context (#181) delivers as one paragraph and records the fa
 
   const result = await harness.intake.complete(completedWav);
 
-  // isOneLineField:true (the safe default when axReady is false) means no
-  // break-placement call and no line breaks - just deliver the text.
+  // isOneLineField:true is only a guess when axReady is false, so it no
+  // longer drives automatic break placement - that stays off (breakCalls
+  // 0) - and with no spoken break command in the transcript there are no
+  // line breaks to emit anyway.
   assert.equal(breakCalls, 0);
   assert.equal(result.status, "delivered");
   assert.ok(!result.text.includes("\n"));
   assert.ok(harness.diagnostics.some(([name, value]) => name === "context.axReady" && value === false));
+});
+
+test("#307: a spoken break command survives an AX guess in a break-safe app", async () => {
+  const harness = createIntake({
+    // The Notes repro: the body isn't AX-ready yet, so isOneLineField is a
+    // guessed "true". Notes is break-safe, so an explicit spoken command
+    // must still land rather than degrade to a space.
+    transcript: "hi my name is Nabil new paragraph my name is Bob",
+    getFocusContext: async () => ({ bundleId: "com.apple.Notes", isOneLineField: true, axReady: false }),
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.equal(result.status, "delivered");
+  assert.ok(result.text.includes("\n\n"), `expected a paragraph break, got ${JSON.stringify(result.text)}`);
+  assert.ok(
+    harness.diagnostics.some(
+      ([name, value]) => name === "context.oneLineGuessOverridden" && value === "com.apple.Notes",
+    ),
+  );
+});
+
+test("#307: a real one-line field (axReady) still strips a spoken break command", async () => {
+  const harness = createIntake({
+    // axReady true means isOneLineField is a real role read, not a guess -
+    // a genuine single-line box, so the break must not land.
+    transcript: "hi my name is Nabil new paragraph my name is Bob",
+    getFocusContext: async () => ({ bundleId: "com.apple.Notes", isOneLineField: true, axReady: true }),
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.equal(result.status, "delivered");
+  assert.ok(!result.text.includes("\n"));
+  assert.ok(
+    !harness.diagnostics.some(([name]) => name === "context.oneLineGuessOverridden"),
+  );
 });
 
 test("eligible long dictation sends cleaned sentences once and applies returned break indices", async () => {
