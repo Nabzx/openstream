@@ -12,7 +12,6 @@ The words land at your cursor and never leave your Mac.
 
 </div>
 
-<img src="assets/readme-banner.png" alt="OpenStream" width="100%">
 
 <img src="assets/demo.gif" alt="Into Apple Notes: a voice edit that wraps a selection in quotes and uppercases it, then dictation with a spoken paragraph break." width="100%">
 
