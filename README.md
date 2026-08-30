@@ -1,13 +1,18 @@
-<img src="assets/readme-banner.png" alt="OpenStream" width="100%">
+<div align="center">
 
 # OpenStream
 
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-0b0f14?logo=apple&logoColor=white)
-![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-arm64-0b0f14)
-![Licence: MIT](https://img.shields.io/badge/licence-MIT-3B9EFF)
-![Status: beta](https://img.shields.io/badge/status-beta-3B9EFF)
+&nbsp;![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-arm64-0b0f14)
+&nbsp;![Licence: MIT](https://img.shields.io/badge/licence-MIT-3B9EFF)
+&nbsp;![Status: beta](https://img.shields.io/badge/status-beta-3B9EFF)
 
-> Local-first voice dictation for developers. Hold a key, talk, let go. The words land at your cursor and never leave your Mac.
+Local-first voice dictation for developers. Hold a key, talk, let go.<br>
+The words land at your cursor and never leave your Mac.
+
+</div>
+
+<img src="assets/readme-banner.png" alt="OpenStream" width="100%">
 
 <!-- demo.gif goes here once recorded on device (#21) -->
 
