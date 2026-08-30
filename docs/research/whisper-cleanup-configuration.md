@@ -8,7 +8,7 @@ Can documented Whisper prompt, decoding, segmentation, or post-decode configurat
 
 ## Sources and version
 
-The repository pins whisper.cpp tag `v1.9.3` at commit [`371b5a7561823ab2bb32142d2751e35e7534727b`](https://github.com/ggml-org/whisper.cpp/tree/371b5a7561823ab2bb32142d2751e35e7534727b), built as `whisper-server` with Metal. The weight is `ggml-base.en.bin` at Hugging Face revision [`5359861c739e955e79d9a303bcbc70fb988958b1`](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1). The pin is recorded in [`scripts/model-artifacts.mjs`](../../scripts/model-artifacts.mjs).
+The repository pins whisper.cpp tag `v1.9.3` at commit [`371b5a7561823ab2bb32142d2751e35e7534727b`](https://github.com/ggml-org/whisper.cpp/tree/371b5a7561823ab2bb32142d2751e35e7534727b), built as `whisper-server` with Metal. The weight is `ggml-large-v3-turbo-q5_0.bin` at Hugging Face revision [`5359861c739e955e79d9a303bcbc70fb988958b1`](https://huggingface.co/ggerganov/whisper.cpp/tree/5359861c739e955e79d9a303bcbc70fb988958b1) (was `ggml-base.en.bin` until #308). The pin is recorded in [`scripts/model-artifacts.mjs`](../../scripts/model-artifacts.mjs).
 
 Primary source paths used below:
 

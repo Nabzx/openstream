@@ -20,7 +20,7 @@ function start() {
     supervisor = createModelSupervisor({
       roleName: "transcription model server",
       command: BIN_PATH,
-      args: ["--model", resolveModelPath("ggml-base.en.bin"), "--host", HOST, "--port", String(PORT)],
+      args: ["--model", resolveModelPath("ggml-large-v3-turbo-q5_0.bin"), "--host", HOST, "--port", String(PORT)],
     });
   }
   supervisor.start();
