@@ -23,9 +23,21 @@ const LEADING_FILLERS = [
   "actually", "literally", "anyway", "like",
 ];
 
+// #320: since the transcription engine moved to Parakeet (#204), which
+// punctuates from prosody, a spoken break command said with a pause around
+// it comes through as its own sentence - "... three. New paragraph. Four
+// ..." - and the bare `\bnew paragraph\b` match left the wrapping "." behind
+// as a stray mark at the start of the new line. So the break patterns now
+// also eat: any leading comma/semicolon/colon (a Parakeet artifact - a real
+// sentence-ending . ! ? before the command is left alone, it closed the
+// previous thought), and any single trailing . , ! ? ; : plus the spaces on
+// both sides. Un-punctuated TTS-style input ("first line new line second
+// line") still matches exactly as before.
+const BREAK_LEAD = "[ \\t]*[,;:]?[ \\t]*";
+const BREAK_TAIL = "[.,!?;:]?[ \\t]*";
 const SPOKEN_PUNCT = [
-  [/\bnew paragraph\b/gi, "\n\n"],
-  [/\bnew line\b/gi, "\n"],
+  [new RegExp(`${BREAK_LEAD}\\bnew paragraph\\b${BREAK_TAIL}`, "gi"), "\n\n"],
+  [new RegExp(`${BREAK_LEAD}\\bnew line\\b${BREAK_TAIL}`, "gi"), "\n"],
   // #124: scoped to explicit trigger phrases only, not the ordinal-word
   // heuristic ("first," ... "second," ...) the issue leaves open - that
   // heuristic risks misfiring on ordinary prose ("first, second, and
@@ -38,7 +50,7 @@ const SPOKEN_PUNCT = [
   // "new bullet point" - the natural variants people reach for. All are
   // explicit list commands, unlikely in ordinary prose; the plural
   // "bullet points" is the one people say most and was missing.
-  [/\b(?:bullet points?|(?:new|next) bullets?(?: points?)?)\b/gi, "\n- "],
+  [new RegExp(`${BREAK_LEAD}\\b(?:bullet points?|(?:new|next) bullets?(?: points?)?)\\b${BREAK_TAIL}`, "gi"), "\n- "],
   [/\bfull stop\b/gi, "."],
   [/\bperiod\b/gi, "."],
   [/\bcomma\b/gi, ","],
