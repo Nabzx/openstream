@@ -28,7 +28,7 @@ Planned, not yet in the app: codebase-vocabulary biasing (transcription weighted
 
 ## Install
 
-OpenStream installs from source. Each GitHub [release](https://github.com/Nabzx/openstream/releases) is a **beta release** with a convenience DMG — it downloads the speech models (~1.2 GB) on first run rather than bundling them — but the DMG is unsigned (Gatekeeper will warn) and every rebuild resets the macOS permission grants (see below), so `git clone` is the supported path.
+OpenStream installs from source. Each GitHub [release](https://github.com/Nabzx/openstream/releases) is a **beta release** with a convenience DMG — it downloads the speech models (~1.6 GB) on first run rather than bundling them — but the DMG is unsigned (Gatekeeper will warn) and every rebuild resets the macOS permission grants (see below), so `git clone` is the supported path.
 
 ### Requirements
 
@@ -48,7 +48,7 @@ npm start
 `npm install` does more than fetch JavaScript packages. It:
 
 - compiles a pinned `whisper.cpp` revision with Metal support
-- downloads and verifies the 141 MiB `ggml-base.en` transcription model
+- downloads and verifies the ~547 MiB `ggml-large-v3-turbo-q5_0` transcription model
 - compiles the Swift hotkey and Accessibility helpers
 - downloads and verifies `llama-server` and a roughly 1 GiB SmolLM2 model for break placement
 
@@ -92,7 +92,7 @@ After granting Input Monitoring and Accessibility, **quit and restart the app** 
 ## How it works
 
 - **Electron + React** — the menu bar shell, the hidden capture window, the push-to-talk overlay, and the desktop window.
-- **Transcription model server** — a pinned `whisper.cpp` build on `ggml-base.en`, supervised for the life of the app.
+- **Transcription model server** — a pinned `whisper.cpp` build on `large-v3-turbo` (q5_0), supervised for the life of the app.
 - **Rules cleanup** — deterministic: fillers, spoken punctuation, a small technical vocabulary, run-on segmentation. Tested against a sub-millisecond budget. See [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md) and [ADR-0002](docs/adr/0002-no-one-model-dictation-engine.md).
 - **Rewrite model server** — `llama-server` with SmolLM2-1.7B, resident, used only to place paragraph breaks in eligible long dictations. It returns sentence numbers, never text.
 - **Native helpers** — Input Monitoring and Accessibility live in separate Swift processes. A blocked Accessibility call cannot take down the global hotkey.
