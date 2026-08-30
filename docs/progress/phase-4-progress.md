@@ -4,7 +4,9 @@ Same purpose as the others: so either of us can explain this project in depth, f
 
 This is the fourth checkpoint in `docs/progress/` — written with Phase 4 **feature-complete for `v1.0`** and the final on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) still outstanding. [phase-3-progress.md](phase-3-progress.md) is the previous one. Where a section hasn't materially changed it says so.
 
-*Updated late Phase 4 (August 2026): the first-run model download ([#249](https://github.com/Nabzx/openstream/issues/249)), the Commands reference tab ([#247](https://github.com/Nabzx/openstream/issues/247)), and the full terminal/phosphor rebrand ([#276](https://github.com/Nabzx/openstream/issues/276), sub-issues [#278](https://github.com/Nabzx/openstream/issues/278)–[#282](https://github.com/Nabzx/openstream/issues/282)) all landed after the first draft. Sections below fold them in. **The terminal/phosphor look was then pivoted to "blue glass" ([#300](https://github.com/Nabzx/openstream/issues/300)) - JetBrains Mono, white-on-navy, blue accents, a genuinely translucent overlay - so where §2 and §5 say "phosphor green / Space Mono / hard edges", read the current `docs/design/visual-identity.md` instead.**
+*Updated late Phase 4 (August 2026): the first-run model download ([#249](https://github.com/Nabzx/openstream/issues/249)), the Commands reference tab ([#247](https://github.com/Nabzx/openstream/issues/247)), and the full terminal/phosphor rebrand ([#276](https://github.com/Nabzx/openstream/issues/276), sub-issues [#278](https://github.com/Nabzx/openstream/issues/278)–[#282](https://github.com/Nabzx/openstream/issues/282)) all landed after the first draft. Sections below fold them in. **The terminal/phosphor look was then pivoted to "blue glass" ([#300](https://github.com/Nabzx/openstream/issues/300)) - JetBrains Mono, white-on-navy, blue accents, a genuinely translucent overlay - so where §2 and §5 say "phosphor green / Space Mono / hard edges", read the current `docs/design/visual-identity.md` instead.***
+
+*Launch-prep addendum (late August 2026): the transcription engine moved from `whisper base.en` to **Parakeet TDT 0.6b v3** ([#317](https://github.com/Nabzx/openstream/pull/317) / [ADR-0003](../adr/0003-parakeet-for-transcription.md)), the mark changed from a caret to a **stream in a ring** ([#324](https://github.com/Nabzx/openstream/pull/324)), the frontmost-app resolution was rewritten ([#316](https://github.com/Nabzx/openstream/pull/316)/[#318](https://github.com/Nabzx/openstream/pull/318)/[#319](https://github.com/Nabzx/openstream/pull/319)), and the [#228](https://github.com/Nabzx/openstream/issues/228) verification pass ran. **§13 is the record of all of it**; where §2, §5, §10, §11 and §12 predate it, §13 wins.*
 
 **Contents**
 1. [What OpenStream is](#1-what-openstream-is)
@@ -19,6 +21,7 @@ This is the fourth checkpoint in `docs/progress/` — written with Phase 4 **fea
 10. [Where we actually are vs. the roadmap](#10-where-we-actually-are-vs-the-roadmap)
 11. [What's unfinished, fragile, or deliberately deferred](#11-whats-unfinished-fragile-or-deliberately-deferred)
 12. [File map](#12-file-map)
+13. [Post-checkpoint: launch preparation](#13-post-checkpoint-launch-preparation) — **read this over §2/§5/§10–§12 where they conflict**
 
 ---
 
@@ -121,6 +124,8 @@ No additions to `CONTEXT.md` this phase — Phase 3's voice-editing terms and th
 
 ## 10. Where we actually are vs. the roadmap
 
+> **Superseded by §13.** This section was written before the Parakeet swap and the verification pass. The current status: v1.0 is a source-only beta, code-complete and verified; what's left is the demo recording ([#21](https://github.com/Nabzx/openstream/issues/21)) and the launch ([#22](https://github.com/Nabzx/openstream/issues/22)). Signing moved to v2.0; the eval corpus and the voice-edit spike moved to v1.1. The rest of this section is kept as it stood.
+
 - **Phases 0–3 — done, tagged** (`v0.1` … `v0.3`). Unchanged.
 - **Phase 4 (v1.0: polish & launch) — feature-complete, not tagged.**
   - Permission gate + doctor (#47), settings UI complete (#19 + Zazai's #218 + #135), Commands reference tab (#247), first-run model download (#249), release automation (#20), window redesign (#242 + #244), the full terminal rebrand (#278–#282), the Track-A pipeline fixes (#134, #181, #227, #294) — all **done, merged**.
@@ -136,6 +141,8 @@ The honest one-sentence summary: **the app is code-complete for `v1.0`; what sta
 Carried forward from [phase-3-progress.md §11](phase-3-progress.md#11-whats-unfinished-fragile-or-deliberately-deferred), still true: no code signing (permission identity across rebuilds unresolved as a consequence), cold start slow, the run-on splitter a known-imperfect heuristic, no automated latency regression test, no `.nvmrc`.
 
 New or changed this phase:
+
+> Several items below are resolved or re-scoped in §13: the Parakeet runtime is now proven and shipped, #227 was confirmed on a real Mac and closed, #171 moved to v1.1, and the DMG is no longer the launch vehicle. §13 has the current picture; the list here is as it stood at the checkpoint.
 
 - **CI does not run the test suite** — only the build. A `npm test` step belongs in `build.yml`.
 - **The DMG's model download is unverified on a real first run.** #249 moved `ggml-base.en` and the SmolLM2 GGUF out of the bundle into a first-launch fetch (`electron/modelStore.js` + the Setup screen). The path is unit-tested against fakes; a genuine packaged first run on a clean machine — download, resume-on-failure, the hotkey arming afterwards — is part of #228.
@@ -208,6 +215,101 @@ site/
   index.html                   — the launch landing page, terminal theme (#21, #278)
 ```
 
+**Launch-prep additions and changes (§13):**
+
+```
+native/transcription-helper/       — NEW. Swift executable: loads Parakeet TDT 0.6b v3 (CoreML/ANE)
+  Package.swift                       via FluidAudio, transcribes a WAV per request over JSON stdio (#317)
+  Sources/transcription-helper/main.swift
+
+electron/
+  transcriptionHelper.js           — NEW. Supervises native/transcription-helper; IS the transcription
+                                     adapter (transcribe(wavBuffer) → text); gates on {"event":"ready"} (#317)
+  transcriptionHelper.test.js       — NEW
+  main.js                          — whisperServer → transcriptionHelper; uncaughtException/rejection
+                                     handlers log instead of a crash dialog; SIGTERM/SIGINT/SIGHUP → quit (#317, #330)
+  dictationCoordinator.js          — oneLineGuessOverridden: a guessed one-line field no longer suppresses
+                                     an explicit spoken break in a break-safe app (#316)
+  cleanup/rules.js                 — SPOKEN_PUNCT break patterns eat the punctuation Parakeet wraps a
+                                     paused command in, so no stray "." is left behind (#320)
+  whisperServer.js, transcriptionHttpAdapter.js — now DORMANT (unwired, kept as a revert path — #326)
+
+native/accessibility-helper/Sources/.../RealAdapters.swift
+                                   — frontmostApp() reads the AX system-wide element, not the NSWorkspace
+                                     tracker (#318); retries the read before falling back (#319);
+                                     warmUp() primes the AX channel at startup (#329/#331)
+
+src/components/Mark.tsx            — the mark is a stream through the listening ring now, single wave (#324)
+assets/icon.svg                   — the mark is the two-line stream in the ring (#324)
+scripts/
+  build-transcription-helper.sh    — NEW. swift build → resources/bin/transcription-helper; in postinstall
+  build-icons.sh, build-branding.sh — the stream mark (#324)
+  verify-dictation-pipeline.sh      — waits on the transcription-helper process, not port 8178 (#328)
+
+docs/
+  adr/0003-parakeet-for-transcription.md — NEW. whisper → Parakeet, and its trade-offs (#317)
+  testing/verification-pass-228.md       — NEW. the #228 pass results
+ROADMAP.md, site/index.html        — Parakeet, macOS 14, source-only launch (#328)
+```
+
 ---
 
-*Keep this current as the project moves past what it describes. When `v1.0` ships, this checkpoint gets a short "what the verification pass found" addendum rather than a rewrite.*
+## 13. Post-checkpoint: launch preparation
+
+Everything below landed after §1–§12 were written, in the run-up to the `v1.0.0` tag. Read this section over the older ones where they conflict.
+
+### The transcription engine is Parakeet now, not whisper
+
+`whisper base.en` (whisper.cpp, a compiled C++ HTTP server on port 8178) was replaced by **NVIDIA Parakeet TDT 0.6b v3**, running as CoreML on the Apple Neural Engine via the [FluidAudio](https://github.com/FluidInference/FluidAudio) Swift package ([#317](https://github.com/Nabzx/openstream/pull/317), [ADR-0003](../adr/0003-parakeet-for-transcription.md)). The two-stage shape [ADR-0002](../adr/0002-no-one-model-dictation-engine.md) fixed is unchanged — Parakeet returns raw text, then `cleanup/rules.js` and the rewrite model server do their existing jobs.
+
+- **New process:** `native/transcription-helper` (Swift), supervised by `electron/transcriptionHelper.js`. It speaks the same newline-delimited JSON stdio protocol as the accessibility helper — a `{"event":"ready"}` line once the model is loaded, then id-tagged `transcribe` requests carrying the WAV as base64. It is both the server *and* the transcription adapter, so `transcriptionHttpAdapter.js` and the port-8178 contract are gone.
+- **The model is not a bundled weight.** FluidAudio downloads the CoreML bundles (~470 MB) from Hugging Face on the helper's first run, into `~/Library/Application Support/FluidAudio`. `resources/models` no longer holds a transcription weight and `modelStore.js` no longer fetches one for that role. First run therefore has no download-progress screen for it yet.
+- **`large-v3-turbo` was tried first and reverted** ([#310](https://github.com/Nabzx/openstream/issues/310)/[#312](https://github.com/Nabzx/openstream/issues/312)) — ~10-20s to load, several seconds per utterance, over the sub-1s budget. Parakeet is the different-engine route [ADR-0002](../adr/0002-no-one-model-dictation-engine.md) pointed at, not a bigger whisper.
+- **macOS floor rose to 14** (FluidAudio needs Swift 6 / macOS 14). Was nominally 13.
+- **`#16` vocabulary biasing does not apply** — Parakeet has no `initial_prompt`. The coordinator still builds the prompt and the helper ignores it. FluidAudio's keyword-boosting API is the replacement route ([#322](https://github.com/Nabzx/openstream/issues/322)).
+- **whisper.cpp is kept, dormant** — `whisperServer.js`, `transcriptionHttpAdapter.js`, `build-whisper.sh`, the `model-artifacts.mjs` transcription role and the `ggml-base.en.bin` entry in `modelStore.js` are all still present but unwired, as a fast revert path. [#326](https://github.com/Nabzx/openstream/issues/326) removes them once Parakeet is proven; the [#228](https://github.com/Nabzx/openstream/issues/228) pass was that proof.
+
+### The frontmost-app tracker was the root of the Notes bug
+
+`electron/dictationCoordinator.js` computes the break-safe verdict from `focusContext().bundleId`. That came from `RealAppSwitchTracker`, which polls `NSWorkspace.shared.frontmostApplication` — a value that lags, and when the app is launched from a terminal can *freeze* at whatever was frontmost at launch (the [#113](https://github.com/Nabzx/openstream/issues/113) / [#173](https://github.com/Nabzx/openstream/issues/173) class of bug). Injection re-resolves the real focused element every time, so the *text* always landed right — but a spoken "new paragraph" in Notes was silently dropped because context detection thought the user was still in the launch terminal.
+
+Three merged PRs:
+- **[#316](https://github.com/Nabzx/openstream/pull/316)** — in a break-safe app, a *guessed* one-line field (AX not ready, [#181](https://github.com/Nabzx/openstream/issues/181)) no longer suppresses an explicit spoken break. Emits `context.oneLineGuessOverridden`.
+- **[#318](https://github.com/Nabzx/openstream/pull/318)** — `RealFocusResolver.frontmostApp()` reads the focused application from the AX **system-wide element** (`kAXFocusedApplicationAttribute`), not the NSWorkspace tracker, so "which app am I in" comes from the same source injection uses. The tracker stays only for the [#62](https://github.com/Nabzx/openstream/issues/62) settle guard (timing, not identity).
+- **[#319](https://github.com/Nabzx/openstream/pull/319)** — that system-wide read returns `kAXErrorCannotComplete` (-25204) transiently; retry within a budget before falling back.
+
+**Residual** ([#333](https://github.com/Nabzx/openstream/issues/333)): the system-wide read is *cold* for the first dictation after launch — it only thaws once an app-scoped AX call has gone through — so the first dictation takes ~1.3s and resolves context from the tracker. A startup warm-up ([#329](https://github.com/Nabzx/openstream/issues/329), then an app-scoped, run-loop-pumping version in [#331](https://github.com/Nabzx/openstream/issues/331)) mitigates it. Not a v1.0 blocker; every dictation after the first is instant and correct.
+
+### The mark is a stream, not a caret
+
+The caret-in-a-ring became a **stream through the listening ring** — a play on the name ([#324](https://github.com/Nabzx/openstream/pull/324)). The app icon (`assets/icon.svg`) carries the full two-line stream; the Home hero (`Mark.tsx`) and the menu-bar icon (`build-icons.sh`) carry a single wave in the same ring, because two lines tangle into a blob at ~18px. `docs/design/visual-identity.md` is updated. The mark was also carried onto `readme-banner.png` and `social-preview.png`.
+
+### Parakeet's punctuation broke the spoken-command layer, then got fixed
+
+Parakeet punctuates from prosody. A spoken "new paragraph" said *with a pause* comes through as its own sentence — "… three. New paragraph. Four …" — and the bare `\bnew paragraph\b` match left the wrapping `.` behind as a stray mark at the start of the new line. **[#320](https://github.com/Nabzx/openstream/pull/320)**: the new-line / new-paragraph / bullet patterns in `SPOKEN_PUNCT` now also eat a leading `,;:` (a Parakeet artifact) and one trailing `.,!?;:` plus the surrounding spaces. Un-punctuated TTS-style test input matches exactly as before.
+
+Still open, v1.1: proper-noun accuracy on short clips ([#321](https://github.com/Nabzx/openstream/issues/321) correction table, [#322](https://github.com/Nabzx/openstream/issues/322) keyword boosting), spoken numbers coming through spelled out rather than as digits ([#332](https://github.com/Nabzx/openstream/issues/332)).
+
+### Main-process errors log instead of popping a crash dialog
+
+An uncaught exception in the Electron main process triggered the default error box, which on window-close or an editor killing the app read as a crash even when it was a benign teardown race (the [#294](https://github.com/Nabzx/openstream/issues/294)/[#295](https://github.com/Nabzx/openstream/issues/295) class). **[#330](https://github.com/Nabzx/openstream/pull/330)**: a `uncaughtException` handler logs the full stack with a `[main]` prefix and only re-shows the dialog when the error is *not* part of shutdown; `before-quit` and SIGTERM/SIGINT/SIGHUP set the shutdown flag (an editor closing its integrated terminal signals rather than going through `before-quit`). The underlying race is not fixed — it is made non-scary and logged.
+
+### The verification pass ([#228](https://github.com/Nabzx/openstream/issues/228))
+
+Ran from a plain Terminal and from the VS Code integrated terminal. Full results in [docs/testing/verification-pass-228.md](../testing/verification-pass-228.md). Passed: basic dictation, break safety both directions, the Notes regression, [#320](https://github.com/Nabzx/openstream/pull/320), bullet points, voice editing, IDE-terminal dictation, warm latency (150–260 ms), the window-close error. Findings moved to v1.1: the cold first dictation ([#333](https://github.com/Nabzx/openstream/issues/333)), short-clip accuracy ([#321](https://github.com/Nabzx/openstream/issues/321)/[#322](https://github.com/Nabzx/openstream/issues/322)), spelled-out numbers ([#332](https://github.com/Nabzx/openstream/issues/332)).
+
+### Scope and docs housekeeping
+
+- **v1.0 is a source repo, not a distributed app.** Code signing / notarisation / Homebrew ([#11](https://github.com/Nabzx/openstream/issues/11)) moved to a new **v2.0** milestone — it only matters once OpenStream is downloaded rather than built. The unsigned DMG the release workflow still produces is a side effect, not the launch vehicle.
+- **The eval corpus ([#171](https://github.com/Nabzx/openstream/issues/171)) and the semantic-voice-edit spike ([#222](https://github.com/Nabzx/openstream/issues/222)) moved to v1.1.** Neither blocks a beta. #171's capture recipe needs updating for the Parakeet helper first (it curls whisper-server, which is gone).
+- **Closed as done or superseded:** the rebrand umbrella ([#276](https://github.com/Nabzx/openstream/issues/276)), the beta-status map ([#288](https://github.com/Nabzx/openstream/issues/288) — "Beta release" is on the Home hero, the About panel, the README badge and `site/index.html`), the README overhaul ([#309](https://github.com/Nabzx/openstream/issues/309)), [#227](https://github.com/Nabzx/openstream/issues/227), and the ADR-2/3-superseded maps [#23](https://github.com/Nabzx/openstream/issues/23) / [#176](https://github.com/Nabzx/openstream/issues/176) / [#189](https://github.com/Nabzx/openstream/issues/189).
+- **`site/index.html` and `ROADMAP.md` refreshed** ([#328](https://github.com/Nabzx/openstream/pull/328)) — Parakeet, macOS 14, "a repo you build not an app you download". `scripts/verify-dictation-pipeline.sh` was fixed too — it hung forever on the old port-8178 wait.
+- **The git-hooks commit was renamed** ([#323](https://github.com/Nabzx/openstream/pull/323)) so the repo root listing doesn't lead with "Strip the Claude co-author trailer".
+
+### What's actually left for the tag
+
+The demo recording ([#21](https://github.com/Nabzx/openstream/issues/21)), and the launch itself ([#22](https://github.com/Nabzx/openstream/issues/22)). The social-preview PNG is uploaded. The push-to-talk shortcut sign-off ([#198](https://github.com/Nabzx/openstream/issues/198)) is Zazai's call; the known edge (a shortcut can still clash with ordinary typing in some configs) is v1.1 polish, not a blocker.
+
+---
+
+*Keep this current as the project moves past what it describes.*
