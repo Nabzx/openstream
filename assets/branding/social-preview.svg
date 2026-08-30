@@ -14,9 +14,10 @@
   <rect width="1280" height="640" fill="url(#bg)"/>
   <rect x="24.5" y="24.5" width="1231" height="591" fill="none" stroke="#1E3A5F" stroke-width="1"/>
 
-  <g transform="translate(640 214)" fill="none" stroke="#5CB8FF" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
-    <circle cx="0" cy="0" r="92"/>
-    <path d="M-40 22 0 -18 40 22"/>
+  <g transform="translate(640 214)" fill="none" stroke="#5CB8FF" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <circle cx="0" cy="0" r="92" stroke-width="13"/>
+    <path d="M-68 -25 q34 -26 68 0 t68 0" stroke-width="14"/>
+    <path d="M-68 25 q34 26 68 0 t68 0" stroke-width="10"/>
   </g>
 
   <g font-family="JetBrains Mono, monospace" text-anchor="middle">
