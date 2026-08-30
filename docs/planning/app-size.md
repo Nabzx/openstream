@@ -6,7 +6,7 @@
 
 App size is OpenStream's most visible competitive weakness. OpenSuperWhisper's DMG is **11 MB**; ours — even after #249 — is an estimated **~150 MB**, and ~120–150 MB of that is the Electron runtime alone. To be the obvious choice for a local dictation tool, the download has to feel light.
 
-**Hard guardrail:** transcription accuracy (whisper `large-v3-turbo` since #308) and the deterministic cleanup must not regress. The only quality lever genuinely at risk is paragraph-break placement, which is the one thing the resident rewrite model does.
+**Hard guardrail:** transcription accuracy (whisper `base.en`) and the deterministic cleanup must not regress. The only quality lever genuinely at risk is paragraph-break placement, which is the one thing the resident rewrite model does.
 
 ## Where the bytes are (post-#249, arm64 `.app` → DMG estimate)
 
