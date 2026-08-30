@@ -33,3 +33,6 @@ vendor/
 # Python spike scratch
 __pycache__/
 *.pyc
+
+# Screen-recording sources - only the optimised assets/demo.{gif,mp4} are committed
+assets/*.mov

@@ -14,7 +14,7 @@ The words land at your cursor and never leave your Mac.
 
 <img src="assets/readme-banner.png" alt="OpenStream" width="100%">
 
-<!-- demo.gif goes here once recorded on device (#21) -->
+<img src="assets/demo.gif" alt="Dictating into Apple Notes: spoken text, a spoken paragraph break, spoken bullet points, and a voice edit that uppercases and quotes a selection." width="100%">
 
 ## Why
 
