@@ -1,31 +1,28 @@
 <svg width="1280" height="360" viewBox="0 0 1280 360" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <radialGradient id="bg" cx="0.24" cy="0.2" r="0.9">
-      <stop offset="0" stop-color="#0A160D"/>
-      <stop offset="1" stop-color="#020402"/>
+    <radialGradient id="bg" cx="0.24" cy="0.15" r="0.95">
+      <stop offset="0" stop-color="#1B4A82"/>
+      <stop offset="0.5" stop-color="#0B1D3A"/>
+      <stop offset="1" stop-color="#0A1730"/>
     </radialGradient>
-    <pattern id="scan" width="14" height="14" patternUnits="userSpaceOnUse">
-      <rect width="14" height="3" y="5" fill="#000000" opacity="0.20"/>
-    </pattern>
     <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
-      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feGaussianBlur stdDeviation="6" result="b"/>
       <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <rect width="1280" height="360" fill="url(#bg)"/>
-  <rect width="1280" height="360" fill="url(#scan)"/>
-  <rect x="16.5" y="16.5" width="1247" height="327" fill="none" stroke="#16241A" stroke-width="1"/>
+  <rect x="16.5" y="16.5" width="1247" height="327" fill="none" stroke="#1E3A5F" stroke-width="1"/>
 
-  <g font-family="Space Mono, monospace">
-    <text x="84" y="148" font-size="66" font-weight="700" fill="#3DF65A" filter="url(#glow)">~ openstream</text>
-    <rect x="612" y="106" width="24" height="48" fill="#3DF65A" filter="url(#glow)"/>
-    <text x="86" y="212" font-size="23" fill="#9FB89F">local-first voice dictation for apple silicon</text>
-    <text x="86" y="256" font-size="19" fill="#56704F">hold a key. talk. let go. the words land where your cursor is.</text>
-    <text x="86" y="300" font-size="17" fill="#1ED89A">open source &#183; on device &#183; a spoken line break never submits your command</text>
+  <g font-family="JetBrains Mono, monospace">
+    <text x="84" y="148" font-size="66" font-weight="700" fill="#5CB8FF" filter="url(#glow)">~ openstream</text>
+    <rect x="612" y="106" width="24" height="48" fill="#5CB8FF" filter="url(#glow)"/>
+    <text x="86" y="212" font-size="23" fill="#DCE8FA">local-first voice dictation for apple silicon</text>
+    <text x="86" y="256" font-size="19" fill="#8AA3C4">hold a key. talk. let go. the words land where your cursor is.</text>
+    <text x="86" y="300" font-size="17" fill="#4FE0D4">open source &#183; on device &#183; a spoken line break never submits your command</text>
   </g>
 
-  <g transform="translate(1088 180)" fill="none" stroke="#3DF65A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+  <g transform="translate(1088 180)" fill="none" stroke="#5CB8FF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
     <circle cx="0" cy="0" r="84"/>
     <path d="M-36 20 0 -16 36 20"/>
   </g>
