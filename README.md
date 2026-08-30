@@ -2,7 +2,7 @@
 
 # OpenStream
 
-Local-first voice dictation for Apple Silicon, built for developers. Hold a key, talk, let go. The text lands in whatever app is frontmost. Audio and every model request stay on the machine.
+**Beta release.** Local-first voice dictation for Apple Silicon, built for developers. Hold a key, talk, let go. The text lands in whatever app is frontmost. Audio and every model request stay on the machine.
 
 It has one firm opinion: **a spoken line break is denied by default.** A newline can submit a half-typed terminal command or send an unfinished message, so OpenStream checks the frontmost app and the focused field before it turns "new paragraph" into a real break. It survives only in apps you have allow-listed.
 
@@ -28,7 +28,7 @@ Planned, not yet in the app: codebase-vocabulary biasing (transcription weighted
 
 ## Install
 
-OpenStream installs from source. There is a convenience DMG on the [releases page](https://github.com/Nabzx/openstream/releases) — it downloads the speech models (~1.2 GB) on first run rather than bundling them — but it is unsigned (Gatekeeper will warn) and every rebuild resets the macOS permission grants (see below), so `git clone` is the supported path.
+OpenStream installs from source. Each GitHub [release](https://github.com/Nabzx/openstream/releases) is a **beta release** with a convenience DMG — it downloads the speech models (~1.2 GB) on first run rather than bundling them — but the DMG is unsigned (Gatekeeper will warn) and every rebuild resets the macOS permission grants (see below), so `git clone` is the supported path.
 
 ### Requirements
 
@@ -112,7 +112,7 @@ The global hotkey, macOS permission prompts, microphone capture, and insertion i
 
 ## Status
 
-Feature-complete for 1.0. The pipeline, the settings UI, the permissions gate, and release automation are all in place; the final on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is what stands between here and the `v1.0.0` tag.
+**Beta release**, feature-complete for 1.0. The pipeline, the settings UI, the permissions gate, and release automation are all in place; the final on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is what stands between here and the `v1.0.0` tag.
 
 ## License
 
