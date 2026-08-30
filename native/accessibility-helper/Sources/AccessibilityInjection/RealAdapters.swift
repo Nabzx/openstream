@@ -128,31 +128,39 @@ public final class RealFocusResolver: FocusResolving {
         self.log = log
     }
 
-    // #228 verification: the very first system-wide AX read after launch
-    // times out (kAXErrorCannotComplete / -25204) and keeps timing out
-    // through the whole retry budget, so the first dictation falls back to
-    // the NSWorkspace tracker - the exact path #318 exists to avoid. Once
-    // warm it is instant. This primes that connection with one generous
-    // read at startup, off the main thread so it never delays `ready`.
+    // #228 verification: for the first several seconds after launch the
+    // system-wide AX read returns kAXErrorCannotComplete (-25204) and keeps
+    // returning it through a dictation's whole retry budget, so the first
+    // dictation falls back to the NSWorkspace tracker - the exact path #318
+    // exists to avoid. A single warm-up read at startup wasn't enough: the
+    // AX subsystem genuinely isn't ready that early. So retry on a
+    // background thread until it answers (or ~20s passes), which primes the
+    // channel well before the user has opened an app and started talking.
     public func warmUp() {
-        let systemWide = AXUIElementCreateSystemWide()
-        AXUIElementSetMessagingTimeout(systemWide, 3.0)
-        var appRef: CFTypeRef?
-        let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
-        if err == .success, let appRef {
-            // Touch the focused element too - that is the read the injection
-            // path makes, and it warms the same messaging channel.
-            var pid: pid_t = 0
-            if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, pid > 0 { // swiftlint:disable:this force_cast
-                let appElement = AXUIElementCreateApplication(pid)
-                AXUIElementSetMessagingTimeout(appElement, 3.0)
-                var focusedRef: CFTypeRef?
-                _ = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+        let start = Date()
+        var attempt = 0
+        while Date().timeIntervalSince(start) < 20 {
+            attempt += 1
+            let systemWide = AXUIElementCreateSystemWide()
+            AXUIElementSetMessagingTimeout(systemWide, 2.0)
+            var appRef: CFTypeRef?
+            let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
+            if err == .success, let appRef {
+                // Touch the focused element too - the read the injection path
+                // makes - to warm the same messaging channel.
+                var pid: pid_t = 0
+                if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, pid > 0 { // swiftlint:disable:this force_cast
+                    let appElement = AXUIElementCreateApplication(pid)
+                    AXUIElementSetMessagingTimeout(appElement, 2.0)
+                    var focusedRef: CFTypeRef?
+                    _ = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+                }
+                log("focus resolver warmed up after \(attempt) attempt(s)")
+                return
             }
-            log("focus resolver warmed up")
-        } else {
-            log("focus resolver warm-up read failed (AXError \(err.rawValue)) - the first dictation may fall back to the tracker")
+            Thread.sleep(forTimeInterval: 0.5)
         }
+        log("focus resolver warm-up never succeeded in 20s - the first dictation may fall back to the tracker")
     }
 
     // The application that owns the focused UI element, read straight from
