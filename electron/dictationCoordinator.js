@@ -101,6 +101,19 @@ function createDictationIntake(options) {
     }
 
     const breakSafe = isBreakSafeApplication(focusContext.bundleId);
+    emitDiagnostic("context.breakSafe", breakSafe);
+    emitDiagnostic("context.oneLineField", focusContext.isOneLineField);
+
+    // #307: a spoken "new paragraph" / "new line" / "bullet point" in an app
+    // that isn't on the break-safe allow-list is degraded to a space by
+    // cleanup() and looks, to the user, like the command was ignored. Name
+    // it in the log so a repro is conclusive about which case it is - a
+    // missing allow-list entry vs. context detection landing on the wrong
+    // bundle id.
+    if (!breakSafe && /\bnew (?:line|paragraph)\b|\bbullet points?\b|\b(?:new|next) bullets?\b/i.test(rawText)) {
+      emitDiagnostic("context.breakCommandDropped", focusContext.bundleId);
+    }
+
     let finishedText = cleanup(rawText, {
       oneLineBox: focusContext.isOneLineField,
       breakSafe,
