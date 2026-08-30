@@ -39,7 +39,7 @@ The two-stage shape ADR-0002 fixed is unchanged: Parakeet returns raw text, then
   contract are gone. The Electron side waits for its `{"event":"ready"}` line before
   letting a dictation through.
 - **The model is not a bundled weight.** FluidAudio downloads the CoreML bundles from
-  Hugging Face on the helper's first run (~1 GB, into
+  Hugging Face on the helper's first run (~470 MB, into
   `~/Library/Application Support/FluidAudio`). There is no `ggml` file in
   `resources/models` and nothing for `modelStore.js` to fetch for this role. First
   run therefore has no download-progress screen yet - the helper logs to stderr and

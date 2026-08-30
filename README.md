@@ -31,7 +31,7 @@ git clone https://github.com/Nabzx/openstream.git
 cd openstream && npm install && npm start
 ```
 
-You need Apple Silicon, macOS 14 or newer, Node 22.12+ and Xcode Command Line Tools. `npm install` builds three Swift helpers (the first build compiles FluidAudio, so it is slow) and fetches the rewrite model. The transcription model, about 1 GB, downloads on the first launch.
+You need Apple Silicon, macOS 14 or newer, Node 22.12+ and Xcode Command Line Tools. `npm install` builds three Swift helpers (the first build compiles FluidAudio, so it is slow) and fetches the rewrite model. The transcription model, about 470 MB, downloads on the first launch.
 
 There is an unsigned beta DMG on the [releases page](https://github.com/Nabzx/openstream/releases). Gatekeeper will warn, and a rebuild resets the macOS permissions, so `git clone` stays the real path.
 
