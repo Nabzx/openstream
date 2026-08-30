@@ -1,8 +1,7 @@
 #!/bin/sh
-# Strip any "Co-authored-by: Claude ..." trailer before the commit is
-# written. This repo has a single author; the coding agent adds that
-# trailer by default and it kept creeping back onto main (rewritten out
-# twice - 2026-08-25 and 2026-08-28). The hook makes it stick.
+# Keep commit messages to a single author. Some editors and tooling append
+# a "Co-authored-by:" / "Generated with" trailer by default; this repo has
+# one author, so the hook strips it before the commit is written.
 #
 # Enabled by `git config core.hooksPath .githooks`, which the postinstall
 # script sets (scripts/setup-git-hooks.sh). Never fails a commit.
@@ -12,7 +11,8 @@ msg_file="$1"
 
 perl -0pi -e '
   s/\n\h*Co-authored-by:\h*Claude[^\n]*//gi;
-  s/\n\h*(?:Generated with|Assisted-by:).*Claude[^\n]*//gi;
+  s/\n\h*(?:\S+\h+)?(?:Generated with|Assisted-by:)[^\n]*Claude[^\n]*//gi;
+  s/\A\s+//;
   s/\n{3,}/\n\n/g;
   s/\s+\z/\n/;
 ' "$msg_file" 2>/dev/null || true
