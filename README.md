@@ -12,7 +12,7 @@ The words land at your cursor and never leave your Mac.
 
 </div>
 
-<img src="assets/readme-banner.png" alt="OpenStream" width="100%">
+<img src="assets/readme-banner.png?v=2" alt="OpenStream" width="100%">
 
 <!-- demo.gif goes here once recorded on device (#21) -->
 
