@@ -245,7 +245,9 @@ function createApplicationMenu() {
   app.setAboutPanelOptions({
     applicationName: "OpenStream",
     applicationVersion: app.getVersion(),
-    copyright: "Local-first voice dictation. MIT (app) / Apache-2.0 (models). No telemetry.",
+    // #288: "Beta release" sits on the copyright line, right under the
+    // version - the version metadata itself is left untouched.
+    copyright: "Beta release. Local-first voice dictation. MIT (app) / Apache-2.0 (models). No telemetry.",
   });
 
   const template = [

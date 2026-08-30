@@ -132,6 +132,9 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
           }
         />
         <div>
+          <div style={{ marginBottom: 8 }}>
+            <span className="tag">Beta release</span>
+          </div>
           <h1>
             {activity === "recording"
               ? "Listening…"
