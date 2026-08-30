@@ -53,6 +53,8 @@ jobs:
         run: |
           {
             echo 'body<<EOF'
+            echo '**Beta release.**'
+            echo
             git tag -l --format='%(contents)' "${GITHUB_REF_NAME}"
             echo
             echo '---'

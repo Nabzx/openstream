@@ -72,6 +72,10 @@ a:hover { background: var(--acc); color: var(--bg); }
 .top .brand { color: var(--fg-hi); font-size: 18px; letter-spacing: -0.01em; }
 .top .brand b { color: var(--acc); text-shadow: 0 0 16px var(--glow); }
 .top .brand .cur { width: 0.5em; height: 1em; }
+.top .brand .beta {
+  margin-left: 8px; padding: 1px 6px; border: 1px solid var(--line-hi);
+  color: var(--muted); font-size: 11px; letter-spacing: 0.04em; vertical-align: 2px;
+}
 .top a.gh { color: var(--muted); }
 .top a.gh:hover { color: var(--acc); background: none; }
 
@@ -220,7 +224,7 @@ footer a:hover { color: var(--acc); background: none; }
 <body>
 <div class="top">
   <div class="wrap">
-    <span class="brand">~ <b>openstream</b><span class="cur"></span></span>
+    <span class="brand">~ <b>openstream</b><span class="cur"></span><span class="beta">beta release</span></span>
     <a class="gh" href="https://github.com/Nabzx/openstream">github &#8599;</a>
   </div>
 </div>
@@ -313,7 +317,7 @@ footer a:hover { color: var(--acc); background: none; }
     <div class="wrap">
       <div class="rule">status<span class="x"></span></div>
       <ul>
-        <li><b>pre-1.0.</b> the core path runs from source today.</li>
+        <li><b>beta release.</b> pre-1.0; the core path runs from source today.</li>
         <li>source install for now. the DMG is unsigned; signing is next.</li>
         <li>no account, no cloud, no telemetry, and that won't change.</li>
       </ul>
@@ -335,6 +339,7 @@ footer a:hover { color: var(--acc); background: none; }
   <span class="s">openstream(1)</span>
   <span class="s d opt">dictation</span>
   <span class="fill"></span>
+  <span class="s opt">beta release</span>
   <span class="s opt">local-first</span>
   <span class="s opt">MIT</span>
   <span class="s d">&#8997; to talk</span>
