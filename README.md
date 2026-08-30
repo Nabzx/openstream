@@ -26,7 +26,7 @@ git clone https://github.com/Nabzx/openstream.git
 cd openstream && npm install && npm start
 ```
 
-You need Apple Silicon, macOS 13 or newer, Node 22.12+, Xcode Command Line Tools and CMake. `npm install` also builds whisper.cpp and two Swift helpers and fetches about 1.6 GB of models, so it takes a while.
+You need Apple Silicon, macOS 13 or newer, Node 22.12+, Xcode Command Line Tools and CMake. `npm install` also builds whisper.cpp and two Swift helpers and fetches about 1.2 GB of models, so it takes a while.
 
 There is an unsigned beta DMG on the [releases page](https://github.com/Nabzx/openstream/releases). Gatekeeper will warn, and a rebuild resets the macOS permissions, so `git clone` stays the real path.
 
@@ -36,7 +36,7 @@ Three grants, done once: Microphone, Input Monitoring, Accessibility. The app op
 
 ## How it works
 
-- `whisper.cpp` (`large-v3-turbo`) transcribes on the GPU, resident for the app's life.
+- `whisper.cpp` transcribes on the GPU, resident for the app's life.
 - A deterministic rules engine cleans the text. No model rewrites your words. See [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md).
 - A small local model places paragraph breaks in long dictations and returns sentence numbers, never text.
 - The hotkey and the text injection run in separate Swift processes, so a stuck Accessibility call cannot take down the shortcut.
