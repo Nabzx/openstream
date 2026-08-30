@@ -128,6 +128,43 @@ public final class RealFocusResolver: FocusResolving {
         self.log = log
     }
 
+    // The application that owns the focused UI element, read straight from
+    // the system-wide AX element rather than the NSWorkspace tracker.
+    //
+    // #307: the tracker polls NSWorkspace.shared.frontmostApplication, which
+    // lags - and, when OpenStream is launched from a terminal, can stay
+    // frozen at the app that was frontmost at launch (the same class of
+    // problem #113 and #173 hit). The fallout: context detection reported
+    // "com.apple.Terminal" while the user dictated into Notes, the text
+    // landed correctly (injection re-resolves the real focused element), but
+    // a spoken "new paragraph" was dropped because Terminal isn't break-safe.
+    //
+    // kAXFocusedApplicationAttribute on the system-wide element is the AX
+    // API's own answer to "who has focus", with no NSWorkspace round trip.
+    // The tracker stays for the settle guard (#62), which is about timing
+    // stability, not identity. Falls back to the tracker if the AX read
+    // fails.
+    private func frontmostApp(deadlineMs: Double) -> NSRunningApplication? {
+        let systemWide = AXUIElementCreateSystemWide()
+        AXUIElementSetMessagingTimeout(systemWide, Float(deadlineMs / 1000.0))
+
+        var appRef: CFTypeRef?
+        let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
+        if err == .success, let appRef {
+            var pid: pid_t = 0
+            if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, // swiftlint:disable:this force_cast
+               pid > 0,
+               let app = NSRunningApplication(processIdentifier: pid) {
+                return app
+            }
+        }
+
+        let fallback = tracker.currentFrontmostApp()
+        log("frontmostApp: system-wide focused application unavailable (AXError \(err.rawValue)), " +
+            "falling back to the tracker (\(fallback?.bundleIdentifier ?? "none"))")
+        return fallback
+    }
+
     // Resolves the focused element once per dictation. #12 folded this into
     // the same helper #6 creates rather than a separate process or command,
     // specifically so this resolution and inject() never race each other
@@ -135,8 +172,8 @@ public final class RealFocusResolver: FocusResolving {
     // (InjectionEngine's fallback chain) reuses this same target rather
     // than re-asking.
     public func resolveFocusedElement(deadlineMs: Double) -> AccessibilityTarget? {
-        guard let frontApp = tracker.currentFrontmostApp() else {
-            log("resolveFocusedElement: tracker has no frontmost app cached")
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+            log("resolveFocusedElement: no frontmost app from AX or the tracker")
             return nil
         }
 
@@ -179,8 +216,8 @@ public final class RealFocusResolver: FocusResolving {
     // the safe direction for an unknown target) - rather than a hard nil
     // that would fail the whole dictation. See #181.
     public func focusContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, axReady: Bool)? {
-        guard let frontApp = tracker.currentFrontmostApp() else {
-            log("focusContext: tracker has no frontmost app cached")
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+            log("focusContext: no frontmost app from AX or the tracker")
             return nil
         }
         guard let bundleId = frontApp.bundleIdentifier else {
@@ -201,8 +238,8 @@ public final class RealFocusResolver: FocusResolving {
     // nil means the focused element or the attribute could not be read;
     // an empty selectedText means there is simply nothing selected.
     public func selectionContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, selectedText: String)? {
-        guard let frontApp = tracker.currentFrontmostApp() else {
-            log("selectionContext: tracker has no frontmost app cached")
+        guard let frontApp = frontmostApp(deadlineMs: deadlineMs) else {
+            log("selectionContext: no frontmost app from AX or the tracker")
             return nil
         }
         guard let bundleId = frontApp.bundleIdentifier else {
