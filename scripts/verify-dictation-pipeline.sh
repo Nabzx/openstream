@@ -232,8 +232,10 @@ wait_for_listener() {
 record_connections() {
   local output="$1" pid
   : > "$output"
+  # Only the rewrite model server (8179) opens a socket now - the
+  # transcription helper (#204) talks over stdio, not a port.
   while true; do
-    for pid in $(lsof -tiTCP:8178 -sTCP:LISTEN 2>/dev/null; lsof -tiTCP:8179 -sTCP:LISTEN 2>/dev/null); do
+    for pid in $(lsof -tiTCP:8179 -sTCP:LISTEN 2>/dev/null); do
       lsof -nP -a -p "$pid" -iTCP 2>/dev/null >> "$output" || true
     done
     sleep 0.1
@@ -263,12 +265,11 @@ for command_name in npm cmake git curl lsof open spctl; do
   fi
 done
 if [[ ! -x node_modules/electron/dist/Electron.app/Contents/MacOS/Electron || \
-      ! -x resources/bin/whisper-server || ! -x resources/bin/llama-server || \
+      ! -x resources/bin/transcription-helper || ! -x resources/bin/llama-server || \
       ! -x resources/bin/hotkey-helper || ! -x resources/bin/accessibility-helper || \
-      ! -f resources/models/ggml-base.en.bin || \
-      ! -f resources/models/SmolLM2-1.7B-Instruct-Q4_K_M.gguf ]]; then
-  say "The built helpers or pinned model artifacts are missing. npm install builds or fetches them."
-  warn "The first install downloads about 1.15 GB. Matching cached artifacts are reused."
+      ! -f resources/models/smollm2-1.7b-instruct-q4_k_m.gguf ]]; then
+  say "The built helpers or the rewrite model are missing. npm install builds or fetches them."
+  warn "The first build compiles FluidAudio and can take a few minutes. Parakeet's CoreML bundles (~470 MB) download on the transcription helper's first run, not now."
   if confirm "Run npm install now?"; then
     npm install
   else
@@ -306,10 +307,14 @@ step "A source run may never add Electron or OpenStream because macOS attributes
 pause "Press Enter after all three permissions are enabled. The wizard will relaunch OpenStream."
 stop_app
 start_app
-say "Waiting for both resident model servers. A cold Metal startup may take 20 seconds."
-wait_for_listener 8178
+say "Waiting for the rewrite model server (port 8179) and the transcription helper."
 wait_for_listener 8179
-say "Both model servers are listening."
+waited=0
+until pgrep -f 'resources/bin/transcription-helper' >/dev/null 2>&1; do
+  if (( waited >= 600 )); then warn "transcription-helper never started. Read $LOG_FILE"; break; fi
+  sleep 2; waited=$((waited + 2))
+done
+say "The transcription helper is up. On a first run it is still downloading Parakeet (~470 MB) - the first dictation below will wait for that; later ones are fast."
 
 stage "Check global push-to-talk feedback"
 open -a TextEdit
@@ -339,13 +344,20 @@ else
 fi
 
 stage "Check localhost-only model processing"
-LISTENERS=$(lsof -nP -iTCP -sTCP:LISTEN | awk '$9 ~ /:8178$|:8179$/ { print }')
+# The rewrite model server (8179) opens a socket; it must be 127.0.0.1 only.
+# The transcription helper (#204) runs Parakeet as local CoreML and opens no
+# socket at all - so exactly one model listener is now correct.
+LISTENERS=$(lsof -nP -iTCP -sTCP:LISTEN | awk '$9 ~ /:8179$/ { print }')
 printf '%s\n' "$LISTENERS"
 LISTENER_COUNT=$(printf '%s\n' "$LISTENERS" | awk 'NF { count++ } END { print count + 0 }')
-if [[ "$LISTENER_COUNT" -ne 2 ]] || \
-   ! printf '%s\n' "$LISTENERS" | awk 'NF && $9 !~ /^127\.0\.0\.1:817[89]$/ { bad=1 } END { exit bad }'; then
+if pgrep -f 'resources/bin/transcription-helper' >/dev/null 2>&1 && \
+   lsof -nP -p "$(pgrep -f 'resources/bin/transcription-helper' | head -1)" -iTCP -sTCP:LISTEN 2>/dev/null | grep -q LISTEN; then
   LOCAL_RESULT="fail"
-  warn "A model listener is not bound only to 127.0.0.1."
+  warn "The transcription helper opened a network listener - it should not."
+elif [[ "$LISTENER_COUNT" -ne 1 ]] || \
+   ! printf '%s\n' "$LISTENERS" | awk 'NF && $9 !~ /^127\.0\.0\.1:8179$/ { bad=1 } END { exit bad }'; then
+  LOCAL_RESULT="fail"
+  warn "The rewrite model listener is not bound only to 127.0.0.1:8179."
 else
   CONNECTION_FILE=$(mktemp)
   record_connections "$CONNECTION_FILE" &
