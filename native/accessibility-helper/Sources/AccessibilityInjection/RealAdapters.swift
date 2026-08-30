@@ -128,39 +128,43 @@ public final class RealFocusResolver: FocusResolving {
         self.log = log
     }
 
-    // #228 verification: for the first several seconds after launch the
-    // system-wide AX read returns kAXErrorCannotComplete (-25204) and keeps
-    // returning it through a dictation's whole retry budget, so the first
-    // dictation falls back to the NSWorkspace tracker - the exact path #318
-    // exists to avoid. A single warm-up read at startup wasn't enough: the
-    // AX subsystem genuinely isn't ready that early. So retry on a
-    // background thread until it answers (or ~20s passes), which primes the
-    // channel well before the user has opened an app and started talking.
+    // #228 verification: for a while after launch the system-wide AX read
+    // returns kAXErrorCannotComplete (-25204) and keeps returning it through
+    // a dictation's whole retry budget, so the first dictation falls back to
+    // the NSWorkspace tracker - the path #318 exists to avoid. The
+    // verification run also showed that an app-scoped read (what the
+    // injection path does) is what actually thaws the channel: a bespoke
+    // system-wide read on its own never succeeded, but the system-wide read
+    // in the second real dictation - right after the first dictation's
+    // injection ran an app-scoped read - was instant.
+    //
+    // So this pokes the frontmost app the way injection does, then tries the
+    // system-wide read, on a background thread that pumps its own run loop
+    // (AX replies can need one). It keeps at it for a minute, which covers
+    // the user switching from the launch terminal to whatever they dictate
+    // into - the frontmost app at second 0 (the terminal) may have a slow
+    // AX tree, so warming only really lands once they're in a real target.
     public func warmUp() {
         let start = Date()
-        var attempt = 0
-        while Date().timeIntervalSince(start) < 20 {
-            attempt += 1
+        while Date().timeIntervalSince(start) < 60 {
+            if let app = tracker.currentFrontmostApp() {
+                let appElement = AXUIElementCreateApplication(app.processIdentifier)
+                AXUIElementSetMessagingTimeout(appElement, 2.0)
+                AXUIElementSetAttributeValue(appElement, "AXManualAccessibility" as CFString, kCFBooleanTrue)
+                var focusedRef: CFTypeRef?
+                _ = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
+            }
+
             let systemWide = AXUIElementCreateSystemWide()
             AXUIElementSetMessagingTimeout(systemWide, 2.0)
             var appRef: CFTypeRef?
-            let err = AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef)
-            if err == .success, let appRef {
-                // Touch the focused element too - the read the injection path
-                // makes - to warm the same messaging channel.
-                var pid: pid_t = 0
-                if AXUIElementGetPid(appRef as! AXUIElement, &pid) == .success, pid > 0 { // swiftlint:disable:this force_cast
-                    let appElement = AXUIElementCreateApplication(pid)
-                    AXUIElementSetMessagingTimeout(appElement, 2.0)
-                    var focusedRef: CFTypeRef?
-                    _ = AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString, &focusedRef)
-                }
-                log("focus resolver warmed up after \(attempt) attempt(s)")
+            if AXUIElementCopyAttributeValue(systemWide, kAXFocusedApplicationAttribute as CFString, &appRef) == .success {
+                log("focus resolver warmed up after \(Int(Date().timeIntervalSince(start)))s")
                 return
             }
-            Thread.sleep(forTimeInterval: 0.5)
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
         }
-        log("focus resolver warm-up never succeeded in 20s - the first dictation may fall back to the tracker")
+        log("focus resolver warm-up never succeeded in 60s - the first dictation may fall back to the tracker")
     }
 
     // The application that owns the focused UI element, read straight from
