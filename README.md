@@ -2,7 +2,7 @@
 
 # OpenStream
 
-![macOS 13+](https://img.shields.io/badge/macOS-13%2B-0b0f14?logo=apple&logoColor=white)
+![macOS 14+](https://img.shields.io/badge/macOS-14%2B-0b0f14?logo=apple&logoColor=white)
 &nbsp;![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-arm64-0b0f14)
 &nbsp;![Licence: MIT](https://img.shields.io/badge/licence-MIT-3B9EFF)
 &nbsp;![Status: beta](https://img.shields.io/badge/status-beta-3B9EFF)
@@ -18,9 +18,9 @@ The words land at your cursor and never leave your Mac.
 
 ## Why
 
-A spoken "new paragraph" can fire off a half-typed shell command or send an unfinished message. OpenStream checks the frontmost app and the focused field first, so a line break only happens where a line break is safe. Everywhere else the words just carry on.
+Wispr Flow is good, but it wants a subscription and an account, and your voice goes to their servers. OpenStream does the same job for free, on your Mac, with no sign-up.
 
-It is Wispr Flow rebuilt as free software: open source, no account, and nothing phones home.
+It also tries not to break your flow. Before it types a line break it checks which app you are in, so saying "new paragraph" cannot fire off a half-typed command or send an unfinished message.
 
 ## Install
 
@@ -31,20 +31,22 @@ git clone https://github.com/Nabzx/openstream.git
 cd openstream && npm install && npm start
 ```
 
-You need Apple Silicon, macOS 14 or newer, Node 22.12+ and Xcode Command Line Tools. `npm install` builds three Swift helpers (the first build compiles FluidAudio, so it is slow) and fetches the rewrite model. The transcription model, about 470 MB, downloads on the first launch.
+You need Apple Silicon, macOS 14 or newer, Node 22.12+ and the Xcode command line tools. `npm install` builds three Swift helpers, so the first run is slow. The transcription model (about 470 MB) downloads the first time you open the app.
 
-There is an unsigned beta DMG on the [releases page](https://github.com/Nabzx/openstream/releases). Gatekeeper will warn, and a rebuild resets the macOS permissions, so `git clone` stays the real path.
+There is an unsigned beta DMG on the [releases page](https://github.com/Nabzx/openstream/releases), but Gatekeeper will complain and a rebuild wipes the permissions, so building from source is the better route.
 
 ## Permissions
 
-Three grants, done once: Microphone, Input Monitoring, Accessibility. The app opens on a Permissions screen if any are missing, and `npm run doctor` checks from the terminal. Grant them, then quit and restart. A rebuild re-keys the grants, so remove the old OpenStream entry in System Settings before adding the new one.
+macOS makes you allow three things, once: Microphone, Input Monitoring and Accessibility. The app tells you on launch if any are missing, or run `npm run doctor`. Grant them, quit, reopen.
+
+Rebuilding the app resets these grants, so delete the old OpenStream under System Settings > Privacy & Security before adding the new one.
 
 ## How it works
 
-- Parakeet (NVIDIA), via FluidAudio, transcribes on the Neural Engine, resident for the app's life.
-- A deterministic rules engine cleans the text. No model rewrites your words. See [ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md).
-- A small local model places paragraph breaks in long dictations and returns sentence numbers, never text.
-- The hotkey and the text injection run in separate Swift processes, so a stuck Accessibility call cannot take down the shortcut.
+- Parakeet (NVIDIA), via FluidAudio, transcribes on the Neural Engine and stays loaded for the life of the app.
+- A deterministic rules engine tidies the text. No model rewrites your words ([ADR-0001](docs/adr/0001-no-llm-in-the-dictation-path.md)).
+- A small local model decides where paragraph breaks go in long dictations. It returns sentence numbers, never text.
+- The hotkey and the text injection run as separate Swift processes, so a stuck Accessibility call cannot take the shortcut down with it.
 
 ## Status
 

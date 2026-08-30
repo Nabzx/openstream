@@ -34,12 +34,15 @@ echo "==> assets/icon.icns"
 # theme). recording and transcribing are non-template, coloured to match
 # docs/design/visual-identity.md: primary blue while listening, aqua while
 # it places the text.
+#
+# One wave, not the app icon's two: two lines tangle into a blob at 22px.
+# Matches src/components/Mark.tsx.
 glyph() {
   cat <<SVG
 <svg width="44" height="44" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-  <g fill="none" stroke="$1" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="$1" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
     <circle cx="12" cy="12" r="7.6"/>
-    <path d="M8.7 13.4 12 10.1 15.3 13.4"/>
+    <path d="M6.4 12 q 2.8 -4.4 5.6 0 t 5.6 0"/>
   </g>
 </svg>
 SVG

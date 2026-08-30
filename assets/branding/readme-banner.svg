@@ -22,8 +22,9 @@
     <text x="86" y="300" font-size="17" fill="#4FE0D4">open source &#183; on device &#183; a spoken line break never submits your command</text>
   </g>
 
-  <g transform="translate(1088 180)" fill="none" stroke="#5CB8FF" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
-    <circle cx="0" cy="0" r="84"/>
-    <path d="M-36 20 0 -16 36 20"/>
+  <g transform="translate(1088 180)" fill="none" stroke="#5CB8FF" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+    <circle cx="0" cy="0" r="84" stroke-width="12"/>
+    <path d="M-62 -23 q31 -24 62 0 t62 0" stroke-width="13"/>
+    <path d="M-62 23 q31 24 62 0 t62 0" stroke-width="9"/>
   </g>
 </svg>
