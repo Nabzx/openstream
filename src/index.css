@@ -1,8 +1,9 @@
-/* OpenStream desktop window - blue-glass identity, matching the landing
-   page (docs/design/visual-identity.md). JetBrains Mono, white text on a
-   navy ground, blue + aqua accents with glow, 10px radius. Dark only. The
-   macOS window chrome (traffic lights, hidden-inset title bar) stays;
-   everything inside it is recoloured. */
+/* OpenStream desktop window - blue-glass identity (docs/design/visual-identity.md).
+   JetBrains Mono, white text, blue + aqua accents with glow, 10px radius.
+   The window itself is a native "under-window" vibrancy material (#301):
+   panels are translucent so the desktop tints through, with a solid navy
+   fallback (main.js backgroundColor) when macOS can't render it. The macOS
+   chrome (traffic lights, hidden-inset title bar) stays. Dark only. */
 
 /* JetBrains Mono is bundled, not fetched - the app is local-first and runs
    offline. One variable woff2 (latin subset) covers the whole weight
@@ -18,24 +19,23 @@
 :root {
   color-scheme: dark;
 
-  --bg: #0B1D3A;           /* navy ground */
-  --bg-hi: #163A6B;        /* top of the page glow */
-  --bg-lo: #0A1730;        /* bottom of the page */
-  --screen: #12294A;       /* panels, cards, fields */
-  --screen-2: #17335A;     /* icon tiles, keycaps, insets */
-  --acc: #5CB8FF;          /* primary: headings, prompts, live state, primary button */
-  --acc-2: #4FE0D4;        /* secondary: pending / secondary state, small tags */
-  --err: #F0503C;          /* genuine errors only: missing permission, dead server */
-  --fg: #DCE8FA;           /* body text */
+  --bg: #14335F;           /* solid navy - the Reduce-Transparency fallback */
+  --screen: rgba(30, 62, 112, 0.5);        /* panels, cards - translucent over the vibrancy */
+  --screen-2: rgba(20, 45, 85, 0.55);      /* keycaps, fields, icon tiles, insets */
+  --acc: #7FCBFF;          /* primary: headings, prompts, live state, primary button */
+  --acc-2: #52E6D6;        /* secondary: pending / secondary state, small tags */
+  --err: #FF6B54;          /* genuine errors only: missing permission, dead server */
+  --fg: #EAF2FF;           /* body text */
   --fg-hi: #FFFFFF;        /* headings, active labels */
-  --muted: #8AA3C4;        /* captions, disabled */
-  --faint: #5B76A0;        /* labels, dividers-as-text */
-  --line: #1E3A5F;         /* hairlines */
-  --line-hi: #2E4E7A;      /* visible borders */
-  --acc-tint: rgba(92, 184, 255, 0.14);
-  --acc2-tint: rgba(79, 224, 212, 0.12);
-  --err-tint: rgba(240, 80, 60, 0.14);
-  --glow: rgba(92, 184, 255, 0.40);
+  --muted: #AEC5E2;        /* captions, disabled */
+  --faint: #7C97BE;        /* labels, dividers-as-text */
+  --line: rgba(150, 195, 245, 0.16);       /* hairlines */
+  --line-hi: rgba(165, 205, 250, 0.34);    /* visible borders */
+  --acc-tint: rgba(127, 203, 255, 0.16);
+  --acc2-tint: rgba(82, 230, 214, 0.14);
+  --err-tint: rgba(255, 107, 84, 0.16);
+  --glow: rgba(127, 203, 255, 0.45);
+  --shadow-text: 0 1px 3px rgba(0, 0, 0, 0.35);
 
   --r: 10px;               /* cards, panels, the mark */
   --r-sm: 7px;             /* buttons, fields, keycaps, tabs */
@@ -54,25 +54,26 @@
 
 * { box-sizing: border-box; }
 
+/* Transparent so the native "under-window" vibrancy shows; a faint blue
+   wash unifies it and keeps contrast when the desktop behind is bright.
+   With Reduce Transparency on, the window's solid --bg shows instead. */
 body {
   margin: 0;
-  background: radial-gradient(135% 90% at 30% -8%, var(--bg-hi) 0%, var(--bg) 44%, var(--bg-lo) 100%);
+  background: linear-gradient(180deg, rgba(32, 74, 132, 0.30), rgba(16, 40, 78, 0.40));
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "liga" 0;
 }
 
-/* faint scanline; dialled almost to nothing - a texture cue, not a CRT */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9000;
-  pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0, 0, 0, 0.05) 3px, transparent 4px);
-}
-
 button { font: inherit; }
+
+/* Text sits over a translucent panel over the desktop - a hairline shadow
+   keeps it readable when the wallpaper behind is bright or busy. */
+.hero h1, .hero p, .group > h2, .group-desc, .row-label, .row-label small,
+.card-label, .perm-item__title, .perm-item__why, .cmd-say, .cmd-becomes,
+.hint, .setting h2, .setting-guidance, .setup-item__head, .empty {
+  text-shadow: var(--shadow-text);
+}
 
 :focus-visible {
   outline: 1px solid var(--acc);
@@ -93,7 +94,7 @@ button { font: inherit; }
   align-items: center;
   gap: var(--space-2);
   padding: 0 var(--space-4) 0 92px; /* room for the inset traffic lights */
-  background: rgba(8, 20, 42, 0.55);
+  background: rgba(10, 26, 52, 0.28);
   border-bottom: 1px solid var(--line-hi);
   -webkit-app-region: drag;
 }
@@ -136,11 +137,13 @@ button { font: inherit; }
 /* --- building blocks --- */
 
 .card {
-  background: linear-gradient(180deg, rgba(30, 60, 105, 0.5), rgba(18, 41, 74, 0.5));
+  background: linear-gradient(180deg, rgba(92, 142, 208, 0.16), rgba(38, 78, 140, 0.24));
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
   overflow: hidden;
-  box-shadow: 0 8px 24px -14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .card-label {
@@ -190,7 +193,7 @@ button { font: inherit; }
   color: var(--muted);
 }
 
-.row-label { flex: 1; color: var(--fg-hi); }
+.row-label { flex: 1; color: var(--fg-hi); text-shadow: var(--shadow-text); }
 
 .row-label small {
   display: block;
@@ -399,7 +402,7 @@ button { font: inherit; }
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--fg-hi);
-  text-shadow: 0 0 26px rgba(92, 184, 255, 0.35);
+  text-shadow: 0 0 26px rgba(127, 203, 255, 0.35), var(--shadow-text);
 }
 
 .hero p {
@@ -562,10 +565,12 @@ button { font: inherit; }
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, rgba(30, 60, 105, 0.5), rgba(18, 41, 74, 0.5));
+  background: linear-gradient(180deg, rgba(92, 142, 208, 0.16), rgba(38, 78, 140, 0.24));
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
-  box-shadow: 0 8px 24px -14px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .perm-item[data-granted="true"] { opacity: 0.6; }
 

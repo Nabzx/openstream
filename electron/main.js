@@ -151,6 +151,14 @@ function createWindow() {
     // paints its own toolbar strip behind them (issue #211).
     titleBarStyle: "hiddenInset",
     title: "OpenStream",
+    // #301: the blue-glass window sits on a native "under-window" vibrancy
+    // material so the desktop shows through translucent panels. When macOS
+    // can't render it (Reduce Transparency), the window falls back to this
+    // solid navy so it still looks intentional. index.css keeps every
+    // panel semi-transparent to let the material read.
+    vibrancy: "under-window",
+    visualEffectState: "active",
+    backgroundColor: "#14335F",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
