@@ -104,6 +104,21 @@ function createDictationIntake(options) {
     emitDiagnostic("context.breakSafe", breakSafe);
     emitDiagnostic("context.oneLineField", focusContext.isOneLineField);
 
+    // #307: when the focused element wasn't AX-ready, isOneLineField is a
+    // guess, not a real role read - and the guess is "one-line" (#181). In a
+    // break-safe app that guess is almost always wrong: the frontmost thing
+    // is the document body, not a search box. Letting a wrong guess suppress
+    // a spoken "new paragraph" / "bullet point" is exactly the Notes bug -
+    // the command silently degrades to a space and the words vanish. So in a
+    // break-safe app, don't let an AX *guess* stand in for a one-line field.
+    // A real role read (axReady true) is still honoured either way, and
+    // automatic break placement below stays on the raw guess - conservative.
+    const oneLineGuessed = focusContext.isOneLineField && focusContext.axReady === false;
+    const treatAsOneLine = focusContext.isOneLineField && !(breakSafe && oneLineGuessed);
+    if (focusContext.isOneLineField && !treatAsOneLine) {
+      emitDiagnostic("context.oneLineGuessOverridden", focusContext.bundleId);
+    }
+
     // #307: a spoken "new paragraph" / "new line" / "bullet point" in an app
     // that isn't on the break-safe allow-list is degraded to a space by
     // cleanup() and looks, to the user, like the command was ignored. Name
@@ -115,7 +130,7 @@ function createDictationIntake(options) {
     }
 
     let finishedText = cleanup(rawText, {
-      oneLineBox: focusContext.isOneLineField,
+      oneLineBox: treatAsOneLine,
       breakSafe,
     });
     if (!finishedText) {

@@ -19,6 +19,10 @@ line break actually landing (or not) in the chosen app.
    app you added — the break lands. Also try "bullet point". Do the same in
    Terminal — both are dropped, the text runs on, and the console shows a
    `[dictation] context.breakCommandDropped: <bundleId>` line (#307).
+   Then dictate straight into a just-opened Notes document (before the body
+   is AX-ready): the break still lands, and the console shows
+   `[dictation] context.oneLineGuessOverridden: com.apple.Notes` — the
+   one-line guess was overridden because Notes is break-safe (#307).
 6. **Remove** an app, then **Restore defaults** — the list returns to the
    defaults.
 7. Quit and relaunch OpenStream. The list (minus anything removed, plus
