@@ -191,7 +191,10 @@ function createWindow() {
       shortcutCaptureSender = null;
       fnShortcutCapture.stop();
     }
-    if (win?.webContents === windowContents) win = null;
+    // Reading win.webContents here throws "Object has been destroyed" - the
+    // window is already gone by "closed". createWindow() only ever has one
+    // win at a time and nothing else reassigns it, so just clear it.
+    win = null;
   });
 }
 
@@ -297,7 +300,7 @@ function createCaptureWindow() {
 // hideHeldResult() below can't drift from createOverlayWindow's initial
 // size the way it did once already (merge artifact: it briefly resized
 // back to the pre-redesign 180x52 instead of this).
-const OVERLAY_RESTING_SIZE = [220, 56];
+const OVERLAY_RESTING_SIZE = [244, 50];
 
 function createOverlayWindow() {
   overlayWin = new BrowserWindow({
@@ -306,14 +309,19 @@ function createOverlayWindow() {
     show: false,
     frame: false,
     transparent: true,
+    // The panel fills the window edge to edge with a 1px phosphor border,
+    // so the native rounded-corner mask must be off or it clips the
+    // border's corners, and the native drop shadow off or it haloes a
+    // hard-edged panel. See #281 / the overlay polish pass.
+    roundedCorners: false,
+    hasShadow: false,
     resizable: false,
     focusable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     // No vibrancy: the terminal rebrand (#281) wants a solid near-black
-    // panel, not frosted glass. The window stays frameless + transparent so
-    // overlay.css paints the panel (solid --bg, a 1px phosphor border, a
-    // faint scanline) and the transparent margin around it disappears.
+    // panel, not frosted glass. overlay.css paints it (solid --bg, a 1px
+    // phosphor border, a faint scanline).
     webPreferences: {
       preload: path.join(__dirname, "overlay", "overlayPreload.js"),
       contextIsolation: true,
@@ -329,7 +337,7 @@ function showHeldResult(text) {
   if (!overlayWin || overlayWin.isDestroyed()) return;
   overlayWin.setFocusable(true);
   overlayWin.setIgnoreMouseEvents(false);
-  overlayWin.setSize(420, 260, true);
+  overlayWin.setSize(432, 264, true);
   overlayWin.webContents.send("held-result", text);
   overlayWin.showInactive();
 }
