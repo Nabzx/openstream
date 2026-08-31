@@ -69,6 +69,8 @@ Every PR gets a review before it merges, and CI (`npm run build`) has to pass. R
 
 Before a change that touches how the pipeline behaves, read the matching doc: `CONTEXT.md` is the glossary, `docs/adr/` records the decisions and why they went that way, `docs/progress/` is the running history. `AGENTS.md` lists the few hard invariants.
 
+Not a coder? There's no company behind OpenStream and no marketing budget. If it's useful to you, [a star and a word to one other person](docs/marketing/spread-the-word.md) is the biggest help there is.
+
 ## Licence
 
 [MIT](LICENSE)
