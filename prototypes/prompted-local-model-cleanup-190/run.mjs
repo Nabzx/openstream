@@ -15,7 +15,7 @@ const require = createRequire(import.meta.url);
 const { cleanup } = require("../../electron/cleanup/rules.js");
 
 const DEFAULT_URL = "http://127.0.0.1:8179/v1/chat/completions";
-const DEFAULT_CORPUS = "/Users/zazai/Music/OpenStream/real-dictation-corpus/real-dictation.draft.json";
+const DEFAULT_CORPUS = "~/openstream-corpus/real-dictation.draft.json";
 const DEFAULT_OUTPUT = new URL("./results.json", import.meta.url);
 const MODEL_FILE = "resources/models/smollm2-1.7b-instruct-q4_k_m.gguf";
 const VARIANTS = [

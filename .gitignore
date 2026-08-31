@@ -34,5 +34,14 @@ vendor/
 __pycache__/
 *.pyc
 
+# Prototype / spike run output - machine-generated benchmark logs and result
+# dumps. Only the curated README.md / RESULTS.md prose is checked in; the raw
+# artifacts leak local paths and hardware detail and have no lasting value.
+prototypes/**/logs/
+prototypes/**/out/
+spike/**/logs/
+spike/**/out/
+*.trace
+
 # Screen-recording sources - only the optimised assets/demo.{gif,mp4} are committed
 assets/*.mov

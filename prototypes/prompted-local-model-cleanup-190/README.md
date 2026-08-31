@@ -29,18 +29,18 @@ Wait for the server to become healthy, then run the prototype:
 
 ```bash
 node prototypes/prompted-local-model-cleanup-190/run.mjs \
-  --corpus /Users/zazai/Music/OpenStream/real-dictation-corpus/real-dictation.draft.json \
+  --corpus ~/openstream-corpus/real-dictation.draft.json \
   --url http://127.0.0.1:8179/v1/chat/completions \
-  --out /Users/zazai/Music/OpenStream/real-dictation-corpus/prompted-cleanup-190-results.json
+  --out ~/openstream-corpus/prompted-cleanup-190-results.json
 ```
 
 Generate a local review page:
 
 ```bash
 node prototypes/prompted-local-model-cleanup-190/review.mjs \
-  --results /Users/zazai/Music/OpenStream/real-dictation-corpus/prompted-cleanup-190-results.json \
-  > /Users/zazai/Music/OpenStream/real-dictation-corpus/prompted-cleanup-190-review.html
-open /Users/zazai/Music/OpenStream/real-dictation-corpus/prompted-cleanup-190-review.html
+  --results ~/openstream-corpus/prompted-cleanup-190-results.json \
+  > ~/openstream-corpus/prompted-cleanup-190-review.html
+open ~/openstream-corpus/prompted-cleanup-190-review.html
 ```
 
 The runner warms each request before measuring it. It records JSON compliance, model fallback, exact text matches, a conservative raw-word bound, break-reply validity, and warm request latency. It records model artifact bytes but does not include process memory or delivery in the result. Sample-by-sample semantic judgement remains human work.
