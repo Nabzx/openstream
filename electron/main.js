@@ -9,6 +9,7 @@ const {
   ipcMain,
   nativeImage,
   screen,
+  session,
   shell,
   systemPreferences,
 } = require("electron");
@@ -80,6 +81,50 @@ process.on("unhandledRejection", (reason) => {
 });
 
 const isDev = process.env.NODE_ENV === "development";
+
+// Defense-in-depth. The renderer only ever reaches the main process over the
+// contextBridge (preload.js) and makes no network requests of its own, so a
+// packaged build can lock every resource to 'self'. Dev additionally needs
+// Vite's HMR websocket and the inline client it injects.
+function installContentSecurityPolicy() {
+  const policy = isDev
+    ? "default-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:5173 ws://localhost:5173 data:"
+    : [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "media-src 'self'",
+        "object-src 'none'",
+        "base-uri 'none'",
+        "frame-ancestors 'none'",
+      ].join("; ");
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [policy],
+      },
+    });
+  });
+}
+
+// No window in this app ever navigates away from its bundled page or opens a
+// child window. Anything attempting either is a bug or a compromised
+// renderer - block both. External links (there are none in the UI today) go
+// through shell.openExternal explicitly, never window.open.
+function hardenWindow(contents) {
+  contents.setWindowOpenHandler(() => ({ action: "deny" }));
+  contents.on("will-navigate", (event, url) => {
+    const current = contents.getURL();
+    if (current && new URL(url).origin !== new URL(current).origin) {
+      event.preventDefault();
+      console.error(`[security] blocked navigation to ${url}`);
+    }
+  });
+}
 
 const TRAY_ICON_FILES = {
   idle: "iconTemplate.png",
@@ -197,6 +242,8 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
+
+  hardenWindow(win.webContents);
 
   if (isDev) {
     win.loadURL("http://localhost:5173");
@@ -335,6 +382,7 @@ function createCaptureWindow() {
       nodeIntegration: false,
     },
   });
+  hardenWindow(captureWin.webContents);
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
 }
 
@@ -376,6 +424,7 @@ function createOverlayWindow() {
   // window the constructor pairing has been unreliable on some
   // Electron/macOS combinations.
   overlayWin.setVibrancy("hud");
+  hardenWindow(overlayWin.webContents);
   overlayWin.loadFile(path.join(__dirname, "overlay", "overlay.html"));
 }
 
@@ -863,6 +912,7 @@ app.on("activate", () => {
 });
 
 app.whenReady().then(() => {
+  installContentSecurityPolicy();
   const settingsPath = path.join(app.getPath("userData"), "settings.json");
   // First ever launch (no settings file yet) opens the window so a new
   // user sees the app came up and what the shortcut is. Later launches
