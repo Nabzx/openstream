@@ -235,7 +235,7 @@ if [[ "$PROTO" == *"/.claude/worktrees/"* ]]; then
   warn "This is a throwaway git worktree."
   say "TCC keys ad-hoc-signed apps partly on their path, so a grant given here"
   say "attaches to a directory that gets deleted. Run this from your main"
-  say "checkout instead: ~/workspace/zazai840/openstream/prototypes/tcc-attribution-46"
+  say "checkout instead: ~/openstream/prototypes/tcc-attribution-46"
   confirm "Continue anyway?" || exit 1
 fi
 printf '\n'

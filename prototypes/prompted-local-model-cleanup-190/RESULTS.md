@@ -39,7 +39,7 @@ The current result is enough to reject this prompt and response contract, not en
 The review page remains local beside the corpus:
 
 ```text
-/Users/zazai/Music/OpenStream/real-dictation-corpus/prompted-cleanup-190-review.html
+~/openstream-corpus/prompted-cleanup-190-review.html
 ```
 
 Before another candidate run, correct the hand-entered references, add number, question, abstention, and target-context cases, and keep the recognition reference separate from cleanup quality. Do not wire this prototype into production.
