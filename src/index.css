@@ -22,9 +22,9 @@
 :root {
   color-scheme: dark;
 
-  --bg: #14335F;           /* solid navy - the Reduce-Transparency fallback */
-  --screen: rgba(30, 62, 112, 0.5);        /* panels, cards - translucent over the vibrancy */
-  --screen-2: rgba(20, 45, 85, 0.55);      /* keycaps, fields, icon tiles, insets */
+  --bg: #13233b;           /* solid navy - the Reduce-Transparency fallback */
+  --screen: rgba(22, 29, 44, 0.62);        /* panels, cards - a blue-neutral frost over the vibrancy */
+  --screen-2: rgba(12, 16, 26, 0.6);       /* keycaps, fields, icon tiles, insets - recessed */
   --acc: #7FCBFF;          /* primary: headings, prompts, live state, primary button */
   --acc-2: #52E6D6;        /* secondary: pending / secondary state, small tags */
   --err: #FF6B54;          /* genuine errors only: missing permission, dead server */
@@ -66,7 +66,7 @@
    wash (plus --bg behind it) is what keeps the fallback on-brand. */
 body {
   margin: 0;
-  background: linear-gradient(180deg, rgba(22, 50, 92, 0.42), rgba(13, 34, 68, 0.5));
+  background: linear-gradient(180deg, rgba(18, 26, 42, 0.4), rgba(11, 16, 27, 0.52));
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
@@ -143,13 +143,12 @@ button { font: inherit; }
 /* --- building blocks --- */
 
 .card {
-  background: linear-gradient(180deg, rgba(92, 142, 208, 0.16), rgba(38, 78, 140, 0.24));
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  backdrop-filter: blur(20px) saturate(1.4);
+  background: var(--screen);
+  -webkit-backdrop-filter: blur(24px) saturate(1.05);
+  backdrop-filter: blur(24px) saturate(1.05);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
   overflow: hidden;
-  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .card-label {
@@ -571,12 +570,11 @@ button { font: inherit; }
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(180deg, rgba(92, 142, 208, 0.16), rgba(38, 78, 140, 0.24));
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  backdrop-filter: blur(20px) saturate(1.4);
+  background: var(--screen);
+  -webkit-backdrop-filter: blur(24px) saturate(1.05);
+  backdrop-filter: blur(24px) saturate(1.05);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
-  box-shadow: 0 10px 30px -16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 .perm-item[data-granted="true"] { opacity: 0.6; }
 
