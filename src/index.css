@@ -49,6 +49,7 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-7: 28px;
 
   --font-ui: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -82,7 +83,7 @@ button { font: inherit; }
 }
 
 :focus-visible {
-  outline: 1px solid var(--acc);
+  outline: 2px solid var(--acc);
   outline-offset: 2px;
 }
 
@@ -95,12 +96,12 @@ button { font: inherit; }
 }
 
 .toolbar {
-  flex: 0 0 52px;
+  flex: 0 0 56px;
   display: flex;
   align-items: center;
   gap: var(--space-2);
   padding: 0 var(--space-4) 0 92px; /* room for the inset traffic lights */
-  background: rgba(10, 26, 52, 0.28);
+  background: rgba(10, 16, 27, 0.3);
   border-bottom: 1px solid var(--line-hi);
   -webkit-app-region: drag;
 }
@@ -108,8 +109,8 @@ button { font: inherit; }
 .navtab {
   display: inline-flex;
   align-items: center;
-  height: 26px;
-  padding: 0 11px;
+  height: 30px;
+  padding: 0 13px;
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
@@ -134,7 +135,7 @@ button { font: inherit; }
 .page {
   flex: 1;
   overflow: auto;
-  padding: var(--space-6);
+  padding: var(--space-7);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -165,9 +166,9 @@ button { font: inherit; }
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 12px 15px;
+  padding: 13px 16px;
   border-top: 1px solid var(--line);
-  min-height: 44px;
+  min-height: 48px;
 }
 .row:first-child { border-top: 0; }
 
@@ -238,8 +239,8 @@ button { font: inherit; }
 /* --- controls --- */
 
 .btn {
-  height: 28px;
-  padding: 0 14px;
+  height: 32px;
+  padding: 0 16px;
   border: 1px solid var(--line-hi);
   border-radius: var(--r-sm);
   background: rgba(92, 184, 255, 0.08);
@@ -294,8 +295,8 @@ button { font: inherit; }
 
 .field {
   flex: 1;
-  height: 30px;
-  padding: 0 11px;
+  height: 32px;
+  padding: 0 12px;
   border: 1px solid var(--line-hi);
   border-radius: var(--r-sm);
   background: var(--screen-2);
@@ -313,7 +314,7 @@ button { font: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 28px;
+  height: 32px;
   padding: 0 8px 0 12px;
   border: 1px solid var(--line-hi);
   border-radius: var(--r-sm);
@@ -324,24 +325,24 @@ button { font: inherit; }
 .select svg { width: 12px; height: 12px; color: var(--muted); }
 
 .switch {
-  width: 42px;
-  height: 22px;
-  flex: 0 0 42px;
+  width: 46px;
+  height: 26px;
+  flex: 0 0 46px;
   border: 1px solid var(--line-hi);
   border-radius: 999px;
   padding: 0;
   background: var(--screen-2);
   position: relative;
   cursor: default;
-  transition: border-color 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+  transition: border-color 0.14s ease, background 0.14s ease;
 }
 .switch::after {
   content: "";
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--muted);
   transition: left 0.14s ease, background 0.14s ease;
@@ -404,9 +405,9 @@ button { font: inherit; }
 
 .hero h1 {
   margin: 0;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
   color: var(--fg-hi);
   text-shadow: var(--shadow-text);
 }

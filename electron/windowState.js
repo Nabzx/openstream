@@ -5,8 +5,8 @@
 // sensible size and always at least partly on-screen.
 
 const DEFAULTS = {
-  defaultWidth: 760,
-  defaultHeight: 580,
+  defaultWidth: 820,
+  defaultHeight: 640,
   minWidth: 560,
   minHeight: 440,
 };
