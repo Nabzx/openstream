@@ -48,7 +48,7 @@ Rebuilding the app resets these grants, so delete the old OpenStream under Syste
 
 ## Status
 
-Beta, `v1.0.0` tagged. The on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is done. Known rough edges are on the [v1.1 milestone](https://github.com/Nabzx/openstream/milestone/6): accuracy on short clips, spoken numbers coming through spelled out, and a slower first dictation right after launch.
+Beta, `v1.0.0` tagged. The on-device verification pass ([#228](https://github.com/Nabzx/openstream/issues/228)) is done. [Known rough edges, and what's next](https://github.com/Nabzx/openstream/issues/340) is the place to start: accuracy on short clips, spoken numbers coming through spelled out, and a slower first dictation right after launch. The full list is on the [v1.1 milestone](https://github.com/Nabzx/openstream/milestone/6).
 
 ## Development
 
