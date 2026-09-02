@@ -8,46 +8,47 @@ This identity has moved twice. Phase 4's window pass (#242) gave the app a macOS
 
 ## The direction in one line
 
-OpenStream is a dictation tool whose whole thesis is that **a spoken line break should never submit your command**. The identity is calm, precise, and a little bit luminous: white text, blue and aqua accents that glow, soft-cornered panels, and glass — both the app window and the push-to-talk bar sit on a native macOS vibrancy material, so the desktop tints through translucent panels. The landing page is its own thing (see per-surface).
+OpenStream is a dictation tool whose whole thesis is that **a spoken line break should never submit your command**. The identity is calm and precise: white text, one soft blue accent, soft-cornered panels, and near-clear glass. Both the app window and the push-to-talk bar sit on a native macOS vibrancy material; in the app the panels are a bright low-opacity film with a low blur and a refracting rim, so the desktop reads through (the "Liquid" direction, [#350](https://github.com/Nabzx/openstream/issues/350)). The landing page is its own thing (see per-surface).
 
 ## Why navy + blue-glow needs care
 
 This palette sits right next to a look that reads as generated: *the cyberpunk dashboard* — navy background, bright cyan accent, glow on everything, a grid or scanline. It's the same trap the phosphor green fell into (near-black + a lone acid pop). Blue glass avoids it the same way: by being a coherent, restrained world rather than a dark theme with a loud accent.
 
 - **Glow is a highlight, not a coat of paint.** After [#341](https://github.com/Nabzx/openstream/issues/341) it belongs on the mark and nothing else. The first cut of the identity put a bloom on labels, headings, pills, the primary button, the focus ring and more, and the window read as generated. If everything glows, nothing reads.
-- **Glass is a material, not a filter.** Both the window and the overlay use native `vibrancy`; panels are translucent so the desktop reads through, but every panel keeps a `backdrop-filter` and enough tint that text sits on frost, never on bare wallpaper. Text carries a hairline shadow for the bright-wallpaper case. Reduce Transparency falls back to a solid navy.
+- **Glass is a material, not a filter.** Both the window and the overlay use native `vibrancy`. The app panels (Liquid, [#350](https://github.com/Nabzx/openstream/issues/350)) are a bright film at `rgba(255,255,255,0.07)`, `blur(8px) saturate(1.7)`, with an inset rim so the light catches the edge. Low blur and low tint are what make it read as clear rather than frosted. Text carries one shadow pass for the bright-wallpaper case, never stacked. Reduce Transparency swaps the whole thing to a solid navy via `@media (prefers-reduced-transparency: reduce)`.
 - **Hierarchy is shades of blue-grey**, not blue-vs-grey. `--fg` is a warm off-white; `--muted` and `--faint` step down through blue-greys; the two accents (`--acc`, `--acc-2`) are the only saturated colour.
 - **Soft, not round.** `10px` radius, `7px` on small controls, pill on toggles and tags. Not pronounced, not pill-shaped buttons.
 - **Terse, man-page copy.** `SYNOPSIS / SAFETY / INSTALL`. No marketing throat-clearing. The `> ` prompt prefix and `──` rule marks survive as quiet nods to where this tool lives.
 
 ### Anti-references — do not do these
 
-Animated grid / "tron" lines · a full glow on every element · gradient-mesh backgrounds · pure `#00BFFF` cyan (too electric) · glassmorphism on the window itself · pronounced `border-radius: 16px+` everywhere · a second bright hue competing with the blue.
+Animated grid / "tron" lines · a full glow on every element · gradient-mesh backgrounds · pure `#00BFFF` cyan (too electric) · a dark blue *tint* on every panel (the frosted look the Liquid pass moved away from) · pronounced `border-radius: 16px+` everywhere · a second bright hue competing with the blue.
 
 ## Tokens
 
 ### Colour
 
-The app window runs on `vibrancy: "under-window"`, so its surfaces are `rgba` over the material, not solid.
+The app window runs on `vibrancy: "under-window"`, so its surfaces are `rgba` over the material, not solid. Values below are the Liquid set ([#350](https://github.com/Nabzx/openstream/issues/350)); the Reduce-Transparency fallback swaps `--screen*` and `--line*` to opaque navy in a media query at the end of `index.css`.
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#14335F` | solid navy — the Reduce-Transparency fallback; `body` is a translucent wash over the vibrancy |
-| `--screen` | `rgba(30,62,112,0.5)` | panels, cards |
-| `--screen-2` | `rgba(20,45,85,0.55)` | keycaps, fields, icon tiles, insets |
-| `--acc` | `#7FCBFF` | primary: headings' glow, prompts, the live state, primary button |
-| `--acc-2` | `#52E6D6` | secondary: "starting" / pending state, small tags, the DMG arrow |
+| `--bg` | `#0A1420` | solid navy — the Reduce-Transparency fallback ground |
+| `--screen` | `rgba(255,255,255,0.07)` | panels, cards — a bright near-clear film |
+| `--screen-2` | `rgba(255,255,255,0.055)` | keycaps, fields, the select, buttons, insets |
+| `--rim` | `inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(255,255,255,0.06)` | the light catching a panel edge — on every glass surface |
+| `--acc` | `#8FC4FF` | primary: prompts, the live state, links, primary button |
+| `--acc-2` | `#52E6D6` | secondary: "starting" / pending state |
 | `--err` | `#FF6B54` | genuine errors only: a missing permission, a dead server. Never decoration. |
 | `--fg` | `#EAF2FF` | body text |
 | `--fg-hi` | `#FFFFFF` | headings, active labels |
-| `--muted` | `#AEC5E2` | captions, secondary text, disabled |
-| `--faint` | `#7C97BE` | rule marks, prompt glyphs, empty-state text |
-| `--line` | `rgba(150,195,245,0.16)` | hairlines between rows |
-| `--line-hi` | `rgba(165,205,250,0.34)` | visible borders |
-| `--glow` | `rgba(127,203,255,0.45)` | box-shadow / text-shadow bloom on the accent |
-| `--shadow-text` | `0 1px 3px rgba(0,0,0,0.35)` | on every text run — legibility over a bright wallpaper |
+| `--muted` | `#C2D2E6` | captions, secondary text, disabled |
+| `--faint` | `#93A6BF` | small labels, the beta tag, empty-state text |
+| `--line` | `rgba(255,255,255,0.12)` | hairlines between rows |
+| `--line-hi` | `rgba(255,255,255,0.22)` | visible borders |
+| `--glow` | `rgba(143,196,255,0.5)` | the one tight halo on the mark, nowhere else |
+| `--shadow-text` | `0 1px 3px rgba(0,0,0,0.42)` | one pass on text over near-clear glass, never stacked |
 
-Cards and panels also carry `backdrop-filter: blur(20px) saturate(1.4)`. The **overlay** uses a lighter set again (whiter text, a brighter rim) — see its section. The **landing page** has its own palette entirely and is not glass.
+Cards and panels also carry `backdrop-filter: blur(8px) saturate(1.7)` plus `--rim`. The **overlay** uses a lighter set again (whiter text, a brighter rim) — see its section. The **landing page** has its own palette entirely and is not glass.
 
 ### Type
 
@@ -61,8 +62,8 @@ Cards and panels also carry `backdrop-filter: blur(20px) saturate(1.4)`. The **o
 ### Geometry & motion
 
 - `--r: 10px` (cards, panels, the mark), `--r-sm: 7px` (buttons, fields, keycaps, tabs), `999px` (pills, the toggle, tags).
-- Borders `1px solid var(--line-hi)`. `──` box-drawing marks on card labels and the held-result heading.
-- Shadows: cards are a flat frost with a hairline border, no drop shadow ([#344](https://github.com/Nabzx/openstream/issues/344)). The one glow shadow left is on the mark ([#343](https://github.com/Nabzx/openstream/issues/343)).
+- Borders `1px solid var(--line-hi)`, whiter since the Liquid pass. No box-drawing marks on labels any more ([#345](https://github.com/Nabzx/openstream/issues/345)).
+- Shadows: no drop shadows. Every glass surface carries `--rim` (a bright inset top edge, a faint bottom one). The one glow shadow left is the mark's tight halo ([#343](https://github.com/Nabzx/openstream/issues/343)).
 - **Motion budget: one orchestrated moment per surface.** The landing hero gets its boot-and-demo sequence. In the app: the blinking block cursor, the mark's pulse while recording, the waveform. The scanline does not move and is dialled almost to nothing. Respect `prefers-reduced-motion`.
 
 ### The wordmark
@@ -73,15 +74,17 @@ Cards and panels also carry `backdrop-filter: blur(20px) saturate(1.4)`. The **o
 ~ openstream █
 ```
 
-The **mark** is a stream through a listening ring, a play on the name, recoloured to `--acc` blue with a `--glow` bloom. The app icon carries the full two-line stream; the Home hero and the menu-bar icon, which render at ~18px, carry a single wave, since two lines tangle into a blob that small. `src/components/Mark.tsx`, `assets/icon.svg` and `scripts/build-icons.sh` hold the three, kept in step.
+The **mark** in the app is a small glass tile (32px, `--screen` fill, `--rim`, one tight `--glow` halo) with the stream glyph in `--acc` ([#352](https://github.com/Nabzx/openstream/issues/352)) — the old glowing ring suited the frosted look, not the clear one. The app icon still carries the full two-line stream; the Home hero and the menu-bar icon, at ~18px, carry a single wave, since two lines tangle into a blob that small. `src/components/Mark.tsx`, `assets/icon.svg` and `scripts/build-icons.sh` hold the three, kept in step.
 
 ## Per-surface
 
-### 1. App window — `src/index.css` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300), glass in [#301](https://github.com/Nabzx/openstream/issues/301)), refined in [#341](https://github.com/Nabzx/openstream/issues/341)
+### 1. App window — `src/index.css` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300), glass in [#301](https://github.com/Nabzx/openstream/issues/301)), refined in [#341](https://github.com/Nabzx/openstream/issues/341), Liquid in [#350](https://github.com/Nabzx/openstream/issues/350)
 
-`createWindow` runs on `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor: "#14335F"` (the Reduce-Transparency fallback). `index.css` keeps `body` a translucent wash and every card/panel `rgba` + `backdrop-filter` so the desktop tints through frost. White-on-blue with blue/aqua accents; `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills, the toggle and tags full-round. The scanline is gone. The macOS chrome (traffic lights, hidden-inset title bar) stays.
+`createWindow` runs on `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor: "#00000000"` (transparent, so the material shows; the CSS carries the fallback). `index.css` keeps `body` near-transparent and every card/panel a bright film with `blur(8px) saturate(1.7)` + `--rim`, so the desktop reads through as clear glass. `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills and the toggle full-round. The macOS chrome (traffic lights, hidden-inset title bar) stays.
 
-**The #341 refinement** was a follow-up skin pass once the identity was live and reading as generated. What changed: the UI moved to the system sans (mono kept only for literal characters, see Type); the blue bloom that was on about ten element types is now the mark's alone; the saturated blue-navy gradient panels became a flat blue-neutral frost at `saturate(1.05)`; the `──` and `>` decoration came off the labels and links; status pills went to a soft tinted fill in sentence case; controls and the default window grew; and the toolbar became the wordmark plus a centred segmented control. Layout, flow and every class name were left alone. Before/after: the design doc at [claude.ai/code/artifact/9aea174f](https://claude.ai/code/artifact/9aea174f-3d78-4db2-b08c-35f734025d4c).
+**#341** was the first follow-up, once the identity was live and reading as generated: system sans for the UI (mono only for literal characters, see Type); glow cut back to the mark; flat de-saturated panels; the `──` and `>` decoration off the labels and links; tinted sentence-case pills; bigger controls; the wordmark-plus-segmented-control toolbar. Before/after: [claude.ai/code/artifact/9aea174f](https://claude.ai/code/artifact/9aea174f-3d78-4db2-b08c-35f734025d4c).
+
+**#350 (Liquid)** took the still-generic cyan-on-navy to a near-clear material: bright film panels, low blur, a refracting rim, the accent softened to `#8FC4FF`, the mark redrawn as a glass tile, and a `@media (prefers-reduced-transparency: reduce)` block that swaps the whole window to a solid navy. It also rebuilt the Settings page as one repeated block (name, context, control) instead of three competing treatments. Five blue-glass options were mocked first: [claude.ai/code/artifact/91d4610a](https://claude.ai/code/artifact/91d4610a-0c35-4c5f-934a-8b3403fb51d3).
 
 ### 2. Push-to-talk overlay — `electron/overlay/` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300) / [#301](https://github.com/Nabzx/openstream/issues/301))
 
@@ -108,9 +111,10 @@ Can't theme the OS chrome. Copy matches the voice: tray tooltip `openstream — 
 ## Decisions
 
 - **Reference direction**: *(Aug 30 2026)* blue glass — calm, luminous, soft-cornered. Supersedes the terminal / phosphor direction settled two weeks earlier, which itself superseded the macOS-native look. Each pivot was the maintainer's call, made against prototypes.
-- **Colour**: `#7FCBFF` primary blue + `#52E6D6` aqua secondary, white text, navy `#14335F` fallback ground. One red `#FF6B54` for genuine errors. No second bright hue. **Dark-only** — no light variant.
+- **Colour** *(current, #350)*: `#8FC4FF` soft blue accent, white text, navy `#0A1420` fallback ground. `#52E6D6` aqua for pending state only. One red `#FF6B54` for genuine errors. No second bright hue. **Dark-only** — no light variant. (Was `#7FCBFF` on `#14335F` before Liquid.)
 - **Glass window** *(#301, pre-launch)*: the app window runs on `vibrancy: "under-window"`, panels translucent, text shadowed, solid-navy fallback. The overlay is the same idea at a lighter setting. True Liquid Glass (`NSGlassEffectView`, macOS 26) is still a native rewrite and still out of scope.
-- **Window refinement** *(#341, post-launch)*: the first cut of blue glass read as generated. The fix, a skin pass with no layout change: system sans for the UI, glow on the mark only, flat de-saturated panels, no terminal decoration, tinted pills, bigger controls, a proper toolbar. The overlay and landing page are separate passes after.
+- **Window refinement** *(#341, post-launch)*: the first cut of blue glass read as generated. The fix, a skin pass with no layout change: system sans for the UI, glow on the mark only, flat de-saturated panels, no terminal decoration, tinted pills, bigger controls, a proper toolbar.
+- **Liquid** *(#350, post-launch)*: #341 was cleaner but still generic. Moved to a near-clear material (bright film panels, low blur, refracting rim, softer `#8FC4FF`), redrew the mark as a glass tile, added the reduced-transparency fallback, and rebuilt Settings as one repeated block. Chosen from five blue-glass mocks. The overlay and landing page still to follow.
 - **Font**: JetBrains Mono, bundled locally for the app and overlay (one variable woff2), Google Fonts on the landing page. No separate display face.
 - **Geometry**: `10px` / `7px` / pill radius. Soft, not round.
 - **Overlay**: native `vibrancy: "hud"` + rounded + shadow; CSS glass on top at the "level 2" translucency point. True Liquid Glass is a post-launch native rewrite ([#301](https://github.com/Nabzx/openstream/issues/301)), not blocking v1.0.
