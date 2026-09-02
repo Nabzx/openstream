@@ -14,7 +14,7 @@ OpenStream is a dictation tool whose whole thesis is that **a spoken line break 
 
 This palette sits right next to a look that reads as generated: *the cyberpunk dashboard* — navy background, bright cyan accent, glow on everything, a grid or scanline. It's the same trap the phosphor green fell into (near-black + a lone acid pop). Blue glass avoids it the same way: by being a coherent, restrained world rather than a dark theme with a loud accent.
 
-- **Glow is a highlight, not a coat of paint.** It belongs on the live state (the mark, the listening text), the primary action, and headings — not on every border and every label. If everything glows, nothing reads.
+- **Glow is a highlight, not a coat of paint.** After [#341](https://github.com/Nabzx/openstream/issues/341) it belongs on the mark and nothing else. The first cut of the identity put a bloom on labels, headings, pills, the primary button, the focus ring and more, and the window read as generated. If everything glows, nothing reads.
 - **Glass is a material, not a filter.** Both the window and the overlay use native `vibrancy`; panels are translucent so the desktop reads through, but every panel keeps a `backdrop-filter` and enough tint that text sits on frost, never on bare wallpaper. Text carries a hairline shadow for the bright-wallpaper case. Reduce Transparency falls back to a solid navy.
 - **Hierarchy is shades of blue-grey**, not blue-vs-grey. `--fg` is a warm off-white; `--muted` and `--faint` step down through blue-greys; the two accents (`--acc`, `--acc-2`) are the only saturated colour.
 - **Soft, not round.** `10px` radius, `7px` on small controls, pill on toggles and tags. Not pronounced, not pill-shaped buttons.
@@ -51,17 +51,18 @@ Cards and panels also carry `backdrop-filter: blur(20px) saturate(1.4)`. The **o
 
 ### Type
 
-- **[JetBrains Mono](https://www.jetbrains.com/lp/mono/)**, everywhere — rounder letterforms than Space Mono and far easier on paragraphs, which is why the switch happened. Ligatures off.
-- Bundled, not fetched: the app and overlay carry one variable `jetbrains-mono.woff2` (latin subset, ~56 KB) locally so an offline first run still renders; the landing page pulls it from Google Fonts. Fallback: `ui-monospace, "SF Mono", Menlo, monospace`.
-- No separate display face — the wordmark is JetBrains Mono bold, larger.
-- Scale: `13px` base in the app, `15–16px` on the landing page, `line-height` ~`1.65`. Headings step up modestly.
+- **The app UI and prose run on the system sans** (`system-ui` / SF Pro), set in [#342](https://github.com/Nabzx/openstream/issues/342). A monospace chrome read as a terminal cosplay rather than a Mac app.
+- **[JetBrains Mono](https://www.jetbrains.com/lp/mono/)** is kept, still bundled, for the places where the literal characters matter: the wordmark, the commands table, keycaps, and the hotkey readout. Ligatures off. Rounder letterforms than Space Mono, which is why it won over the earlier terminal direction.
+- Bundled, not fetched: the app and overlay carry one variable `jetbrains-mono.woff2` (latin subset, ~56 KB) locally so an offline first run still renders; the landing page pulls it from Google Fonts. Fallbacks: `system-ui, -apple-system, sans-serif` for the UI, `ui-monospace, "SF Mono", Menlo, monospace` for the mono.
+- The wordmark is JetBrains Mono bold: `~ openstream`.
+- Scale: `13.5px` base in the app, `15–16px` on the landing page, `line-height` ~`1.6`. Headings step up modestly.
 - Uppercase labels get `letter-spacing: 0.05–0.13em`.
 
 ### Geometry & motion
 
 - `--r: 10px` (cards, panels, the mark), `--r-sm: 7px` (buttons, fields, keycaps, tabs), `999px` (pills, the toggle, tags).
 - Borders `1px solid var(--line-hi)`. `──` box-drawing marks on card labels and the held-result heading.
-- Shadows: a soft downward drop on cards (`0 8px 24px -14px rgba(0,0,0,0.55)`) plus a hairline inner top highlight. Glow shadows on the accent elements only.
+- Shadows: cards are a flat frost with a hairline border, no drop shadow ([#344](https://github.com/Nabzx/openstream/issues/344)). The one glow shadow left is on the mark ([#343](https://github.com/Nabzx/openstream/issues/343)).
 - **Motion budget: one orchestrated moment per surface.** The landing hero gets its boot-and-demo sequence. In the app: the blinking block cursor, the mark's pulse while recording, the waveform. The scanline does not move and is dialled almost to nothing. Respect `prefers-reduced-motion`.
 
 ### The wordmark
@@ -76,9 +77,11 @@ The **mark** is a stream through a listening ring, a play on the name, recoloure
 
 ## Per-surface
 
-### 1. App window — `src/index.css` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300), glass in [#301](https://github.com/Nabzx/openstream/issues/301))
+### 1. App window — `src/index.css` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300), glass in [#301](https://github.com/Nabzx/openstream/issues/301)), refined in [#341](https://github.com/Nabzx/openstream/issues/341)
 
-`createWindow` runs on `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor: "#14335F"` (the Reduce-Transparency fallback). `index.css` keeps `body` a translucent wash and every card/panel `rgba` + `backdrop-filter` so the desktop tints through frost. White-on-blue with blue/aqua accents and glow; `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills, the toggle and tags full-round; the navtab active tab is a tinted rounded pill (brackets dropped). Every text run gets `--shadow-text`. The scanline is gone. Every class name kept — no `.tsx` churn. The macOS chrome (traffic lights, hidden-inset title bar) stays.
+`createWindow` runs on `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor: "#14335F"` (the Reduce-Transparency fallback). `index.css` keeps `body` a translucent wash and every card/panel `rgba` + `backdrop-filter` so the desktop tints through frost. White-on-blue with blue/aqua accents; `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills, the toggle and tags full-round. The scanline is gone. The macOS chrome (traffic lights, hidden-inset title bar) stays.
+
+**The #341 refinement** was a follow-up skin pass once the identity was live and reading as generated. What changed: the UI moved to the system sans (mono kept only for literal characters, see Type); the blue bloom that was on about ten element types is now the mark's alone; the saturated blue-navy gradient panels became a flat blue-neutral frost at `saturate(1.05)`; the `──` and `>` decoration came off the labels and links; status pills went to a soft tinted fill in sentence case; controls and the default window grew; and the toolbar became the wordmark plus a centred segmented control. Layout, flow and every class name were left alone. Before/after: the design doc at [claude.ai/code/artifact/9aea174f](https://claude.ai/code/artifact/9aea174f-3d78-4db2-b08c-35f734025d4c).
 
 ### 2. Push-to-talk overlay — `electron/overlay/` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300) / [#301](https://github.com/Nabzx/openstream/issues/301))
 
@@ -107,6 +110,7 @@ Can't theme the OS chrome. Copy matches the voice: tray tooltip `openstream — 
 - **Reference direction**: *(Aug 30 2026)* blue glass — calm, luminous, soft-cornered. Supersedes the terminal / phosphor direction settled two weeks earlier, which itself superseded the macOS-native look. Each pivot was the maintainer's call, made against prototypes.
 - **Colour**: `#7FCBFF` primary blue + `#52E6D6` aqua secondary, white text, navy `#14335F` fallback ground. One red `#FF6B54` for genuine errors. No second bright hue. **Dark-only** — no light variant.
 - **Glass window** *(#301, pre-launch)*: the app window runs on `vibrancy: "under-window"`, panels translucent, text shadowed, solid-navy fallback. The overlay is the same idea at a lighter setting. True Liquid Glass (`NSGlassEffectView`, macOS 26) is still a native rewrite and still out of scope.
+- **Window refinement** *(#341, post-launch)*: the first cut of blue glass read as generated. The fix, a skin pass with no layout change: system sans for the UI, glow on the mark only, flat de-saturated panels, no terminal decoration, tinted pills, bigger controls, a proper toolbar. The overlay and landing page are separate passes after.
 - **Font**: JetBrains Mono, bundled locally for the app and overlay (one variable woff2), Google Fonts on the landing page. No separate display face.
 - **Geometry**: `10px` / `7px` / pill radius. Soft, not round.
 - **Overlay**: native `vibrancy: "hud"` + rounded + shadow; CSS glass on top at the "level 2" translucency point. True Liquid Glass is a post-launch native rewrite ([#301](https://github.com/Nabzx/openstream/issues/301)), not blocking v1.0.
