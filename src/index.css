@@ -151,14 +151,15 @@ button { font: inherit; }
   overflow: hidden;
 }
 
+/* A quiet section header for a grouped list, not an accent banner. */
 .card-label {
-  padding: 12px 15px 8px;
-  font-size: 11px;
-  letter-spacing: 0.13em;
+  padding: 12px 15px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: var(--acc);
+  color: var(--faint);
 }
-.card-label::before { content: "\2500\2500  "; color: var(--line-hi); letter-spacing: 0; }
 
 .row {
   display: flex;
@@ -180,7 +181,7 @@ button { font: inherit; }
   text-align: left;
   cursor: default;
 }
-.row--disclosure:hover { background: var(--acc-tint); }
+.row--disclosure:hover { background: rgba(255, 255, 255, 0.04); }
 
 .disclosure-chevron {
   width: 13px;
@@ -282,7 +283,6 @@ button { font: inherit; }
   cursor: default;
   padding: 2px 4px;
 }
-.linkbtn::before { content: "> "; color: var(--faint); }
 .linkbtn:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 .row-actions {
@@ -379,20 +379,19 @@ button { font: inherit; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 9px;
-  border: 1px solid currentColor;
+  padding: 3px 10px;
   border-radius: 999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted);
   font-size: 11px;
-  letter-spacing: 0.03em;
-  text-transform: lowercase;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 .pill svg { width: 11px; height: 11px; }
-.pill--ok { color: var(--acc); }
-.pill--wait { color: var(--acc-2); }
-.pill--err { color: var(--err); }
-.pill--muted { color: var(--muted); }
+.pill--ok { background: var(--acc-tint); color: var(--acc); }
+.pill--wait { background: var(--acc2-tint); color: var(--acc-2); }
+.pill--err { background: var(--err-tint); color: var(--err); }
+.pill--muted { background: rgba(255, 255, 255, 0.06); color: var(--muted); }
 
 /* --- home --- */
 
