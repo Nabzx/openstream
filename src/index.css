@@ -1,9 +1,11 @@
-/* OpenStream desktop window - blue-glass identity (docs/design/visual-identity.md).
-   JetBrains Mono, white text, blue + aqua accents with glow, 10px radius.
-   The window itself is a native "under-window" vibrancy material (#301):
-   panels are translucent so the desktop tints through, with a solid navy
-   fallback (main.js backgroundColor) when macOS can't render it. The macOS
-   chrome (traffic lights, hidden-inset title bar) stays. Dark only. */
+/* OpenStream desktop window - blue-glass identity, "Liquid" direction
+   (docs/design/visual-identity.md). System sans, white text, one soft
+   blue accent. Panels are near-clear glass: a bright low-opacity film
+   over the native "under-window" vibrancy material (#301), low blur, a
+   refracting rim, so the desktop reads through. With Reduce Transparency
+   the whole thing falls back to a solid navy (see the media query near
+   the end). The macOS chrome (traffic lights, hidden-inset title bar)
+   stays. Dark only. */
 
 /* The UI and prose run on the system sans (SF Pro on macOS) - a monospace
    chrome reads as a terminal cosplay. JetBrains Mono is kept, still
@@ -22,23 +24,24 @@
 :root {
   color-scheme: dark;
 
-  --bg: #13233b;           /* solid navy - the Reduce-Transparency fallback */
-  --screen: rgba(22, 29, 44, 0.62);        /* panels, cards - a blue-neutral frost over the vibrancy */
-  --screen-2: rgba(12, 16, 26, 0.6);       /* keycaps, fields, icon tiles, insets - recessed */
-  --acc: #7FCBFF;          /* primary: headings, prompts, live state, primary button */
+  --bg: #0a1420;           /* solid navy - the Reduce-Transparency fallback */
+  --screen: rgba(255, 255, 255, 0.07);     /* panels, cards - a bright film, near-clear glass */
+  --screen-2: rgba(255, 255, 255, 0.055);  /* keycaps, fields, icon tiles, insets */
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  --acc: #8FC4FF;          /* primary: headings, prompts, live state, primary button */
   --acc-2: #52E6D6;        /* secondary: pending / secondary state, small tags */
   --err: #FF6B54;          /* genuine errors only: missing permission, dead server */
   --fg: #EAF2FF;           /* body text */
   --fg-hi: #FFFFFF;        /* headings, active labels */
-  --muted: #AEC5E2;        /* captions, disabled */
-  --faint: #7C97BE;        /* labels, dividers-as-text */
-  --line: rgba(150, 195, 245, 0.16);       /* hairlines */
-  --line-hi: rgba(165, 205, 250, 0.34);    /* visible borders */
-  --acc-tint: rgba(127, 203, 255, 0.16);
-  --acc2-tint: rgba(82, 230, 214, 0.14);
-  --err-tint: rgba(255, 107, 84, 0.16);
-  --glow: rgba(127, 203, 255, 0.45);   /* the mark only - see #343 */
-  --shadow-text: 0 1px 2px rgba(0, 0, 0, 0.28);   /* one soft pass for text over frost, never stacked */
+  --muted: #C2D2E6;        /* captions, disabled */
+  --faint: #93A6BF;        /* labels, dividers-as-text */
+  --line: rgba(255, 255, 255, 0.12);       /* hairlines */
+  --line-hi: rgba(255, 255, 255, 0.22);    /* visible borders */
+  --acc-tint: rgba(143, 196, 255, 0.18);
+  --acc2-tint: rgba(82, 230, 214, 0.16);
+  --err-tint: rgba(255, 107, 84, 0.18);
+  --glow: rgba(143, 196, 255, 0.5);   /* the mark only - see #343 */
+  --shadow-text: 0 1px 3px rgba(0, 0, 0, 0.42);   /* one pass for text over near-clear glass, never stacked */
 
   --r: 10px;               /* cards, panels, the mark */
   --r-sm: 7px;             /* buttons, fields, keycaps, tabs */
@@ -61,13 +64,13 @@
 
 * { box-sizing: border-box; }
 
-/* Semi-transparent so the native "under-window" vibrancy shows through as
-   glass; the blue wash unifies it and holds contrast over a bright
-   desktop. With Reduce Transparency on, the material flattens and this
-   wash (plus --bg behind it) is what keeps the fallback on-brand. */
+/* Near-transparent so the native "under-window" vibrancy carries the
+   glass and the desktop reads through. A faint top-down wash keeps text
+   legible near the toolbar. The Reduce-Transparency fallback is the
+   media query at the end of this file, not this rule. */
 body {
   margin: 0;
-  background: linear-gradient(180deg, rgba(18, 26, 42, 0.4), rgba(11, 16, 27, 0.52));
+  background: linear-gradient(180deg, rgba(12, 20, 34, 0.28), rgba(8, 13, 22, 0.34));
   color: var(--fg);
   -webkit-font-smoothing: antialiased;
 }
@@ -102,8 +105,11 @@ button { font: inherit; }
   align-items: center;
   justify-content: center;
   padding: 0 var(--space-4) 0 92px; /* room for the inset traffic lights */
-  background: rgba(10, 16, 27, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-backdrop-filter: blur(12px) saturate(1.6);
+  backdrop-filter: blur(12px) saturate(1.6);
   border-bottom: 1px solid var(--line-hi);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
   -webkit-app-region: drag;
 }
 
@@ -166,10 +172,11 @@ button { font: inherit; }
 
 .card {
   background: var(--screen);
-  -webkit-backdrop-filter: blur(24px) saturate(1.05);
-  backdrop-filter: blur(24px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.7);
+  backdrop-filter: blur(8px) saturate(1.7);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
+  box-shadow: var(--rim);
   overflow: hidden;
 }
 
@@ -592,10 +599,11 @@ button { font: inherit; }
   gap: 12px;
   padding: 14px 16px;
   background: var(--screen);
-  -webkit-backdrop-filter: blur(24px) saturate(1.05);
-  backdrop-filter: blur(24px) saturate(1.05);
+  -webkit-backdrop-filter: blur(8px) saturate(1.7);
+  backdrop-filter: blur(8px) saturate(1.7);
   border: 1px solid var(--line-hi);
   border-radius: var(--r);
+  box-shadow: var(--rim);
 }
 .perm-item[data-granted="true"] { opacity: 0.6; }
 
@@ -690,4 +698,31 @@ button { font: inherit; }
   color: var(--err);
   font-size: 12px;
   margin: 0 1px;
+}
+
+/* --- Reduce Transparency fallback --------------------------------------
+   The clear glass depends on the vibrancy material and a desktop behind
+   it. When the user turns on Reduce Transparency, macOS flattens the
+   material and the near-clear panels would vanish. Swap the whole thing
+   to a solid navy: opaque panels, an opaque body, no rims, no blur. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --screen: #17273c;
+    --screen-2: #101d2e;
+    --line: rgba(180, 205, 235, 0.16);
+    --line-hi: rgba(190, 212, 240, 0.3);
+    --rim: none;
+    --shadow-text: none;
+  }
+  body { background: var(--bg); }
+  .toolbar {
+    background: #0d1a29;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+  .card, .perm-item {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
