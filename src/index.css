@@ -652,54 +652,133 @@ button { font: inherit; }
   padding: 0 1px;
 }
 
-/* --- Push-to-talk shortcut section (HotkeySettings.tsx markup is owned by
-   the shortcut work; this recolours it to match, CSS only) --- */
+/* --- Settings: one repeated block per setting - name, a line of
+   context, then the control (#353). `.setting-item` blocks lay out in
+   DOM order. HotkeySettings.tsx renders its own `.setting` section
+   (owned by the shortcut work); its parts are matched to the pattern
+   here, CSS only, and `order` is used *only* there since its DOM order
+   is fixed. --- */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.setting-item,
 .setting {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: 3px;
+  padding: 18px 2px;
+  border-top: 1px solid var(--line);
 }
+.settings-list > :first-child { border-top: 0; padding-top: 2px; }
+
+.setting-item__name,
 .setting h2 {
-  margin: 0 1px;
-  font-size: 13px;
-  font-weight: 700;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--fg-hi);
 }
+.setting h2 { order: 1; }
+
+.setting-item__desc,
+.setting-guidance {
+  margin: 0 0 9px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 60ch;
+}
+.setting-guidance { order: 2; }
+
+.setting-item__control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* HotkeySettings: the key readout and the change button, pulled below
+   the guidance so the name / context / control order holds. */
 .setting-current {
+  order: 3;
+  align-self: flex-start;
   margin: 0;
-  padding: 12px 15px;
+  padding: 7px 12px;
   background: var(--screen-2);
   border: 1px solid var(--line-hi);
-  border-radius: var(--r);
+  border-radius: var(--r-sm);
+  box-shadow: var(--rim);
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--acc);
 }
-.setting-guidance {
-  margin: 0 1px;
-  font-size: 12px;
-  color: var(--muted);
-  max-width: 68ch;
-}
 .setting button {
+  order: 4;
   align-self: flex-start;
-  height: 28px;
-  padding: 0 14px;
+  margin-top: 9px;
+  height: 32px;
+  padding: 0 16px;
   border: 1px solid var(--line-hi);
   border-radius: var(--r-sm);
-  background: rgba(92, 184, 255, 0.08);
+  background: var(--screen-2);
   color: var(--acc);
   font-size: 12px;
   cursor: default;
 }
-.setting button:hover:not(:disabled) { background: var(--acc); color: #05152c; }
+.setting button:hover:not(:disabled) { background: var(--acc); color: #05152c; border-color: var(--acc); }
 .setting button:disabled { opacity: 0.4; }
-.setting-error {
-  color: var(--err);
-  font-size: 12px;
-  margin: 0 1px;
+.setting-error { order: 5; color: var(--err); font-size: 12px; margin: 6px 0 0; }
+
+/* break-safe apps: the listed apps as removable chips, one add control */
+.chips-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 9px;
 }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 7px 5px 11px;
+  font-size: 12px;
+  border-radius: var(--r-sm);
+  background: var(--screen-2);
+  border: 1px solid var(--line-hi);
+  color: var(--fg-hi);
+}
+.chip small {
+  color: var(--faint);
+  font-size: 10.5px;
+}
+.chip button {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  cursor: default;
+  padding: 0 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+.chip button:hover { color: var(--err); }
+.chip--empty {
+  color: var(--faint);
+  border-style: dashed;
+}
+
+.settings-advanced { margin-top: 12px; }
+.settings-advanced > summary {
+  font-size: 12px;
+  color: var(--faint);
+  cursor: default;
+  list-style: none;
+}
+.settings-advanced > summary::-webkit-details-marker { display: none; }
+.settings-advanced > summary::before { content: "\203A\00a0\00a0"; }
+.settings-advanced[open] > summary::before { content: "\2304\00a0\00a0"; }
+.settings-advanced .field { max-width: 240px; }
 
 /* --- Reduce Transparency fallback --------------------------------------
    The clear glass depends on the vibrancy material and a desktop behind

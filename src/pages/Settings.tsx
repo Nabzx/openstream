@@ -11,24 +11,19 @@ function StartupSection() {
   }, []);
 
   return (
-    <div className="group">
-      <h2>Startup</h2>
-      <div className="card">
-        <div className="row">
-          <span className="row-label">
-            Launch OpenStream at login
-            <small>Starts quietly in the menu bar — no window.</small>
-          </span>
-          <Toggle
-            label="Launch OpenStream at login"
-            checked={openAtLogin ?? false}
-            disabled={openAtLogin === null}
-            onChange={(next) => {
-              setOpenAtLogin(next);
-              window.openstream.app.setLoginItem(next).then(setOpenAtLogin);
-            }}
-          />
-        </div>
+    <div className="setting-item">
+      <h3 className="setting-item__name">Launch at login</h3>
+      <p className="setting-item__desc">Starts quietly in the menu bar, no window.</p>
+      <div className="setting-item__control">
+        <Toggle
+          label="Launch OpenStream at login"
+          checked={openAtLogin ?? false}
+          disabled={openAtLogin === null}
+          onChange={(next) => {
+            setOpenAtLogin(next);
+            window.openstream.app.setLoginItem(next).then(setOpenAtLogin);
+          }}
+        />
       </div>
     </div>
   );
@@ -37,21 +32,23 @@ function StartupSection() {
 export default function Settings() {
   return (
     <main className="page">
-      {/* HotkeySettings renders its own headed `.setting` section - it's
-          kept as-is until the one-key shortcut work settles (#216), then restyled
-          into the card system like the rest of this page. */}
-      <HotkeySettings />
+      <div className="settings-list">
+        {/* HotkeySettings renders its own `.setting` section - owned by the
+            one-key shortcut work (#216). index.css matches it to the
+            `.setting-item` pattern with `order`, CSS only. */}
+        <HotkeySettings />
 
-      <div className="group">
-        <h2>Break-safe applications</h2>
-        <p className="group-desc">
-          A spoken “new paragraph” becomes a real line break only in the apps listed here. Everywhere else it is
-          dropped, since a newline can submit a half-typed terminal command or send an unfinished message.
-        </p>
-        <BreakSafeAppsSettings />
+        <div className="setting-item">
+          <h3 className="setting-item__name">Line breaks by app</h3>
+          <p className="setting-item__desc">
+            A spoken “new paragraph” becomes a real line break only in these apps. Everywhere else it is dropped,
+            since a newline can submit a half-typed terminal command or send an unfinished message.
+          </p>
+          <BreakSafeAppsSettings />
+        </div>
+
+        <StartupSection />
       </div>
-
-      <StartupSection />
     </main>
   );
 }
