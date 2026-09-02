@@ -66,65 +66,31 @@ export default function BreakSafeAppsSettings() {
 
   return (
     <>
-      <div className="card">
+      <div className="chips-control">
         {apps === null ? (
-          <div className="row">
-            <span className="row-label">Loading…</span>
-          </div>
+          <span className="chip chip--empty">Loading…</span>
+        ) : apps.length === 0 ? (
+          <span className="chip chip--empty">No apps — line breaks are off everywhere</span>
         ) : (
-          <>
-            {apps.length === 0 && (
-              <div className="row">
-                <span className="row-label" style={{ color: "var(--text-2)" }}>
-                  No apps listed — line breaks are off everywhere.
-                </span>
-              </div>
-            )}
-            {apps.map((bundleId) => (
-              <div className="row" key={bundleId}>
-                <span className="row-label">
-                  {names[bundleId] ?? bundleId}
-                  {names[bundleId] && <small className="mono">{bundleId}</small>}
-                </span>
-                <button
-                  type="button"
-                  className="btn btn--ghost"
-                  onClick={() => removeApp(bundleId)}
-                  disabled={saving}
-                  aria-label={`Remove ${names[bundleId] ?? bundleId}`}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <div className="row">
-              <input
-                className="field mono"
-                type="text"
-                placeholder="com.example.App"
-                value={newBundleId}
-                onChange={(event) => setNewBundleId(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") addApp();
-                }}
-                disabled={saving}
-              />
+          apps.map((bundleId) => (
+            <span className="chip" key={bundleId}>
+              {names[bundleId] ?? bundleId}
               <button
                 type="button"
-                className="btn"
-                onClick={addApp}
-                disabled={saving || newBundleId.trim().length === 0}
+                onClick={() => removeApp(bundleId)}
+                disabled={saving}
+                aria-label={`Remove ${names[bundleId] ?? bundleId}`}
               >
-                Add
+                ×
               </button>
-            </div>
-          </>
+            </span>
+          ))
         )}
       </div>
-      {error && <p className="error-text">{error}</p>}
-      <div className="row-actions">
+
+      <div className="setting-item__control">
         <button type="button" className="btn" onClick={pickApp} disabled={saving || apps === null}>
-          Add application…
+          Add app…
         </button>
         <button
           type="button"
@@ -135,10 +101,36 @@ export default function BreakSafeAppsSettings() {
           Restore defaults
         </button>
       </div>
-      <p className="hint">
-        “Add application…” picks an app and reads its bundle identifier for you. To add one by hand, find its
-        identifier with <span className="mono">osascript -e 'id of app "…"'</span>.
-      </p>
+
+      {error && <p className="error-text">{error}</p>}
+
+      <details className="settings-advanced">
+        <summary>Add by bundle identifier</summary>
+        <div className="setting-item__control" style={{ marginTop: 8 }}>
+          <input
+            className="field mono"
+            type="text"
+            placeholder="com.example.App"
+            value={newBundleId}
+            onChange={(event) => setNewBundleId(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") addApp();
+            }}
+            disabled={saving}
+          />
+          <button
+            type="button"
+            className="btn"
+            onClick={addApp}
+            disabled={saving || newBundleId.trim().length === 0}
+          >
+            Add
+          </button>
+        </div>
+        <p className="hint">
+          Find an app’s identifier with <span className="mono">osascript -e 'id of app "…"'</span>.
+        </p>
+      </details>
     </>
   );
 }
