@@ -96,40 +96,61 @@ button { font: inherit; }
 }
 
 .toolbar {
+  position: relative;
   flex: 0 0 56px;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: center;
   padding: 0 var(--space-4) 0 92px; /* room for the inset traffic lights */
   background: rgba(10, 16, 27, 0.3);
   border-bottom: 1px solid var(--line-hi);
   -webkit-app-region: drag;
 }
 
-.navtab {
+/* Left of the centred control, clear of the traffic lights. */
+.wordmark {
+  position: absolute;
+  left: 92px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: -0.01em;
+  -webkit-app-region: no-drag;
+}
+
+.segmented {
   display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 13px;
-  border: 0;
+  gap: 2px;
+  padding: 2px;
   border-radius: var(--r-sm);
+  background: rgba(255, 255, 255, 0.05);
+  -webkit-app-region: no-drag;
+}
+
+.segmented__item {
+  height: 26px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
   background: transparent;
   color: var(--muted);
   font: inherit;
-  text-transform: lowercase;
-  -webkit-app-region: no-drag;
+  font-size: 12.5px;
   cursor: default;
   transition: color 0.1s ease, background 0.1s ease;
 }
 
-.navtab svg { display: none; }
+.segmented__item:hover:not([aria-selected="true"]) { color: var(--fg); }
 
-.navtab:hover:not([aria-current="page"]) { color: var(--fg); }
-
-.navtab[aria-current="page"] {
+.segmented__item[aria-selected="true"] {
   color: var(--fg-hi);
-  background: var(--acc-tint);
-  box-shadow: inset 0 0 0 1px rgba(92, 184, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* On a narrow window the wordmark would crowd the centred control. */
+@media (max-width: 640px) {
+  .wordmark { display: none; }
 }
 
 .page {

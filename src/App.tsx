@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { coercePage, TAB_PAGES, type Page, type TabPage } from "./nav";
-import { CommandsIcon, HomeIcon, SettingsIcon } from "./components/Icons";
 import Home from "./pages/Home";
 import Commands from "./pages/Commands";
 import Settings from "./pages/Settings";
 import Permissions from "./pages/Permissions";
 import Setup from "./pages/Setup";
 
-const TAB_META: Record<TabPage, { label: string; Icon: (props: { className?: string }) => JSX.Element }> = {
-  home: { label: "Home", Icon: HomeIcon },
-  commands: { label: "Commands", Icon: CommandsIcon },
-  settings: { label: "Settings", Icon: SettingsIcon },
+const TAB_LABELS: Record<TabPage, string> = {
+  home: "Home",
+  commands: "Commands",
+  settings: "Settings",
 };
 
 export default function App() {
@@ -23,23 +22,24 @@ export default function App() {
 
   return (
     <div className="shell">
-      <nav className="toolbar">
-        {TAB_PAGES.map((tabPage) => {
-          const { label, Icon } = TAB_META[tabPage];
-          return (
+      <header className="toolbar">
+        <span className="wordmark">~ openstream</span>
+        <div className="segmented" role="tablist" aria-label="Sections">
+          {TAB_PAGES.map((tabPage) => (
             <button
               key={tabPage}
               type="button"
-              className="navtab"
+              role="tab"
+              className="segmented__item"
+              aria-selected={page === tabPage}
               aria-current={page === tabPage ? "page" : undefined}
               onClick={() => setPage(tabPage)}
             >
-              <Icon />
-              {label}
+              {TAB_LABELS[tabPage]}
             </button>
-          );
-        })}
-      </nav>
+          ))}
+        </div>
+      </header>
       {page === "settings" && <Settings />}
       {page === "commands" && <Commands />}
       {page === "setup" && <Setup onDone={() => setPage("home")} />}
