@@ -6,7 +6,7 @@ const WORK_AREA = { x: 0, y: 0, width: 1440, height: 900 };
 
 test("returns the default size when there's nothing saved", () => {
   const bounds = sanitizeWindowBounds(null, WORK_AREA);
-  assert.deepEqual(bounds, { width: 760, height: 580 });
+  assert.deepEqual(bounds, { width: 820, height: 640 });
 });
 
 test("restores a saved size and position unchanged when it fits on screen", () => {
@@ -36,7 +36,7 @@ test("drops a position that would put the title bar above the work area", () => 
 
 test("ignores non-finite saved values and uses defaults", () => {
   const bounds = sanitizeWindowBounds({ width: NaN, height: "tall", x: null }, WORK_AREA);
-  assert.deepEqual(bounds, { width: 760, height: 580 });
+  assert.deepEqual(bounds, { width: 820, height: 640 });
 });
 
 test("keeps a position where the window is mostly off the left but still grabbable", () => {
