@@ -447,34 +447,35 @@ button { font: inherit; }
 }
 .hero p .keys { margin: 0 1px; }
 
-/* the mark: a stream (two counter-phase lines) in a listening ring */
+/* the mark: a small solid glass tile with the stream glyph. The old
+   glowing ring suited the frosted look; the clear material wants an
+   edge light and one tight halo, not a bloom (#352). */
 .mark {
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   margin-top: 2px;
-  border: 1px solid var(--acc);
-  border-radius: var(--r);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 9px;
   display: grid;
   place-items: center;
-  background: var(--acc-tint);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--acc);
-  box-shadow: 0 0 22px -5px var(--glow), inset 0 0 12px -6px var(--glow);
+  box-shadow: var(--rim), 0 0 18px -7px var(--glow);
 }
-.mark svg { width: 19px; height: 19px; filter: drop-shadow(0 0 7px var(--glow)); }
+.mark svg { width: 18px; height: 18px; }
 
 .mark--attention {
-  border-color: var(--err);
+  border-color: rgba(255, 175, 160, 0.5);
   background: var(--err-tint);
   color: var(--err);
-  box-shadow: 0 0 22px -6px rgba(240, 80, 60, 0.4);
+  box-shadow: var(--rim);
 }
-.mark--attention svg { filter: none; }
 
 .mark--recording { animation: mark-pulse 1.7s ease-out infinite; }
 @keyframes mark-pulse {
-  from { box-shadow: 0 0 0 0 var(--acc-tint), 0 0 22px -5px var(--glow); }
-  to { box-shadow: 0 0 0 12px transparent, 0 0 22px -5px var(--glow); }
+  from { box-shadow: var(--rim), 0 0 0 0 var(--acc-tint); }
+  to { box-shadow: var(--rim), 0 0 0 10px transparent; }
 }
 @media (prefers-reduced-motion: reduce) { .mark--recording { animation: none; } }
 
