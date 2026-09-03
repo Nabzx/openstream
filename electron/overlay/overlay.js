@@ -4,7 +4,17 @@ const heldText = document.querySelector("[data-held-text]");
 const copyButton = document.querySelector("[data-copy]");
 const dismissButton = document.querySelector("[data-dismiss]");
 
-const IDLE_LEVEL = 0.08;
+// The bars never drop to a flat line: while the mic is quiet they ride a
+// slow ripple instead. `idleLevel()` is that ripple for the newest bar;
+// the history shift below carries it across the row so it visibly
+// travels, the same as real speech does.
+const IDLE_LEVEL = 0.32;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+function idleLevel() {
+  if (reduceMotion.matches) return IDLE_LEVEL;
+  return IDLE_LEVEL + 0.2 * Math.abs(Math.sin(Date.now() / 220));
+}
 
 // Each bar reads a slightly older point in the same real sound-level
 // signal, so the wave visibly travels across the bars as you speak rather
@@ -16,14 +26,14 @@ function setBars(levels) {
   bars.forEach((bar, i) => bar.style.setProperty("--level", levels[i]));
 }
 
-const STATUS_TEXT = { recording: "listening", editing: "editing" };
+const STATUS_TEXT = { recording: "Listening", editing: "Editing" };
 
 window.openstreamOverlay.onStateChange((state) => {
   document.body.dataset.state = state;
   // A voice-edit message (edit-message) sets its own status text; don't
   // stamp over it here.
   if (state !== "edit-message") {
-    status.textContent = STATUS_TEXT[state] ?? "idle";
+    status.textContent = STATUS_TEXT[state] ?? "Idle";
   }
   if (state !== "recording") {
     levelHistory.fill(IDLE_LEVEL);
@@ -41,7 +51,9 @@ window.openstreamOverlay.onVoiceEditMessage((text) => {
 window.openstreamOverlay.onSoundLevel((level) => {
   // Typical speech RMS is well below 1 - expand it for a readable waveform
   // while retaining the normalized capture value on the IPC boundary.
-  const visibleLevel = Math.max(IDLE_LEVEL, Math.min(1, level * 5));
+  // Below the idle ripple, show the ripple instead of a flat floor.
+  const speech = Math.min(1, level * 5);
+  const visibleLevel = Math.max(idleLevel(), speech);
   levelHistory.push(visibleLevel);
   levelHistory.shift();
   setBars(levelHistory);
@@ -49,12 +61,12 @@ window.openstreamOverlay.onSoundLevel((level) => {
 
 window.openstreamOverlay.onHeldResult((text) => {
   heldText.textContent = text;
-  copyButton.textContent = "copy";
+  copyButton.textContent = "Copy";
   document.body.dataset.state = "held";
 });
 
 window.openstreamOverlay.onHeldResultCopied(() => {
-  copyButton.textContent = "copied";
+  copyButton.textContent = "Copied";
 });
 
 copyButton.addEventListener("click", () => {
