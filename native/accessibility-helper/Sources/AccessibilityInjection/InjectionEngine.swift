@@ -82,14 +82,20 @@ public final class InjectionEngine {
 
         let info = focused.fieldInfo
         let readableAndFieldSized = info.valueChars.map { $0 <= config.axValueMaxChars } ?? false
+        // #368: Google Docs and other browser editors render to a canvas and
+        // manage input themselves - an AX write returns .success and does
+        // nothing. Skip rung 1 there and paste.
+        let pasteFirst = (tracker.currentFrontmostBundleId()).map(config.pasteFirstBundleIds.contains) ?? false
 
-        // Rung 1: write straight into the field.
-        if info.selectedTextSettable && readableAndFieldSized {
-            if focused.writeAtCaret(text) {
+        // Rung 1: write straight into the field. An AX write that returns
+        // .success is not proof the text arrived (#368), so read the field
+        // back and confirm before trusting it.
+        if !pasteFirst && info.selectedTextSettable && readableAndFieldSized {
+            if focused.writeAtCaret(text), let after = focused.readValue(), after.contains(text) {
                 return .delivered(method: "wrote into the field", verified: true, note: "inserted at the caret, clipboard untouched")
             }
-            log("kAXSelectedTextAttribute reported settable but the write failed, falling back to paste")
-        } else if info.selectedTextSettable, let chars = info.valueChars, chars > config.axValueMaxChars {
+            log("rung 1 write did not confirm (settable role \(info.role)); falling back to paste")
+        } else if !pasteFirst && info.selectedTextSettable, let chars = info.valueChars, chars > config.axValueMaxChars {
             log("refusing to write into \(info.role) - \(chars) characters of existing content looks like scrollback, not a field")
         }
 
@@ -97,6 +103,14 @@ public final class InjectionEngine {
         let pasteResult = paster.paste(text: text, verifyAgainst: readableAndFieldSized ? focused : nil)
         if pasteResult.delivered {
             return .delivered(method: "pasted", verified: pasteResult.verified, note: pasteResult.note)
+        }
+
+        // #368: in a browser we usually can't read the field back, so a
+        // paste we couldn't verify is the norm, not a failure. A single
+        // Cmd+V into Docs works; typing it char by char mangles it. Trust
+        // the paste rather than dropping to rung 3.
+        if pasteFirst {
+            return .delivered(method: "pasted", verified: false, note: "sent to the browser; can't read it back to confirm")
         }
 
         // The app rejected a paste we could actually verify. One atomic

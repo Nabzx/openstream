@@ -15,12 +15,13 @@ struct InjectionEngineTests {
         missesBeforeSuccess: Int = 0,
         pasteResult: PasteResult = PasteResult(delivered: true, verified: false, note: ""),
         trackerAge: @escaping () -> Double = { 10_000 },
-        appName: String? = "TestApp"
+        appName: String? = "TestApp",
+        bundleId: String? = nil
     ) -> (engine: InjectionEngine, time: SimulatedTime, paster: FakePaster, typer: FakeTyper) {
         let time = SimulatedTime()
         let paster = FakePaster(result: pasteResult)
         let typer = FakeTyper()
-        let tracker = FakeTracker(age: trackerAge, appName: appName)
+        let tracker = FakeTracker(age: trackerAge, appName: appName, bundleId: bundleId)
         let engine = InjectionEngine(
             config: config,
             focusResolver: FakeFocusResolver(target: focusTarget, missesBeforeSuccess: missesBeforeSuccess),
@@ -38,7 +39,8 @@ struct InjectionEngineTests {
 
     @Test func rung1WritesAtCaretWhenFieldIsSettableAndSmall() {
         let target = FakeAccessibilityTarget(
-            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true)
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true),
+            valueToReadBack: "say hello there"
         )
         let (engine, _, paster, _) = makeEngine(focusTarget: target)
 
@@ -47,6 +49,67 @@ struct InjectionEngineTests {
         #expect(outcome == .delivered(method: "wrote into the field", verified: true, note: "inserted at the caret, clipboard untouched"))
         #expect(target.writtenText == "hello")
         #expect(paster.callCount == 0, "rung 1 succeeded, rung 2 should never fire")
+    }
+
+    // #368: an AX write that returns .success but doesn't actually land the
+    // text - Google Docs and other canvas editors - must fall through to
+    // paste, not be reported as a verified success.
+    @Test func rung1FallsThroughWhenTheWriteReturnsSuccessButTheTextIsntThere() {
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 0, selectedTextSettable: true),
+            writeSucceeds: true,
+            valueToReadBack: ""
+        )
+        let (engine, _, paster, typer) = makeEngine(
+            focusTarget: target,
+            pasteResult: PasteResult(delivered: true, verified: true, note: "read back and confirmed")
+        )
+
+        let outcome = engine.decide(text: "hello")
+
+        #expect(outcome == .delivered(method: "pasted", verified: true, note: "read back and confirmed"))
+        #expect(target.writtenText == "hello", "rung 1 was still attempted")
+        #expect(paster.callCount == 1, "rung 1 didn't confirm, so rung 2 ran")
+        #expect(typer.typedText == nil)
+    }
+
+    // #368: in a browser, skip rung 1 entirely - the AX write is known to
+    // no-op there - and go straight to paste.
+    @Test func browserSkipsRung1AndPastes() {
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true),
+            valueToReadBack: "hello"
+        )
+        let (engine, _, paster, _) = makeEngine(
+            focusTarget: target,
+            pasteResult: PasteResult(delivered: true, verified: false, note: "sent, but nothing confirmed it landed"),
+            bundleId: "com.google.Chrome"
+        )
+
+        let outcome = engine.decide(text: "hello")
+
+        #expect(outcome == .delivered(method: "pasted", verified: false, note: "sent, but nothing confirmed it landed"))
+        #expect(target.writtenText == nil, "rung 1 must not fire in a browser")
+        #expect(paster.callCount == 1)
+    }
+
+    // #368: a browser paste we can't verify is delivered, not a reason to
+    // type char by char (which mangles the text in Docs).
+    @Test func browserTrustsAnUnverifiablePasteInsteadOfTypingBlind() {
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true),
+            valueToReadBack: "stale"
+        )
+        let (engine, _, _, typer) = makeEngine(
+            focusTarget: target,
+            pasteResult: PasteResult(delivered: false, verified: false, note: "the app did not accept the paste"),
+            bundleId: "com.apple.Safari"
+        )
+
+        let outcome = engine.decide(text: "hello")
+
+        #expect(outcome == .delivered(method: "pasted", verified: false, note: "sent to the browser; can't read it back to confirm"))
+        #expect(typer.typedText == nil, "rung 3 must not fire in a browser")
     }
 
     @Test func rung1RefusesAScrollbackSizedField() {

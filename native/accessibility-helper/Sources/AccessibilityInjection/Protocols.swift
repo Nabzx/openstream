@@ -50,4 +50,11 @@ public protocol KeyTyping {
 public protocol AppSwitchTracking {
     func ageMs() -> Double
     func currentFrontmostName() -> String?
+    // #368: bundle id of the frontmost app, for the paste-first list.
+    // Defaulted so fakes that predate it keep compiling.
+    func currentFrontmostBundleId() -> String?
+}
+
+public extension AppSwitchTracking {
+    func currentFrontmostBundleId() -> String? { nil }
 }
