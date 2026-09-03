@@ -1,8 +1,9 @@
-/* Push-to-talk overlay - blue-glass, matching the app window
-   (src/index.css) and the landing page. Its own file, its own CSP
-   (default-src 'self'; style-src 'self'), so JetBrains Mono is bundled
-   right here rather than pulled from Google Fonts. One variable woff2
-   covers the weight range. */
+/* Push-to-talk overlay - the "Liquid" blue glass, matching the app
+   window (src/index.css) since #358. Its own file, its own CSP
+   (default-src 'self'; style-src 'self'). The UI runs on the system
+   sans (no bundling, always present); the bundled JetBrains Mono is
+   kept for the held text only - the one place literal characters
+   matter. */
 
 @font-face {
   font-family: "JetBrains Mono";
@@ -14,18 +15,25 @@
 
 :root {
   color-scheme: dark;
-  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  --screen: rgba(6, 16, 32, 0.55);
-  --acc: #9BD3FF;
-  --acc-2: #4FE0D4;
+  --font-ui: system-ui, -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: var(--font-ui);
+
+  --screen: rgba(255, 255, 255, 0.09);
+  --screen-2: rgba(255, 255, 255, 0.06);
+  --rim: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+  --acc: #8FC4FF;
+  --acc-2: #52E6D6;
   --err: #FF7A63;
-  --fg: #DCE8FA;
+  --fg: #EAF2FF;
   --fg-hi: #FFFFFF;
-  --muted: #9DB4D2;
-  --faint: #6F8CB4;
-  --line-hi: rgba(155, 200, 255, 0.28);
-  --glow: rgba(120, 200, 255, 0.7);
+  --muted: #C2D2E6;
+  --faint: #93A6BF;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-hi: rgba(255, 255, 255, 0.22);
+  --glow: rgba(143, 196, 255, 0.5);
+  --shadow-text: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 html,
@@ -39,14 +47,13 @@ body {
   display: flex;
 }
 
-/* The overlay window carries a native macOS vibrancy material (see
-   createOverlayWindow: vibrancy + roundedCorners + hasShadow). This paints
-   the glass on top of it: a translucent blue wash, a bright rim light, an
-   inner glow. The window is rounded and sized to the panel, so the panel
-   fills it with a matching radius. Shared by the recording strip and the
-   held-result panel; the window resizes between them rather than swapping.
-   Users with Reduce Transparency on, or on a bright wallpaper, get the
-   more opaque fallback the wash already provides. */
+/* The overlay window carries a native macOS "hud" vibrancy material (see
+   createOverlayWindow: vibrancy + roundedCorners + hasShadow). This is
+   the same near-clear film the app cards use: a bright low-opacity
+   layer, low blur, a refracting rim, one soft drop shadow for the float.
+   The window is rounded and sized to the panel, so the panel fills it
+   with a matching radius. Reduce Transparency users get the OS-flattened
+   material plus this film, which stays legible. */
 .overlay {
   box-sizing: border-box;
   position: relative;
@@ -56,14 +63,11 @@ body {
   overflow: hidden;
   border-radius: 13px;
   color: var(--fg);
-  background: linear-gradient(180deg, rgba(120, 180, 255, 0.18), rgba(30, 60, 110, 0.16));
-  -webkit-backdrop-filter: blur(14px) saturate(1.7) brightness(1.08);
-  backdrop-filter: blur(14px) saturate(1.7) brightness(1.08);
-  border: 1px solid rgba(180, 220, 255, 0.6);
-  box-shadow:
-    inset 0 1px 0 rgba(230, 244, 255, 0.6),
-    inset 0 0 26px -8px rgba(180, 220, 255, 0.5),
-    0 12px 40px rgba(0, 0, 0, 0.4);
+  background: var(--screen);
+  -webkit-backdrop-filter: blur(8px) saturate(1.7);
+  backdrop-filter: blur(8px) saturate(1.7);
+  border: 1px solid var(--line-hi);
+  box-shadow: var(--rim), 0 10px 30px -8px rgba(0, 0, 0, 0.45);
   font-size: 13px;
 }
 
@@ -73,7 +77,7 @@ body {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   padding: 0 16px;
   white-space: nowrap;
 }
@@ -87,39 +91,26 @@ body {
   color: var(--fg-hi);
   font-weight: 700;
   text-transform: lowercase;
-  letter-spacing: 0.02em;
-  text-shadow: 0 0 12px var(--glow), 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-.cur {
-  width: 7px;
-  height: 15px;
-  margin-left: -4px;
-  border-radius: 2px;
-  background: var(--fg-hi);
-  box-shadow: 0 0 10px var(--glow);
-  animation: cur-blink 1.05s steps(1) infinite;
-}
-@keyframes cur-blink {
-  50% { opacity: 0; }
+  letter-spacing: 0.01em;
+  text-shadow: var(--shadow-text);
 }
 
 .waveform {
   display: flex;
   align-items: center;
   gap: 3px;
-  height: 18px;
+  height: 24px;
   margin-left: auto;
   flex: 0 0 auto;
 }
 
 .waveform__bar {
-  width: 3px;
+  width: 3.5px;
   height: 100%;
   border-radius: 2px;
-  background: var(--fg-hi);
-  box-shadow: 0 0 6px var(--glow);
-  transform: scaleY(var(--level, 0.08));
+  background: var(--acc);
+  box-shadow: 0 0 8px var(--glow);
+  transform: scaleY(var(--level, 0.4));
   transform-origin: center;
   transition: transform 90ms ease-out;
 }
@@ -202,8 +193,7 @@ body[data-state="held"] .recording { display: none; }
 body[data-state="held"] .held-result { display: flex; }
 
 body[data-state="editing"] .waveform,
-body[data-state="edit-message"] .waveform,
-body[data-state="edit-message"] .cur { display: none; }
+body[data-state="edit-message"] .waveform { display: none; }
 
 body[data-state="edit-message"] [data-status] {
   color: var(--fg);
@@ -217,8 +207,4 @@ body[data-state="idle"] .waveform__bar {
   box-shadow: none;
   transform: scaleY(0.15);
   transition: transform 300ms ease-out;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cur { animation: none; }
 }
