@@ -88,24 +88,26 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
 }
 .termwrap { width: 100%; max-width: 680px; position: relative; }
 .term {
-  border: 1px solid var(--line-hi); background: var(--screen); text-align: left;
+  border: 1px solid var(--line-hi); border-radius: 12px; overflow: hidden;
+  background: var(--screen); text-align: left;
   font-family: var(--font-mono);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 20px 50px -24px rgba(0, 0, 0, 0.6);
 }
 .term .bar {
-  display: flex; align-items: center; gap: 7px; padding: 10px 14px;
-  border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 7px; padding: 11px 15px;
+  border-bottom: 1px solid var(--line); font-size: 12px; color: var(--faint);
 }
 .term .bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--line-hi); display: block; }
-.term .bar i:first-child { background: var(--acc); }
 .term .bar span { margin-left: 6px; }
 .term .body {
-  padding: 22px 20px 26px; font-size: 15px; line-height: 2.05;
-  white-space: pre-wrap; word-break: break-word; min-height: 230px; color: var(--fg);
+  padding: 22px 22px 26px; font-size: 14.5px; line-height: 2;
+  white-space: pre-wrap; word-break: break-word; min-height: 250px; color: var(--fg);
 }
 .term .body .p { color: var(--acc); }
 .term .body .l { color: var(--acc); }
 .term .body .l::before { content: "\25CF  "; animation: pulse 1.5s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.3; } }
+.term .body .d { color: var(--faint); }
 .term .body .h { color: var(--acc-2); }
 @media (prefers-reduced-motion: reduce) { .term .body .l::before { animation: none; } }
 
@@ -141,13 +143,13 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
   letter-spacing: -0.03em; color: var(--fg-hi); margin-bottom: 6px; text-wrap: balance;
 }
 .hook .sub { color: var(--muted); margin-bottom: 26px; }
-.bars { font-size: 12px; }
-.bars .b { display: grid; grid-template-columns: 8ch 1fr 8ch; gap: 12px; align-items: center; padding: 4px 0; }
+.bars { font-size: 12.5px; }
+.bars .b { display: grid; grid-template-columns: 8ch 1fr 8ch; gap: 14px; align-items: center; padding: 5px 0; }
 .bars .b .name { color: var(--fg); }
-.bars .b .track { height: 12px; background: var(--screen); border: 1px solid var(--line-hi); position: relative; overflow: hidden; }
-.bars .b .track i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w, 0%); background: var(--acc); transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
+.bars .b .track { height: 10px; border-radius: 999px; background: var(--screen); border: 1px solid var(--line-hi); position: relative; overflow: hidden; }
+.bars .b .track i { position: absolute; left: 0; top: 0; bottom: 0; width: var(--w, 0%); border-radius: 999px; background: var(--acc); transition: width 1.1s cubic-bezier(.2,.8,.2,1); }
 .bars .b.slow .track i { background: var(--line-hi); }
-.bars .b .n { color: var(--acc); text-align: right; }
+.bars .b .n { color: var(--acc); text-align: right; font-variant-numeric: tabular-nums; }
 .bars .b.slow .n { color: var(--muted); }
 
 /* what */
@@ -203,7 +205,7 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
   <section class="sec demo">
     <div class="wrap">
       <div class="rule">demo<span class="x"></span></div>
-      <div style="border:1px solid var(--line-hi);background:var(--screen);line-height:0">
+      <div style="border:1px solid var(--line-hi);border-radius:12px;overflow:hidden;background:var(--screen);line-height:0">
         <video src="../assets/demo.mp4" autoplay muted loop playsinline preload="metadata" style="width:100%;display:block"></video>
       </div>
       <p style="color:var(--muted);font-size:12px;margin-top:12px">A voice edit, then dictation with a spoken paragraph break, into Apple Notes. Nothing sent anywhere.</p>
@@ -264,11 +266,10 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
   var el = document.getElementById("demo");
   function endState() {
     el.innerHTML =
-      '<span class="p">$</span> openstream\n' +
       '<span class="l">listening</span>\n' +
-      'I find your lack of faith disturbing.\n' +
-      '  <span class="h">&#8627; transcribed on-device, nothing left your mac</span>\n' +
-      '<span class="p">$</span> <span class="cur"></span>';
+      '<span class="d">heard: "set a 5s timeout, new paragraph, then retry"</span>\n' +
+      '<span class="p">$</span> set a 5s timeout, then retry. <span class="cur"></span>\n' +
+      '  <span class="h">&#8627; "new paragraph" ignored here: a newline would submit</span>';
   }
   if (el) {
     if (reduce) { endState(); }
@@ -276,11 +277,10 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
       var lines = [], i = 0;
       var render = function () { el.innerHTML = lines.join("\n"); };
       var q = [
-        { t: "l", h: '<span class="p">$</span> openstream', a: 340 },
-        { t: "l", h: '<span class="l">listening</span>', a: 900 },
-        { t: "ty", pre: '', txt: 'I find your lack of faith disturbing.', s: 34, a: 640 },
-        { t: "l", h: '  <span class="h">&#8627; transcribed on-device, nothing left your mac</span>', a: 560 },
-        { t: "l", h: '<span class="p">$</span> <span class="cur"></span>', a: 0 }
+        { t: "l", h: '<span class="l">listening</span>', a: 950 },
+        { t: "l", h: '<span class="d">heard: "set a 5s timeout, new paragraph, then retry"</span>', a: 750 },
+        { t: "ty", pre: '<span class="p">$</span> ', txt: 'set a 5s timeout, then retry.', s: 36, a: 560 },
+        { t: "l", h: '  <span class="h">&#8627; "new paragraph" ignored here: a newline would submit</span>', a: 700 }
       ];
       var next = function () {
         if (i >= q.length) {
@@ -294,7 +294,7 @@ a:hover { text-decoration: underline; text-underline-offset: 2px; }
           lines[idx] = st.pre + st.txt.slice(0, j) + '<span class="cur"></span>';
           render(); j++;
           if (j <= st.txt.length) setTimeout(tick, st.s);
-          else { lines[idx] = st.pre + st.txt; render(); i++; setTimeout(next, st.a); }
+          else { lines[idx] = st.pre + st.txt + ' <span class="cur"></span>'; render(); i++; setTimeout(next, st.a); }
         })();
       };
       next();
