@@ -28,7 +28,7 @@ Animated grid / "tron" lines · a full glow on every element · gradient-mesh ba
 
 ### Colour
 
-The app window runs on `vibrancy: "under-window"`, so its surfaces are `rgba` over the material, not solid. Values below are the Liquid set ([#350](https://github.com/Nabzx/openstream/issues/350)); the Reduce-Transparency fallback swaps `--screen*` and `--line*` to opaque navy in a media query at the end of `index.css`.
+The app window runs on `vibrancy: "hud"` ([#350](https://github.com/Nabzx/openstream/issues/350) swapped it from `"under-window"`, which is too dark and desaturated to read as clear glass), so its surfaces are `rgba` over the material, not solid. Values below are the Liquid set; the Reduce-Transparency fallback swaps `--screen*` and `--line*` to opaque navy in a media query at the end of `index.css`.
 
 | Token | Value | Use |
 |---|---|---|
@@ -80,7 +80,7 @@ The **mark** in the app is a small glass tile (32px, `--screen` fill, `--rim`, o
 
 ### 1. App window — `src/index.css` + `electron/main.js` — **done** ([#300](https://github.com/Nabzx/openstream/issues/300), glass in [#301](https://github.com/Nabzx/openstream/issues/301)), refined in [#341](https://github.com/Nabzx/openstream/issues/341), Liquid in [#350](https://github.com/Nabzx/openstream/issues/350)
 
-`createWindow` runs on `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor: "#00000000"` (transparent, so the material shows; the CSS carries the fallback). `index.css` keeps `body` near-transparent and every card/panel a bright film with `blur(8px) saturate(1.7)` + `--rim`, so the desktop reads through as clear glass. `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills and the toggle full-round. The macOS chrome (traffic lights, hidden-inset title bar) stays.
+`createWindow` runs on `vibrancy: "hud"` + `visualEffectState: "active"` + `backgroundColor: "#00000000"` (transparent, so the material shows; the CSS carries the fallback). `index.css` keeps `body` near-transparent and every card/panel a bright film with `blur(8px) saturate(1.7)` + `--rim`, so the desktop reads through as clear glass. `--r` / `--r-sm` radius across cards, buttons, fields, keycaps, the mark; pills and the toggle full-round. The macOS chrome (traffic lights, hidden-inset title bar) stays. An in-app gradient behind the glass was tried and dropped: the maintainer preferred the plain clear glass showing the real desktop.
 
 **#341** was the first follow-up, once the identity was live and reading as generated: system sans for the UI (mono only for literal characters, see Type); glow cut back to the mark; flat de-saturated panels; the `──` and `>` decoration off the labels and links; tinted sentence-case pills; bigger controls; the wordmark-plus-segmented-control toolbar. Before/after: [claude.ai/code/artifact/9aea174f](https://claude.ai/code/artifact/9aea174f-3d78-4db2-b08c-35f734025d4c).
 
@@ -114,7 +114,7 @@ Can't theme the OS chrome. Copy matches the voice: tray tooltip `openstream — 
 - **Colour** *(current, #350)*: `#8FC4FF` soft blue accent, white text, navy `#0A1420` fallback ground. `#52E6D6` aqua for pending state only. One red `#FF6B54` for genuine errors. No second bright hue. **Dark-only** — no light variant. (Was `#7FCBFF` on `#14335F` before Liquid.)
 - **Glass window** *(#301, pre-launch)*: the app window runs on `vibrancy: "under-window"`, panels translucent, text shadowed, solid-navy fallback. The overlay is the same idea at a lighter setting. True Liquid Glass (`NSGlassEffectView`, macOS 26) is still a native rewrite and still out of scope.
 - **Window refinement** *(#341, post-launch)*: the first cut of blue glass read as generated. The fix, a skin pass with no layout change: system sans for the UI, glow on the mark only, flat de-saturated panels, no terminal decoration, tinted pills, bigger controls, a proper toolbar.
-- **Liquid** *(#350, post-launch)*: #341 was cleaner but still generic. Moved to a near-clear material (bright film panels, low blur, refracting rim, softer `#8FC4FF`), redrew the mark as a glass tile, added the reduced-transparency fallback, and rebuilt Settings as one repeated block. Chosen from five blue-glass mocks. The overlay and landing page still to follow.
+- **Liquid** *(#350, post-launch)*: #341 was cleaner but still generic. Moved to a near-clear material (bright film panels, low blur, refracting rim, softer `#8FC4FF`), redrew the mark as a glass tile, added the reduced-transparency fallback, and rebuilt Settings as one repeated block. Chosen from five blue-glass mocks. Follow-up: the window vibrancy went `"under-window"` to `"hud"` because the dark background material read as flat blue-grey under the clear film; a painted in-app gradient behind the glass was tried and dropped in favour of the real desktop showing through. The overlay and landing page still to follow.
 - **Font**: JetBrains Mono, bundled locally for the app and overlay (one variable woff2), Google Fonts on the landing page. No separate display face.
 - **Geometry**: `10px` / `7px` / pill radius. Soft, not round.
 - **Overlay**: native `vibrancy: "hud"` + rounded + shadow; CSS glass on top at the "level 2" translucency point. True Liquid Glass is a post-launch native rewrite ([#301](https://github.com/Nabzx/openstream/issues/301)), not blocking v1.0.

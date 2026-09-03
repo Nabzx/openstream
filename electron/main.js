@@ -228,12 +228,14 @@ function createWindow() {
     // paints its own toolbar strip behind them (issue #211).
     titleBarStyle: "hiddenInset",
     title: "OpenStream",
-    // #301: the blue-glass window sits on a native "under-window" vibrancy
-    // material so the desktop shows through translucent panels. The window
-    // background MUST be transparent or the opaque fill paints over the
-    // material and the glass never shows. Reduce Transparency then flattens
-    // the material; index.css's body wash keeps that fallback on-brand.
-    vibrancy: "under-window",
+    // #350 (Liquid): the window sits on a native vibrancy material so the
+    // desktop shows through the near-clear panels. "under-window" is the
+    // dark, desaturated background material and reads as flat blue-grey
+    // under the Liquid film; "hud" is more translucent and picks up more
+    // colour, closer to the clear look. The window background MUST be
+    // transparent or the opaque fill paints over the material. Reduce
+    // Transparency flattens it; the index.css media query is the fallback.
+    vibrancy: "hud",
     visualEffectState: "active",
     backgroundColor: "#00000000",
     webPreferences: {

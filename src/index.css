@@ -1,11 +1,11 @@
 /* OpenStream desktop window - blue-glass identity, "Liquid" direction
    (docs/design/visual-identity.md). System sans, white text, one soft
    blue accent. Panels are near-clear glass: a bright low-opacity film
-   over the native "under-window" vibrancy material (#301), low blur, a
-   refracting rim, so the desktop reads through. With Reduce Transparency
-   the whole thing falls back to a solid navy (see the media query near
-   the end). The macOS chrome (traffic lights, hidden-inset title bar)
-   stays. Dark only. */
+   over the native "hud" vibrancy material (#350; "under-window" was too
+   dark and desaturated for the clear look), low blur, a refracting rim,
+   so the desktop reads through. With Reduce Transparency the whole thing
+   falls back to a solid navy (see the media query near the end). The
+   macOS chrome (traffic lights, hidden-inset title bar) stays. Dark only. */
 
 /* The UI and prose run on the system sans (SF Pro on macOS) - a monospace
    chrome reads as a terminal cosplay. JetBrains Mono is kept, still
