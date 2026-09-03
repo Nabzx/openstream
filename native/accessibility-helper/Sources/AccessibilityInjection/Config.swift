@@ -26,6 +26,12 @@ public struct Config {
     public var axValueMaxChars: Int
     public var longTextChars: Int
     public var stableForBlindPasteMs: Double?
+    // #368: apps whose focused element accepts a kAXSelectedTextAttribute
+    // write and silently drops it (Google Docs renders to a canvas and
+    // manages input itself; other browser editors do the same). In these
+    // we skip rung 1 entirely and paste, and we trust an unverifiable
+    // paste rather than falling to blind char-by-char typing.
+    public var pasteFirstBundleIds: Set<String>
 
     public init(
         settleMs: Double = 400,
@@ -36,7 +42,21 @@ public struct Config {
         restoreMs: Double = 300,
         axValueMaxChars: Int = 2000,
         longTextChars: Int = 120,
-        stableForBlindPasteMs: Double? = 800
+        stableForBlindPasteMs: Double? = 800,
+        pasteFirstBundleIds: Set<String> = [
+            "com.google.Chrome",
+            "com.google.Chrome.canary",
+            "com.google.Chrome.beta",
+            "com.google.Chrome.dev",
+            "com.apple.Safari",
+            "com.apple.SafariTechnologyPreview",
+            "company.thebrowser.Browser",
+            "com.microsoft.edgemac",
+            "com.brave.Browser",
+            "org.mozilla.firefox",
+            "com.vivaldi.Vivaldi",
+            "com.operasoftware.Opera",
+        ]
     ) {
         self.settleMs = settleMs
         self.settleBudgetMs = settleBudgetMs
@@ -47,5 +67,6 @@ public struct Config {
         self.axValueMaxChars = axValueMaxChars
         self.longTextChars = longTextChars
         self.stableForBlindPasteMs = stableForBlindPasteMs
+        self.pasteFirstBundleIds = pasteFirstBundleIds
     }
 }

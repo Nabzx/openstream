@@ -110,6 +110,10 @@ public final class RealAppSwitchTracker: AppSwitchTracking {
         currentFrontmostApp()?.localizedName
     }
 
+    public func currentFrontmostBundleId() -> String? {
+        currentFrontmostApp()?.bundleIdentifier
+    }
+
     // Not part of AppSwitchTracking - RealFocusResolver needs the actual
     // NSRunningApplication (for its pid), not just its name.
     public func currentFrontmostApp() -> NSRunningApplication? {

@@ -89,10 +89,12 @@ final class FakeTyper: KeyTyping {
 final class FakeTracker: AppSwitchTracking {
     var ageProvider: () -> Double
     var appName: String?
+    var bundleId: String?
 
-    init(age: @escaping () -> Double, appName: String?) {
+    init(age: @escaping () -> Double, appName: String?, bundleId: String? = nil) {
         self.ageProvider = age
         self.appName = appName
+        self.bundleId = bundleId
     }
 
     func ageMs() -> Double {
@@ -101,5 +103,9 @@ final class FakeTracker: AppSwitchTracking {
 
     func currentFrontmostName() -> String? {
         appName
+    }
+
+    func currentFrontmostBundleId() -> String? {
+        bundleId
     }
 }
