@@ -14,29 +14,33 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
 :root {
-  --bg: #05070C;
-  --bg-hi: #0B1826;
-  --screen: #0A1119;
-  --acc: #7EC8FF;
-  --acc-2: #5FE6DC;
-  --fg: #DCE8FA;
+  --bg: #0A1420;
+  --bg-hi: #17304d;
+  --screen: #121c2c;
+  --acc: #8FC4FF;
+  --acc-2: #52E6D6;
+  --fg: #EAF2FF;
   --fg-hi: #FFFFFF;
-  --muted: #8AA3C4;
-  --line: #152538;
-  --line-hi: #233C58;
-  --glow: rgba(126, 200, 255, 0.34);
+  --muted: #C2D2E6;
+  --faint: #93A6BF;
+  --line: #1e2c40;
+  --line-hi: #31465f;
+  --glow: rgba(143, 196, 255, 0.4);
   --bar: 28px;
+
+  --font-ui: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 
 body {
-  background: radial-gradient(120% 70% at 28% -6%, var(--bg-hi) 0%, var(--bg) 46%, #040609 100%) fixed;
+  background: radial-gradient(120% 70% at 24% -8%, var(--bg-hi) 0%, var(--bg) 44%, #070d17 100%) fixed;
   color: var(--fg);
-  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 13px;
-  line-height: 1.75;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   padding-bottom: var(--bar);
 }
@@ -69,8 +73,8 @@ a:hover { background: var(--acc); color: var(--bg); }
   background: linear-gradient(180deg, var(--bg) 45%, rgba(6, 9, 14, 0.72) 78%, transparent);
 }
 .top .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; font-size: 13px; }
-.top .brand { color: var(--fg-hi); font-size: 18px; letter-spacing: -0.01em; }
-.top .brand b { color: var(--acc); text-shadow: 0 0 16px var(--glow); }
+.top .brand { color: var(--fg-hi); font-family: var(--font-mono); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+.top .brand b { color: var(--acc); }
 .top .brand .cur { width: 0.5em; height: 1em; }
 .top .brand .beta {
   margin-left: 8px; padding: 1px 6px; border: 1px solid var(--line-hi);
@@ -101,11 +105,10 @@ a:hover { background: var(--acc); color: var(--bg); }
   margin-bottom: 30px;
 }
 .termwrap { width: 100%; max-width: 680px; position: relative; }
-.termwrap::after {
-  content: ""; position: absolute; inset: -56px; z-index: -1;
-  background: radial-gradient(ellipse at center, var(--glow), transparent 70%);
+.term {
+  border: 1px solid var(--line-hi); background: var(--screen); text-align: left;
+  font-family: var(--font-mono);
 }
-.term { border: 1px solid var(--line-hi); background: var(--screen); text-align: left; }
 .term .bar {
   display: flex; align-items: center; gap: 7px; padding: 10px 14px;
   border-bottom: 1px solid var(--line); font-size: 12px; color: var(--muted);
@@ -125,10 +128,9 @@ a:hover { background: var(--acc); color: var(--bg); }
 @media (prefers-reduced-motion: reduce) { .term .body .l::before { animation: none; } }
 
 .hero h1 {
-  margin: 0 0 34px; font-weight: 700; font-size: clamp(1.7rem, 5vw, 2.6rem);
-  color: var(--fg-hi); line-height: 1.2; letter-spacing: -0.02em;
+  margin: 0 0 34px; font-weight: 700; font-size: clamp(1.8rem, 5vw, 2.7rem);
+  color: var(--fg-hi); line-height: 1.15; letter-spacing: -0.03em; text-wrap: balance;
 }
-.hero h1 .acc { text-shadow: 0 0 26px var(--glow); }
 
 .cta { display: flex; gap: 18px; align-items: center; justify-content: center; font-size: 14px; }
 .cta .btn { border: 1px solid var(--acc); color: var(--acc); padding: 9px 22px; }
@@ -153,10 +155,9 @@ a:hover { background: var(--acc); color: var(--bg); }
 
 /* hook */
 .hook h2 {
-  font-weight: 700; font-size: clamp(1.6rem, 5vw, 2.6rem); line-height: 1.15;
-  letter-spacing: -0.02em; color: var(--fg-hi); margin-bottom: 6px; text-wrap: balance;
+  font-weight: 700; font-size: clamp(1.6rem, 5vw, 2.5rem); line-height: 1.12;
+  letter-spacing: -0.03em; color: var(--fg-hi); margin-bottom: 6px; text-wrap: balance;
 }
-.hook h2 .acc { text-shadow: 0 0 24px var(--glow); }
 .hook .sub { color: var(--muted); margin-bottom: 26px; }
 .bars { font-size: 12px; }
 .bars .b { display: grid; grid-template-columns: 8ch 1fr 8ch; gap: 12px; align-items: center; padding: 4px 0; }
@@ -176,7 +177,8 @@ a:hover { background: var(--acc); color: var(--bg); }
 /* install */
 .install pre {
   border: 1px solid var(--line-hi); background: var(--screen); padding: 16px;
-  font-size: 12.5px; line-height: 1.9; overflow-x: auto;
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.9; overflow-x: auto;
+  border-radius: 8px;
 }
 .install pre .p { color: var(--acc); }
 .install pre .c { color: var(--muted); }
