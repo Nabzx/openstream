@@ -34,6 +34,8 @@
   --line-hi: rgba(255, 255, 255, 0.22);
   --glow: rgba(143, 196, 255, 0.5);
   --shadow-text: 0 1px 3px rgba(0, 0, 0, 0.45);
+  --r: 10px;
+  --r-sm: 7px;
 }
 
 html,
@@ -81,17 +83,11 @@ body {
   padding: 0 16px;
   white-space: nowrap;
 }
-.recording::before {
-  content: ">";
-  color: var(--faint);
-  font-weight: 700;
-}
 
 [data-status] {
   color: var(--fg-hi);
-  font-weight: 700;
-  text-transform: lowercase;
-  letter-spacing: 0.01em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   text-shadow: var(--shadow-text);
 }
 
@@ -125,15 +121,12 @@ body {
 }
 
 .held-result h1 {
-  margin: 0 0 4px;
-  font-size: 12px;
+  margin: 0 0 3px;
+  font-size: 12.5px;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: lowercase;
   color: var(--err);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: var(--shadow-text);
 }
-.held-result h1::before { content: "\2500\2500  "; color: var(--line-hi); }
 
 .held-result p {
   margin: 0 0 10px;
@@ -149,11 +142,12 @@ body {
   margin: 0;
   overflow: auto;
   padding: 9px 11px;
-  border-radius: 8px;
+  border-radius: var(--r-sm);
   color: var(--fg-hi);
-  background: rgba(6, 16, 30, 0.5);
+  background: var(--screen-2);
   border: 1px solid var(--line-hi);
-  font: 12px/1.5 "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  box-shadow: var(--rim);
+  font: 12px/1.5 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   user-select: text;
@@ -167,25 +161,33 @@ body {
 }
 
 button {
-  padding: 5px 11px;
-  border-radius: 7px;
-  color: var(--fg-hi);
-  background: rgba(120, 190, 255, 0.14);
+  height: 28px;
+  padding: 0 13px;
+  border-radius: var(--r-sm);
+  color: var(--acc);
+  background: var(--screen-2);
   border: 1px solid var(--line-hi);
+  box-shadow: var(--rim);
   font: inherit;
   font-size: 12px;
-  text-transform: lowercase;
   cursor: pointer;
 }
-button::before { content: "["; color: var(--faint); }
-button::after { content: "]"; color: var(--faint); }
 button:hover {
-  background: rgba(155, 211, 255, 0.9);
+  background: var(--acc);
   color: #06162c;
-  border-color: rgba(200, 230, 255, 0.8);
+  border-color: var(--acc);
 }
-button.secondary { color: var(--muted); background: transparent; }
-button.secondary:hover { color: #06162c; }
+button.secondary {
+  color: var(--muted);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+button.secondary:hover {
+  background: transparent;
+  color: var(--fg-hi);
+  border-color: var(--line-hi);
+}
 
 /* --- state wiring (unchanged behaviour) --- */
 
@@ -198,8 +200,7 @@ body[data-state="edit-message"] .waveform { display: none; }
 body[data-state="edit-message"] [data-status] {
   color: var(--fg);
   font-weight: 400;
-  text-transform: none;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  text-shadow: var(--shadow-text);
 }
 
 body[data-state="idle"] .waveform__bar {
