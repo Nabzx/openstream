@@ -7,7 +7,7 @@
 <meta property="og:title" content="openstream">
 <meta property="og:description" content="Local-first voice dictation for people who live in a terminal. Open source, free, on-device.">
 <meta property="og:type" content="website">
-<meta name="theme-color" content="#05070C">
+<meta name="theme-color" content="#0A1420">
 <title>openstream: local-first voice dictation</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,6 @@
   --line: #1e2c40;
   --line-hi: #31465f;
   --glow: rgba(143, 196, 255, 0.4);
-  --bar: 28px;
 
   --font-ui: -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -42,18 +41,13 @@ body {
   font-size: 14px;
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
-  padding-bottom: var(--bar);
-}
-
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: 300; pointer-events: none;
-  background: repeating-linear-gradient(0deg, transparent 0 2px, rgba(0,0,0,0.05) 3px, transparent 4px);
+  padding-bottom: 60px;
 }
 
 .wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
 
 a { color: var(--acc); text-decoration: none; }
-a:hover { background: var(--acc); color: var(--bg); }
+a:hover { text-decoration: underline; text-underline-offset: 2px; }
 
 .acc { color: var(--acc); }
 .acc2 { color: var(--acc-2); }
@@ -75,24 +69,12 @@ a:hover { background: var(--acc); color: var(--bg); }
 .top .wrap { display: flex; justify-content: space-between; align-items: center; height: 60px; font-size: 13px; }
 .top .brand { color: var(--fg-hi); font-family: var(--font-mono); font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
 .top .brand b { color: var(--acc); }
-.top .brand .cur { width: 0.5em; height: 1em; }
 .top .brand .beta {
-  margin-left: 8px; padding: 1px 6px; border: 1px solid var(--line-hi);
-  color: var(--muted); font-size: 11px; letter-spacing: 0.04em; vertical-align: 2px;
+  margin-left: 10px; color: var(--faint); font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase; vertical-align: 1px;
 }
 .top a.gh { color: var(--muted); }
-.top a.gh:hover { color: var(--acc); background: none; }
-
-/* ---- status bar ---- */
-.status {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 100; height: var(--bar);
-  background: var(--acc); color: var(--bg);
-  display: flex; align-items: center; font-weight: 700; font-size: 11px; letter-spacing: 0.02em;
-}
-.status .s { padding: 0 12px; }
-.status .s.d { background: rgba(0,0,0,0.3); color: var(--acc); }
-.status .fill { flex: 1; }
-@media (max-width: 560px) { .status .s.opt { display: none; } }
+.top a.gh:hover { color: var(--acc); text-decoration: none; }
 
 /* ---- hero ---- */
 .hero {
@@ -133,12 +115,13 @@ a:hover { background: var(--acc); color: var(--bg); }
 }
 
 .cta { display: flex; gap: 18px; align-items: center; justify-content: center; font-size: 14px; }
-.cta .btn { border: 1px solid var(--acc); color: var(--acc); padding: 9px 22px; }
-.cta .btn::before { content: "> "; color: var(--muted); }
-.cta .btn:hover { background: var(--acc); color: var(--bg); }
-.cta .btn:hover::before { color: var(--bg); }
+.cta .btn {
+  border: 1px solid var(--acc); border-radius: 8px; color: var(--acc);
+  padding: 10px 22px; font-weight: 600;
+}
+.cta .btn:hover { background: var(--acc); color: var(--bg); text-decoration: none; }
 .cta a.plain { color: var(--muted); }
-.cta a.plain:hover { color: var(--acc); background: none; }
+.cta a.plain:hover { color: var(--acc); text-decoration: none; }
 
 .scroll { margin-top: 50px; color: var(--muted); font-size: 16px; animation: bob 2s ease-in-out infinite; }
 @keyframes bob { 50% { transform: translateY(4px); } }
@@ -147,10 +130,9 @@ a:hover { background: var(--acc); color: var(--bg); }
 /* ---- sections ---- */
 .sec { padding: 80px 0; border-top: 1px solid var(--line); }
 .rule {
-  color: var(--muted); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-  margin-bottom: 24px; display: flex; align-items: center; gap: 10px; white-space: nowrap;
+  color: var(--faint); font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+  margin-bottom: 24px; display: flex; align-items: center; gap: 12px; white-space: nowrap;
 }
-.rule::before { content: "\2500\2500"; color: var(--line-hi); }
 .rule .x { flex: 1; height: 1px; background: var(--line-hi); }
 
 /* hook */
@@ -195,8 +177,8 @@ a:hover { background: var(--acc); color: var(--bg); }
 <body>
 <div class="top">
   <div class="wrap">
-    <span class="brand">~ <b>openstream</b><span class="cur"></span><span class="beta">beta release</span></span>
-    <a class="gh" href="https://github.com/Nabzx/openstream">github &#8599;</a>
+    <span class="brand">~ <b>openstream</b><span class="beta">beta</span></span>
+    <a class="gh" href="https://github.com/Nabzx/openstream">GitHub &#8599;</a>
   </div>
 </div>
 
@@ -204,7 +186,7 @@ a:hover { background: var(--acc); color: var(--bg); }
 
   <section class="hero">
     <span class="k">local-first voice dictation</span>
-    <h1>press a key. talk. <span class="acc">let go.</span></h1>
+    <h1>Press a key. Talk. <span class="acc">Let go.</span></h1>
     <div class="termwrap">
       <div class="term" aria-hidden="true">
         <div class="bar"><i></i><i></i><i></i><span>openstream</span></div>
@@ -212,8 +194,8 @@ a:hover { background: var(--acc); color: var(--bg); }
       </div>
     </div>
     <div class="cta">
-      <a class="btn" href="#install">install</a>
-      <a class="plain" href="#hook">why &#8595;</a>
+      <a class="btn" href="#install">Install</a>
+      <a class="plain" href="#hook">Why &#8595;</a>
     </div>
     <div class="scroll" aria-hidden="true">&#9662;</div>
   </section>
@@ -224,18 +206,18 @@ a:hover { background: var(--acc); color: var(--bg); }
       <div style="border:1px solid var(--line-hi);background:var(--screen);line-height:0">
         <video src="../assets/demo.mp4" autoplay muted loop playsinline preload="metadata" style="width:100%;display:block"></video>
       </div>
-      <p style="color:var(--muted);font-size:12px;margin-top:12px">a voice edit, then dictation with a spoken paragraph break &mdash; into apple notes, nothing sent anywhere.</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:12px">A voice edit, then dictation with a spoken paragraph break, into Apple Notes. Nothing sent anywhere.</p>
     </div>
   </section>
 
   <section class="sec hook" id="hook">
     <div class="wrap">
       <div class="rule">why<span class="x"></span></div>
-      <h2>you type at 40. you talk at <span class="acc">150</span>.</h2>
-      <p class="sub">words per minute. dictation is roughly four times faster, if it lands clean.</p>
+      <h2>You type at 40. You talk at <span class="acc">150</span>.</h2>
+      <p class="sub">Words per minute. Dictation is roughly four times faster, if it lands clean.</p>
       <div class="bars">
-        <div class="b slow"><span class="name">typing</span><span class="track"><i data-w="27"></i></span><span class="n">40</span></div>
-        <div class="b"><span class="name">talking</span><span class="track"><i data-w="100"></i></span><span class="n">150</span></div>
+        <div class="b slow"><span class="name">Typing</span><span class="track"><i data-w="27"></i></span><span class="n">40</span></div>
+        <div class="b"><span class="name">Talking</span><span class="track"><i data-w="100"></i></span><span class="n">150</span></div>
       </div>
     </div>
   </section>
@@ -256,7 +238,7 @@ a:hover { background: var(--acc); color: var(--bg); }
 <pre><span class="c"># apple silicon, macOS 14+, node 22.12+, xcode CLT</span>
 <span class="p">$</span> git clone https://github.com/Nabzx/openstream.git
 <span class="p">$</span> cd openstream && npm install && npm start</pre>
-      <p style="color:var(--muted);font-size:12px;margin-top:12px">the transcription model downloads on first launch, about 470 MB. <span class="acc">npm run doctor</span> checks the permissions.</p>
+      <p style="color:var(--muted);font-size:12px;margin-top:12px">The transcription model downloads on first launch, about 470 MB. <span class="acc">npm run doctor</span> checks the permissions.</p>
     </div>
   </section>
 
@@ -264,25 +246,15 @@ a:hover { background: var(--acc); color: var(--bg); }
     <div class="wrap">
       <div class="rule">status<span class="x"></span></div>
       <ul>
-        <li><b>beta release.</b> pre-1.0; the core path runs from source today.</li>
-        <li>a GitHub repo you clone and build, not an app you download. that is the point for now: open, auditable, yours to change.</li>
-        <li>no account, no cloud, no telemetry, and that won't change.</li>
+        <li><b>Beta release.</b> Pre-1.0; the core path runs from source today.</li>
+        <li>A GitHub repo you clone and build, not an app you download. That is the point for now: open, auditable, yours to change.</li>
+        <li>No account, no cloud, no telemetry, and that won't change.</li>
       </ul>
     </div>
   </section>
 
 
 </main>
-
-<div class="status" aria-hidden="true">
-  <span class="s">openstream(1)</span>
-  <span class="s d opt">dictation</span>
-  <span class="fill"></span>
-  <span class="s opt">beta release</span>
-  <span class="s opt">local-first</span>
-  <span class="s opt">MIT</span>
-  <span class="s d">&#8997; to talk</span>
-</div>
 
 <script>
 (function () {
