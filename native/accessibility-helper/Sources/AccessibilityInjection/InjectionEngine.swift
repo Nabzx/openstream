@@ -100,6 +100,13 @@ public final class InjectionEngine {
         }
 
         // Rung 2: clipboard + paste.
+        // #368: give a browser editor a beat to re-focus its input surface
+        // before the paste. A warm dictation otherwise pastes ~150ms after
+        // the hotkey release, before Docs' hidden iframe is focused, and
+        // the Cmd+V lands nowhere.
+        if pasteFirst {
+            sleep(config.browserPasteSettleMs / 1000.0)
+        }
         let pasteResult = paster.paste(text: text, verifyAgainst: readableAndFieldSized ? focused : nil)
         if pasteResult.delivered {
             return .delivered(method: "pasted", verified: pasteResult.verified, note: pasteResult.note)

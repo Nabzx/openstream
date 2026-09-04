@@ -32,6 +32,12 @@ public struct Config {
     // we skip rung 1 entirely and paste, and we trust an unverifiable
     // paste rather than falling to blind char-by-char typing.
     public var pasteFirstBundleIds: Set<String>
+    // #368: Google Docs re-focuses its hidden editing iframe a beat after
+    // key focus returns to the browser. A paste fired inside that beat -
+    // which a warm dictation does, ~150ms after the hotkey release - lands
+    // nowhere. Wait this long before pasting into a pasteFirst app. The
+    // first, cold dictation already clears it via the AX warm-up.
+    public var browserPasteSettleMs: Double
 
     public init(
         settleMs: Double = 400,
@@ -56,7 +62,8 @@ public struct Config {
             "org.mozilla.firefox",
             "com.vivaldi.Vivaldi",
             "com.operasoftware.Opera",
-        ]
+        ],
+        browserPasteSettleMs: Double = 400
     ) {
         self.settleMs = settleMs
         self.settleBudgetMs = settleBudgetMs
@@ -68,5 +75,6 @@ public struct Config {
         self.longTextChars = longTextChars
         self.stableForBlindPasteMs = stableForBlindPasteMs
         self.pasteFirstBundleIds = pasteFirstBundleIds
+        self.browserPasteSettleMs = browserPasteSettleMs
     }
 }
