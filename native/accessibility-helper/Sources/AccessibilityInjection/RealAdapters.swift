@@ -24,7 +24,12 @@ public final class RealAXTarget: AccessibilityTarget {
         var settable: DarwinBoolean = false
         AXUIElementIsAttributeSettable(element, kAXSelectedTextAttribute as CFString, &settable)
 
-        return FieldInfo(role: role, valueChars: valueChars, selectedTextSettable: settable.boolValue)
+        var pid: pid_t = 0
+        let bundleId = AXUIElementGetPid(element, &pid) == .success && pid > 0
+            ? NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
+            : nil
+
+        return FieldInfo(role: role, valueChars: valueChars, selectedTextSettable: settable.boolValue, bundleId: bundleId)
     }
 
     // Rung 1: replace the current selection (a caret is a zero-length
@@ -384,7 +389,14 @@ public final class RealClipboardPaster: ClipboardPasting {
     }
 
     private func synthesizeCmdV() {
-        let source = CGEventSource(stateID: .hidSystemState)
+        // #368: a `.hidSystemState` source ORs the live hardware modifier
+        // flags into the event at post time. When the paste fires within a
+        // few hundred ms of the push-to-talk key release - which it does on
+        // every dictation after the first, once the AX channel is warm -
+        // that key's modifier is still settling, so the paste goes out as
+        // Cmd+<that modifier>+V and the app ignores it. A `.privateState`
+        // source carries exactly the flags we set, nothing else.
+        let source = CGEventSource(stateID: .privateState)
         let vKeyCode: CGKeyCode = 9 // 'V' on the ANSI layout
         let keyDown = CGEvent(keyboardEventSource: source, virtualKey: vKeyCode, keyDown: true)
         let keyUp = CGEvent(keyboardEventSource: source, virtualKey: vKeyCode, keyDown: false)
@@ -402,11 +414,15 @@ public final class RealKeyTyper: KeyTyping {
     public init() {}
 
     public func type(_ text: String) {
-        let source = CGEventSource(stateID: .hidSystemState)
+        // #368: private source + explicitly cleared flags, so a lingering
+        // hotkey modifier can't turn a typed 'c' into Cmd+C mid-transcript.
+        let source = CGEventSource(stateID: .privateState)
         for scalar in text.unicodeScalars {
             var chars = [UniChar(scalar.value)]
             let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true)
             let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
+            keyDown?.flags = []
+            keyUp?.flags = []
             keyDown?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &chars)
             keyUp?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &chars)
             keyDown?.post(tap: .cghidEventTap)

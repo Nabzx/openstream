@@ -74,16 +74,16 @@ struct InjectionEngineTests {
     }
 
     // #368: in a browser, skip rung 1 entirely - the AX write is known to
-    // no-op there - and go straight to paste.
-    @Test func browserSkipsRung1AndPastes() {
+    // no-op there - and go straight to paste, after a settle so the doc's
+    // input surface has re-focused.
+    @Test func browserSkipsRung1AndPastesAfterASettle() {
         let target = FakeAccessibilityTarget(
-            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true),
+            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true, bundleId: "com.google.Chrome"),
             valueToReadBack: "hello"
         )
-        let (engine, _, paster, _) = makeEngine(
+        let (engine, time, paster, _) = makeEngine(
             focusTarget: target,
-            pasteResult: PasteResult(delivered: true, verified: false, note: "sent, but nothing confirmed it landed"),
-            bundleId: "com.google.Chrome"
+            pasteResult: PasteResult(delivered: true, verified: false, note: "sent, but nothing confirmed it landed")
         )
 
         let outcome = engine.decide(text: "hello")
@@ -91,19 +91,33 @@ struct InjectionEngineTests {
         #expect(outcome == .delivered(method: "pasted", verified: false, note: "sent, but nothing confirmed it landed"))
         #expect(target.writtenText == nil, "rung 1 must not fire in a browser")
         #expect(paster.callCount == 1)
+        #expect(time.elapsedMs >= config.browserPasteSettleMs, "the browser settle must run before the paste")
+    }
+
+    @Test func nonBrowserPasteHasNoSettle() {
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXWebArea", valueChars: nil, selectedTextSettable: false)
+        )
+        let (engine, time, _, _) = makeEngine(
+            focusTarget: target,
+            pasteResult: PasteResult(delivered: true, verified: false, note: "sent, but nothing confirmed it landed")
+        )
+
+        _ = engine.decide(text: "hello")
+
+        #expect(time.elapsedMs == 0, "no settle outside a pasteFirst app")
     }
 
     // #368: a browser paste we can't verify is delivered, not a reason to
     // type char by char (which mangles the text in Docs).
     @Test func browserTrustsAnUnverifiablePasteInsteadOfTypingBlind() {
         let target = FakeAccessibilityTarget(
-            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true),
+            fieldInfo: FieldInfo(role: "AXTextArea", valueChars: 5, selectedTextSettable: true, bundleId: "com.apple.Safari"),
             valueToReadBack: "stale"
         )
         let (engine, _, _, typer) = makeEngine(
             focusTarget: target,
-            pasteResult: PasteResult(delivered: false, verified: false, note: "the app did not accept the paste"),
-            bundleId: "com.apple.Safari"
+            pasteResult: PasteResult(delivered: false, verified: false, note: "the app did not accept the paste")
         )
 
         let outcome = engine.decide(text: "hello")

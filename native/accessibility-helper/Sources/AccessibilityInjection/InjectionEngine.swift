@@ -83,9 +83,13 @@ public final class InjectionEngine {
         let info = focused.fieldInfo
         let readableAndFieldSized = info.valueChars.map { $0 <= config.axValueMaxChars } ?? false
         // #368: Google Docs and other browser editors render to a canvas and
-        // manage input themselves - an AX write returns .success and does
-        // nothing. Skip rung 1 there and paste.
-        let pasteFirst = (tracker.currentFrontmostBundleId()).map(config.pasteFirstBundleIds.contains) ?? false
+        // manage input themselves. An AX write there sometimes no-ops and
+        // sometimes lands but isn't reflected in the AX value, so a
+        // fall-through paste doubles the text. Skip rung 1 in a browser and
+        // paste once. Prefer the focused element's own owner over the
+        // frontmost tracker, which lags from a terminal launch.
+        let ownerBundleId = info.bundleId ?? tracker.currentFrontmostBundleId()
+        let pasteFirst = ownerBundleId.map(config.pasteFirstBundleIds.contains) ?? false
 
         // Rung 1: write straight into the field. An AX write that returns
         // .success is not proof the text arrived (#368), so read the field
@@ -100,6 +104,13 @@ public final class InjectionEngine {
         }
 
         // Rung 2: clipboard + paste.
+        // #368: give a browser editor a beat to re-focus its input surface
+        // before the paste. A warm dictation otherwise pastes ~150ms after
+        // the hotkey release, before Docs' hidden iframe is focused, and
+        // the Cmd+V lands nowhere.
+        if pasteFirst {
+            sleep(config.browserPasteSettleMs / 1000.0)
+        }
         let pasteResult = paster.paste(text: text, verifyAgainst: readableAndFieldSized ? focused : nil)
         if pasteResult.delivered {
             return .delivered(method: "pasted", verified: pasteResult.verified, note: pasteResult.note)
