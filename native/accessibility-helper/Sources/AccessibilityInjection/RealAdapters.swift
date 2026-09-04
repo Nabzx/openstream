@@ -24,7 +24,12 @@ public final class RealAXTarget: AccessibilityTarget {
         var settable: DarwinBoolean = false
         AXUIElementIsAttributeSettable(element, kAXSelectedTextAttribute as CFString, &settable)
 
-        return FieldInfo(role: role, valueChars: valueChars, selectedTextSettable: settable.boolValue)
+        var pid: pid_t = 0
+        let bundleId = AXUIElementGetPid(element, &pid) == .success && pid > 0
+            ? NSRunningApplication(processIdentifier: pid)?.bundleIdentifier
+            : nil
+
+        return FieldInfo(role: role, valueChars: valueChars, selectedTextSettable: settable.boolValue, bundleId: bundleId)
     }
 
     // Rung 1: replace the current selection (a caret is a zero-length
