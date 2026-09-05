@@ -25,6 +25,11 @@ const COMMANDS = {
   // structural
   bullets: { kind: "list", marker: "bullet", aliases: ["bullet list", "bulleted list", "bullet points", "bullet point list", "make a bullet list"] },
   numbered: { kind: "list", marker: "number", aliases: ["numbered list", "number list", "ordered list"] },
+  // clipboard (#374) - the one command that never rewrites the selection.
+  // interpretVoiceEditCommand still returns it as an "ok" result with
+  // commandId "copy"; the coordinator reads that id to route to the
+  // clipboard instead of injection, same as it already reads other ids.
+  copy: { kind: "copy", aliases: ["copy that", "copy this", "copy it", "copy"] },
 };
 
 const ALIAS_TO_ID = new Map();
@@ -128,6 +133,7 @@ function applyCommand(command, selection) {
   if (command.kind === "case") return applyCase(command.id, selection);
   if (command.kind === "wrap") return applyWrap(command, selection);
   if (command.kind === "list") return applyList(command, selection);
+  if (command.kind === "copy") return selection;
   return null;
 }
 

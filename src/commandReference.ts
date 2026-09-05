@@ -144,6 +144,12 @@ export const COMMAND_SECTIONS: CommandSection[] = [
           { say: "numbered list  ·  ordered list", becomes: "each item numbered 1., 2., 3." },
         ],
       },
+      {
+        title: "Clipboard",
+        commands: [
+          { say: "copy that  ·  copy this", becomes: "copies the selection — the document is left untouched" },
+        ],
+      },
     ],
   },
 ];

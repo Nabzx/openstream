@@ -79,6 +79,24 @@ test("list: a multi-line selection is declined", () => {
   assert.equal(result("bullet list", "line one\nline two, line three").status, "declined");
 });
 
+test("#374: copy that returns the selection unchanged as the result", () => {
+  assert.deepEqual(result("copy that", "hello world"), {
+    status: "ok",
+    commandId: "copy",
+    result: "hello world",
+  });
+});
+
+test("#374: copy's other aliases and trailing punctuation all match", () => {
+  for (const spoken of ["copy this", "copy it", "copy", "Copy that."]) {
+    assert.equal(result(spoken, "some text").commandId, "copy", spoken);
+  }
+});
+
+test("#374: copy never declines - any selection, however prose-like, can be copied", () => {
+  assert.equal(result("copy that", "a whole sentence, with punctuation!").status, "ok");
+});
+
 test("unrecognised command leaves an explicit status", () => {
   assert.deepEqual(result("make this sing", "whatever"), { status: "unrecognised" });
 });
