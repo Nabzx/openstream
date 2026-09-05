@@ -413,11 +413,15 @@ public final class RealClipboardPaster: ClipboardPasting {
 public final class RealKeyTyper: KeyTyping {
     public init() {}
 
-    public func type(_ text: String) {
+    public func type(_ text: String, shouldAbort: () -> Bool) -> Bool {
         // #368: private source + explicitly cleared flags, so a lingering
         // hotkey modifier can't turn a typed 'c' into Cmd+C mid-transcript.
         let source = CGEventSource(stateID: .privateState)
         for scalar in text.unicodeScalars {
+            // #355: checked before every character, not just once, since
+            // this is the rung that can run for long enough that the app
+            // genuinely changes partway through.
+            if shouldAbort() { return false }
             var chars = [UniChar(scalar.value)]
             let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: true)
             let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0, keyDown: false)
@@ -428,5 +432,6 @@ public final class RealKeyTyper: KeyTyping {
             keyDown?.post(tap: .cghidEventTap)
             keyUp?.post(tap: .cghidEventTap)
         }
+        return true
     }
 }

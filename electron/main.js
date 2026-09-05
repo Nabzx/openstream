@@ -200,6 +200,13 @@ const VOICE_EDIT_MAX_CHARS = 5000;
 
 // Set at key-down (the async selection read), consumed at recording-complete.
 let pendingSelectionRead = null;
+// #355: which app was frontmost when the key went down, read the same way
+// (async, never delays recording). dictationIntake compares this against
+// the app it finds frontmost once the transcript is ready, and holds
+// rather than deliver into a different app than the one dictation started
+// in - a keystroke or paste can be destructive there even when the words
+// themselves are innocent.
+let pendingFrontmostAtRecordStart = null;
 
 // The desktop window is only ever opened from an explicit user action -
 // the tray item, a Dock-icon click (the `activate` handler), a second
@@ -459,6 +466,13 @@ const heldResultController = createHeldResultController({
 // recording, so this is deliberately not awaited here.
 function beginPushToTalk() {
   pendingSelectionRead = accessibilityHelper.getSelection().catch(() => null);
+  // #355: same treatment as the selection read - async, never delays
+  // recording, and just gives dictation a "before" snapshot to compare
+  // against once the transcript is ready.
+  pendingFrontmostAtRecordStart = accessibilityHelper
+    .getFocusContext()
+    .then((context) => context.bundleId)
+    .catch(() => null);
   pushToTalkCoordinator.keyDown();
 }
 
@@ -467,11 +481,15 @@ async function handleCompletedRecording(wavBuffer, timing) {
   pendingSelectionRead = null;
   const selection = selectionRead ? await selectionRead : null;
 
+  const frontmostRead = pendingFrontmostAtRecordStart;
+  pendingFrontmostAtRecordStart = null;
+  const recordStartBundleId = frontmostRead ? await frontmostRead : null;
+
   if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
     showVoiceEditWorking();
     return applyVoiceEdit(wavBuffer, selection, timing);
   }
-  return transcribeAndPrint(wavBuffer, timing);
+  return transcribeAndPrint(wavBuffer, timing, recordStartBundleId);
 }
 
 function showVoiceEditWorking() {
@@ -528,10 +546,10 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
   }
 }
 
-async function transcribeAndPrint(wavBuffer, timing) {
+async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   let result;
   try {
-    result = await dictationIntake.complete(wavBuffer);
+    result = await dictationIntake.complete(wavBuffer, recordStartBundleId);
   } catch (error) {
     console.error("[dictation] unexpected intake failure:", error);
     setUserVisibleState("idle");

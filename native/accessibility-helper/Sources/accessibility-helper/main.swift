@@ -101,7 +101,11 @@ while let line = readLine(strippingNewline: true) {
             emit(["id": id, "status": "error", "reason": "insert requires non-empty \"text\""])
             continue
         }
-        var reply = engine.decide(text: text).replyFields
+        // #355: the bundle id the caller resolved when the dictation
+        // started, if it sent one. Optional - a caller that doesn't know
+        // about this gets the old behaviour, no abort check at all.
+        let expectedBundleId = obj["expectedBundleId"] as? String
+        var reply = engine.decide(text: text, expectedBundleId: expectedBundleId).replyFields
         reply["id"] = id
         emit(reply)
     case "permissions":

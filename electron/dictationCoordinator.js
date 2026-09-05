@@ -36,15 +36,18 @@ function createDictationIntake(options) {
 
   let queue = Promise.resolve();
 
-  function complete(wavBuffer) {
-    const result = queue.then(() => processCompletedDictation(wavBuffer));
+  // #355: recordStartBundleId is the app the caller resolved as frontmost
+  // when the push-to-talk key went down - optional, so a caller that
+  // doesn't capture it (or the tests) gets the old behaviour untouched.
+  function complete(wavBuffer, recordStartBundleId) {
+    const result = queue.then(() => processCompletedDictation(wavBuffer, recordStartBundleId));
     // An unexpected programming error must reject its own call without
     // preventing later completed recordings from leaving the queue.
     queue = result.catch(() => {});
     return result;
   }
 
-  async function processCompletedDictation(wavBuffer) {
+  async function processCompletedDictation(wavBuffer, recordStartBundleId) {
     if (!wavBuffer || wavBuffer.byteLength <= 44) {
       return { status: "empty" };
     }
@@ -82,6 +85,29 @@ function createDictationIntake(options) {
       // the app context detection actually landed on.
       emitDiagnostic("context.bundleId", focusContext.bundleId);
       emitDiagnostic("context.axReady", focusContext.axReady !== false);
+
+      // #355: record start to playback end is one continuous window. Any
+      // keystroke or paste can be destructive in the wrong app - a TUI's
+      // single-key shortcut, a chat box's Enter-to-send - even though the
+      // words themselves are innocent, so a switch away from the app the
+      // user was dictating into holds the transcript rather than guessing
+      // which context to format it for.
+      if (
+        typeof recordStartBundleId === "string" &&
+        recordStartBundleId.length > 0 &&
+        recordStartBundleId !== focusContext.bundleId
+      ) {
+        emitDiagnostic("context.appSwitchedDuringDictation", `${recordStartBundleId} -> ${focusContext.bundleId}`);
+        const salvaged = cleanup(rawText, { oneLineBox: false, breakSafe: false });
+        if (!salvaged) {
+          return { status: "no-speech" };
+        }
+        return {
+          status: "held",
+          text: salvaged,
+          reason: `the frontmost app changed while you were dictating (was ${recordStartBundleId}, now ${focusContext.bundleId})`,
+        };
+      }
     } catch (error) {
       // #227: a context read that fails outright (the helper is down, or
       // nothing is frontmost) used to drop the transcript silently as a
@@ -171,7 +197,10 @@ function createDictationIntake(options) {
     }
 
     try {
-      const deliveryResult = await delivery.deliver(finishedText);
+      // #355: pass the bundle just confirmed as frontmost, so the helper's
+      // own abort check (which watches for the app changing again, this
+      // time mid-injection) has a fresh baseline rather than none at all.
+      const deliveryResult = await delivery.deliver(finishedText, focusContext.bundleId);
       if (deliveryResult?.kind === "inserted") {
         return { status: "delivered", text: finishedText };
       }

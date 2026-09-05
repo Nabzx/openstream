@@ -36,7 +36,13 @@ public final class InjectionEngine {
         self.log = log
     }
 
-    public func decide(text: String) -> InjectionOutcome {
+    // expectedBundleId, when supplied, is the app the dictation started in
+    // (#355). Record start to playback end is one continuous window - a
+    // keystroke or a paste can be destructive in the wrong app (a TUI's
+    // single-key shortcut, a chat box's Enter-to-send) even though the text
+    // itself is perfectly innocent. Callers that don't know about this
+    // (existing tests, any future caller) pass nil and nothing changes.
+    public func decide(text: String, expectedBundleId: String? = nil) -> InjectionOutcome {
         // Settle guard: never trust a target while the last app switch is
         // more recent than settleMs. Poll rather than trust a single
         // reading, since the tracker updates asynchronously in production.
@@ -91,6 +97,13 @@ public final class InjectionEngine {
         let ownerBundleId = info.bundleId ?? tracker.currentFrontmostBundleId()
         let pasteFirst = ownerBundleId.map(config.pasteFirstBundleIds.contains) ?? false
 
+        // #355: the frontmost app has already moved on from where this
+        // dictation started. Hold rather than deliver blind - same
+        // treatment as every other case this engine can't trust.
+        if let expected = expectedBundleId, let owner = ownerBundleId, owner != expected {
+            return .held(reason: "the frontmost app changed during the dictation (was \(expected), now \(owner))")
+        }
+
         // Rung 1: write straight into the field. An AX write that returns
         // .success is not proof the text arrived (#368), so read the field
         // back and confirm before trusting it.
@@ -130,7 +143,21 @@ public final class InjectionEngine {
         // so rung 3 only fires here, where we have positive evidence rung 2
         // failed, never for the fields we could not verify in the first
         // place.
-        typer.type(text)
+        //
+        // #355: this is the rung that actually runs for a while on long
+        // text, so it is the one place the app can genuinely change mid-
+        // playback rather than just between record end and injection start.
+        // shouldAbort is polled before every character; the tracker (not an
+        // AX resolve) is cheap enough to check that often without slowing
+        // typing down further.
+        let typedEverything = typer.type(text) {
+            guard let expected = expectedBundleId else { return false }
+            return tracker.currentFrontmostBundleId().map { $0 != expected } ?? false
+        }
+        if !typedEverything {
+            log("stopped typing partway through - the frontmost app changed")
+            return .held(reason: "the frontmost app changed while typing; stopped rather than send keystrokes into the wrong app")
+        }
         let long = text.count > config.longTextChars
         return .delivered(
             method: "typed character by character",

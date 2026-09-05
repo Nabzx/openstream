@@ -220,6 +220,55 @@ struct InjectionEngineTests {
         #expect(typer.typedText == nil)
     }
 
+    // MARK: - #355: abort when the frontmost app changes mid-flight
+
+    @Test func abortsUpfrontWhenTheAppHasAlreadyChanged() {
+        // The lazygit case: dictation started in one app, the user has
+        // since switched to another, and the words themselves ("Pie in the
+        // sky") are innocent - it's the destination that turned dangerous.
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true, bundleId: "com.apple.Terminal")
+        )
+        let (engine, _, paster, typer) = makeEngine(focusTarget: target)
+
+        let outcome = engine.decide(text: "hello", expectedBundleId: "com.apple.TextEdit")
+
+        #expect(outcome == .held(reason: "the frontmost app changed during the dictation (was com.apple.TextEdit, now com.apple.Terminal)"))
+        #expect(target.writtenText == nil, "must not write into the app it started in front of, let alone the new one")
+        #expect(paster.callCount == 0)
+        #expect(typer.typedText == nil)
+    }
+
+    @Test func matchingExpectedBundleIdDoesNotAbort() {
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true, bundleId: "com.apple.TextEdit"),
+            valueToReadBack: "hello"
+        )
+        let (engine, _, _, _) = makeEngine(focusTarget: target)
+
+        let outcome = engine.decide(text: "hello", expectedBundleId: "com.apple.TextEdit")
+
+        #expect(outcome == .delivered(method: "wrote into the field", verified: true, note: "inserted at the caret, clipboard untouched"))
+    }
+
+    @Test func rung3StopsTypingWhenTheAppChangesPartway() {
+        // Unlike the upfront check, this is a genuine mid-playback switch:
+        // rung 3 was already under way when the app changed.
+        let target = FakeAccessibilityTarget(
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: false, bundleId: "com.apple.Terminal")
+        )
+        let (engine, _, _, typer) = makeEngine(
+            focusTarget: target,
+            pasteResult: PasteResult(delivered: false, verified: false, note: "the app did not accept the paste"),
+            bundleId: "com.apple.Terminal2" // the tracker now sees a different app than the dictation started in
+        )
+
+        let outcome = engine.decide(text: "hello", expectedBundleId: "com.apple.Terminal")
+
+        #expect(outcome == .held(reason: "the frontmost app changed while typing; stopped rather than send keystrokes into the wrong app"))
+        #expect(typer.completed == false)
+    }
+
     @Test func longTextTypedBlindGetsAWarningNote() {
         let target = FakeAccessibilityTarget(
             fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: false)

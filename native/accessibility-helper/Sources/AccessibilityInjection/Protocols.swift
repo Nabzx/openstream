@@ -44,7 +44,9 @@ public protocol ClipboardPasting {
 }
 
 public protocol KeyTyping {
-    func type(_ text: String)
+    // #355: shouldAbort is polled before every character; typing stops the
+    // moment it returns true. Returns whether the whole text was typed.
+    func type(_ text: String, shouldAbort: () -> Bool) -> Bool
 }
 
 public protocol AppSwitchTracking {

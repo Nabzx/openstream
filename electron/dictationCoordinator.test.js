@@ -509,6 +509,66 @@ test("context detection failure holds the transcript instead of dropping it (#22
   );
 });
 
+test("#355: a different frontmost app than record start holds instead of delivering", async () => {
+  let deliveryCalls = 0;
+  const harness = createIntake({
+    bundleId: "com.apple.Terminal",
+    deliver: async () => {
+      deliveryCalls++;
+      return { kind: "inserted" };
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav, "com.apple.TextEdit");
+
+  // The lazygit case: the words are innocent, the destination isn't - held,
+  // not delivered into whatever is frontmost now.
+  assert.equal(result.status, "held");
+  assert.equal(result.text, "Hello world.");
+  assert.match(
+    result.reason,
+    /the frontmost app changed while you were dictating \(was com\.apple\.TextEdit, now com\.apple\.Terminal\)/,
+  );
+  assert.equal(deliveryCalls, 0, "a mid-dictation app switch never reaches delivery");
+  assert.ok(
+    harness.diagnostics.some(
+      ([name, value]) => name === "context.appSwitchedDuringDictation" && value === "com.apple.TextEdit -> com.apple.Terminal",
+    ),
+  );
+});
+
+test("#355: the same frontmost app at record start and at delivery proceeds normally", async () => {
+  const harness = createIntake({ bundleId: "com.apple.TextEdit" });
+
+  const result = await harness.intake.complete(completedWav, "com.apple.TextEdit");
+
+  assert.equal(result.status, "delivered");
+  assert.deepEqual(harness.delivered, ["Hello world."]);
+});
+
+test("#355: no record-start bundle id means the check is skipped entirely", async () => {
+  const harness = createIntake({ bundleId: "com.apple.Terminal" });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.equal(result.status, "delivered", "existing callers that don't track record start are unaffected");
+});
+
+test("#355: delivery gets the bundle id just confirmed as frontmost", async () => {
+  const receivedArgs = [];
+  const harness = createIntake({
+    bundleId: "com.apple.Notes",
+    deliver: async (...args) => {
+      receivedArgs.push(args);
+      return { kind: "inserted" };
+    },
+  });
+
+  await harness.intake.complete(completedWav, "com.apple.Notes");
+
+  assert.deepEqual(receivedArgs, [["Hello world.", "com.apple.Notes"]]);
+});
+
 test("delivery failure holds the complete finished text without retrying delivery", async () => {
   let deliveryCalls = 0;
   const harness = createIntake({

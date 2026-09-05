@@ -60,6 +60,24 @@ test("accessibility helper correlates context and insertion replies received out
   helper.stop();
 });
 
+// #355: the caller passes the bundle id it resolved focus context against,
+// so the helper's own abort check has a baseline to compare against.
+test("accessibility helper sends expectedBundleId when the caller supplies one", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createAccessibilityHelper({ spawnProcess: () => child });
+  helper.start();
+
+  const delivered = helper.deliver("Some text.", "com.apple.TextEdit");
+  await nextTurn();
+
+  assert.deepEqual(requests, [{ id: "1", cmd: "insert", text: "Some text.", expectedBundleId: "com.apple.TextEdit" }]);
+
+  child.stdout.write('{"id":"1","status":"held","reason":"the frontmost app changed during the dictation"}\n');
+  assert.deepEqual(await delivered, { kind: "held", reason: "the frontmost app changed during the dictation" });
+  helper.stop();
+});
+
 test("getSelection returns the selection and focus context on an ok reply", async () => {
   const child = fakeProcess();
   const requests = readRequests(child);

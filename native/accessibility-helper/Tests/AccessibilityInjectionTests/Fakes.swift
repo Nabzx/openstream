@@ -80,9 +80,20 @@ final class FakePaster: ClipboardPasting {
 
 final class FakeTyper: KeyTyping {
     private(set) var typedText: String?
+    private(set) var completed: Bool?
+    // Test config: when true (the default), shouldAbort is polled once, as
+    // if it were the first character - enough to prove the engine wires it
+    // through, without simulating a full character-by-character loop.
+    var checksAbort = true
 
-    func type(_ text: String) {
+    func type(_ text: String, shouldAbort: () -> Bool) -> Bool {
         typedText = text
+        if checksAbort && shouldAbort() {
+            completed = false
+            return false
+        }
+        completed = true
+        return true
     }
 }
 
