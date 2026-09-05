@@ -68,6 +68,84 @@ Directory listings help too, and they last: add OpenStream on
 [AlternativeTo](https://alternativeto.net) as an alternative to Wispr Flow and
 superwhisper, or open a PR to `awesome-macos`.
 
+## The long list
+
+If you want to do more than the two-minute version, here is the full set of
+places OpenStream could be posted. **Two rules, always:** disclose that you use
+it (or built it, if you are a contributor), and never post the same link to more
+than one or two of these a day from one account. A burst of ten looks like spam
+and gets you shadow-banned.
+
+**Weekly windows to remember:**
+
+- **Saturday** — r/webdev, self-promotion is only allowed in the weekly
+  **"Showoff Saturday"** thread.
+- **Sunday** — r/apple (developers only), r/reactjs "Showcase Sunday",
+  r/SideProject self-promo threads get the most traction.
+- r/Entrepreneur and r/startups — their weekly "share your startup" threads
+  only, never a standalone post.
+
+### Subreddits
+
+*Mac & Apple:* r/macapps, r/MacOSApps, r/macOS, r/mac, r/apple, r/AppleSilicon,
+r/MacOSBeta, r/macsysadmin, r/opensourcemac
+
+*Mac power-user tools (best-fit audience):* r/Alfredapp, r/Raycast, r/shortcuts,
+r/BetterTouchTool, r/macautomation, r/AppleScript, r/keyboards
+
+*Open source & side projects:* r/opensource, r/FOSS, r/freesoftware,
+r/coolgithubprojects, r/github, r/SideProject, r/IMadeThis, r/somethingimade
+
+*Local AI & models:* r/LocalLLaMA (the single best one — lead with "on the Neural
+Engine, nothing leaves the machine"), r/LocalLLM, r/artificial,
+r/ArtificialIntelligence, r/LLMDevs, r/deeplearning, r/huggingface, r/OpenSourceAI
+
+*Privacy & no-cloud:* r/privacy, r/PrivacyGuides, r/degoogle, r/selfhosted,
+r/homelab, r/HomeServer, r/StallmanWasRight, r/DataHoarder, r/PrivacyProducts,
+r/nosurf
+
+*Terminal & editors:* r/commandline, r/vim, r/neovim, r/emacs, r/DoomEmacs,
+r/spacemacs, r/orgmode, r/tmux, r/zsh, r/iTerm, r/warpdotdev, r/vscode,
+r/JetBrains, r/Cursor, r/ChatGPTCoding, r/Codeium
+
+*Note-taking & writing tools:* r/ObsidianMD, r/logseq, r/Anytype, r/RemNote,
+r/Roam, r/notetaking, r/Zettelkasten, r/PKMS, r/Scrivener, r/Ulysses, r/bearapp,
+r/Joplin
+
+*Writers & content:* r/writing, r/writers, r/technicalwriting,
+r/freelanceWriting, r/copywriting, r/selfpublish, r/podcasting
+
+*Developers (a real write-up, or the weekly showcase thread):* r/programming,
+r/webdev, r/webdevelopment, r/coding, r/softwaredevelopment, r/devtools, r/swift,
+r/electronjs, r/typescript, r/node, r/reactjs
+
+*Productivity:* r/productivity
+
+*Accessibility & RSI — contribute genuinely first, never drop a link and leave:*
+r/RSI, r/accessibility, r/disability, r/Blind, r/dragonmedicalpractice,
+r/speechrecognition, r/Carpaltunnel, r/tendinitis, r/AAC
+
+*Maker & launch — mostly weekly-thread only, read each subreddit's rules first:*
+r/EntrepreneurRideAlong, r/indiehackers, r/roastmystartup, r/AlphaandBetaUsers,
+r/SaaS, r/microsaas, r/GrowthHacking, r/Entrepreneur, r/startups,
+r/YoungEntrepreneurs, r/PromoteYourStartup, r/Business_Ideas
+
+### Beyond Reddit
+
+- **Hacker News** (a Show HN), **Lobsters** (tagged `show`), **Product Hunt**
+- **AlternativeTo** and **Slant** — list it as an alternative to Wispr Flow and
+  superwhisper. These rank in search and last for years.
+- **A Homebrew cask PR** (`homebrew/homebrew-cask`) — the highest-leverage single
+  action here, once there is a signed build.
+- **GitHub awesome-lists**, one PR each: `jaywcjlove/awesome-mac`,
+  `serhii-londar/open-source-mac-os-apps`, `herrbischoff/awesome-macos-command-line`,
+  `RunaCapital/awesome-oss-alternatives`, `pluja/awesome-privacy`,
+  `janhq/awesome-local-ai`, `sindresorhus/awesome-electron`,
+  `matteocrippa/awesome-swift`, `brunopulis/awesome-a11y`. Search GitHub for
+  `awesome dictation`, `awesome apple silicon`, `awesome local-first` for more.
+- **Newsletters:** Console.dev, TLDR, The Changelog, Ben's Bites and other
+  on-device-AI roundups, Mac and privacy newsletters.
+
 ## Report bugs, open pull requests
 
 An engaged user who files a clear bug report or sends a small fix is worth more
