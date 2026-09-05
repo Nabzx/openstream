@@ -78,11 +78,11 @@ and gets you shadow-banned.
 
 **Weekly windows to remember:**
 
-- **Saturday** — r/webdev, self-promotion is only allowed in the weekly
+- **Saturday.** On r/webdev, self-promotion is only allowed in the weekly
   **"Showoff Saturday"** thread.
-- **Sunday** — r/apple (developers only), r/reactjs "Showcase Sunday",
+- **Sunday.** r/apple (developers only), r/reactjs "Showcase Sunday",
   r/SideProject self-promo threads get the most traction.
-- r/Entrepreneur and r/startups — their weekly "share your startup" threads
+- r/Entrepreneur and r/startups, their weekly "share your startup" threads
   only, never a standalone post.
 
 ### Subreddits
@@ -96,7 +96,7 @@ r/BetterTouchTool, r/macautomation, r/AppleScript, r/keyboards
 *Open source & side projects:* r/opensource, r/FOSS, r/freesoftware,
 r/coolgithubprojects, r/github, r/SideProject, r/IMadeThis, r/somethingimade
 
-*Local AI & models:* r/LocalLLaMA (the single best one — lead with "on the Neural
+*Local AI & models:* r/LocalLLaMA (the single best one, lead with "on the Neural
 Engine, nothing leaves the machine"), r/LocalLLM, r/artificial,
 r/ArtificialIntelligence, r/LLMDevs, r/deeplearning, r/huggingface, r/OpenSourceAI
 
@@ -121,11 +121,11 @@ r/electronjs, r/typescript, r/node, r/reactjs
 
 *Productivity:* r/productivity
 
-*Accessibility & RSI — contribute genuinely first, never drop a link and leave:*
+*Accessibility & RSI, contribute genuinely first and never drop a link and leave:*
 r/RSI, r/accessibility, r/disability, r/Blind, r/dragonmedicalpractice,
 r/speechrecognition, r/Carpaltunnel, r/tendinitis, r/AAC
 
-*Maker & launch — mostly weekly-thread only, read each subreddit's rules first:*
+*Maker & launch, mostly weekly-thread only, read each subreddit's rules first:*
 r/EntrepreneurRideAlong, r/indiehackers, r/roastmystartup, r/AlphaandBetaUsers,
 r/SaaS, r/microsaas, r/GrowthHacking, r/Entrepreneur, r/startups,
 r/YoungEntrepreneurs, r/PromoteYourStartup, r/Business_Ideas
@@ -133,9 +133,9 @@ r/YoungEntrepreneurs, r/PromoteYourStartup, r/Business_Ideas
 ### Beyond Reddit
 
 - **Hacker News** (a Show HN), **Lobsters** (tagged `show`), **Product Hunt**
-- **AlternativeTo** and **Slant** — list it as an alternative to Wispr Flow and
+- **AlternativeTo** and **Slant**: list it as an alternative to Wispr Flow and
   superwhisper. These rank in search and last for years.
-- **A Homebrew cask PR** (`homebrew/homebrew-cask`) — the highest-leverage single
+- **A Homebrew cask PR** (`homebrew/homebrew-cask`), the highest-leverage single
   action here, once there is a signed build.
 - **GitHub awesome-lists**, one PR each: `jaywcjlove/awesome-mac`,
   `serhii-londar/open-source-mac-os-apps`, `herrbischoff/awesome-macos-command-line`,
