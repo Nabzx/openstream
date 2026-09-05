@@ -89,6 +89,13 @@ export const COMMAND_SECTIONS: CommandSection[] = [
         ],
       },
       {
+        title: "Clipboard",
+        note: "Say it on its own — the whole utterance, nothing else, or it types literally.",
+        commands: [
+          { say: "paste  ·  paste that", becomes: "the clipboard, at the cursor. Multi-line only in break-safe apps." },
+        ],
+      },
+      {
         title: "Quoting, spelling & numbers",
         commands: [
           { say: "quote … end quote", becomes: "wraps what's between them in “…”", mono: false },
