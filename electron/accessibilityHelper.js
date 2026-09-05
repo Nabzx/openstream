@@ -175,8 +175,12 @@ function createAccessibilityHelper({
     };
   }
 
-  async function deliver(text) {
-    const reply = await request("insert", { text });
+  // #355: expectedBundleId is the app the caller resolved focus context
+  // against - typically just now, so the helper's own abort check (which
+  // watches for the app changing again, mid-typing) has a fresh baseline.
+  // Optional so existing callers are unaffected.
+  async function deliver(text, expectedBundleId) {
+    const reply = await request("insert", { text, ...(expectedBundleId ? { expectedBundleId } : {}) });
     if (reply.status === "delivered") return { kind: "inserted" };
     if (reply.status === "held" && typeof reply.reason === "string") {
       return { kind: "held", reason: reply.reason };
