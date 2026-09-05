@@ -177,6 +177,8 @@ function recordDictationDiagnostic(name, value) {
 
 const dictationIntake = createDictationIntake({
   transcription,
+  // #375: a spoken "paste" reads from here.
+  clipboard: { readText: () => clipboard.readText() },
   contextDetection: accessibilityHelper,
   breakPlacement,
   delivery: accessibilityHelper,
@@ -578,6 +580,14 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
       console.log(`[dictation] release-to-insertion: ${latencyMs.toFixed(1)}ms (${budgetResult} 1000ms budget)`);
     }
     setUserVisibleState("idle");
+  } else if (result.status === "pasted") {
+    // #375: a spoken "paste" - the clipboard is now at the cursor.
+    console.log(`[dictation] pasted ${result.text.length} characters from the clipboard`);
+    showVoiceEditMessage("Pasted");
+  } else if (result.status === "info") {
+    // #375: nothing to paste, or the clipboard was too large.
+    console.log(`[dictation] ${result.message}`);
+    showVoiceEditMessage(result.message);
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.reason}`);
     setUserVisibleState("held", { text: result.text, reason: result.reason });

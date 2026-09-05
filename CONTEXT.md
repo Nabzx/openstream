@@ -73,7 +73,7 @@ Resolving the frontmost application and the focused field via the macOS Accessib
 _Avoid_: App detection, focus detection, context
 
 **Break-safe application**:
-An application where inserting a line break does not submit or send. The app inserts a paragraph break only in these. Every application is treated as unsafe until it is listed.
+An application where inserting a line break does not submit or send. Anything that would put a newline at the cursor - a spoken paragraph break, a multi-line paste (#375) - happens only in these. Every application is treated as unsafe until it is listed.
 _Avoid_: Allow-listed app, multi-line app, safe app
 
 **Break placement**:

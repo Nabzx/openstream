@@ -20,6 +20,8 @@ function createIntake({
   vocabulary,
   onDiagnostic,
   listDetection,
+  // #375: undefined = no clipboard adapter wired at all.
+  clipboardText,
 } = {}) {
   const diagnostics = [];
   const delivered = [];
@@ -47,6 +49,7 @@ function createIntake({
     vocabulary,
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
     listDetection,
+    clipboard: clipboardText !== undefined ? { readText: () => clipboardText } : null,
   });
 
   return { intake, diagnostics, delivered, breakCalls };
@@ -567,6 +570,83 @@ test("#355: delivery gets the bundle id just confirmed as frontmost", async () =
   await harness.intake.complete(completedWav, "com.apple.Notes");
 
   assert.deepEqual(receivedArgs, [["Hello world.", "com.apple.Notes"]]);
+});
+
+test("#375: a bare \"paste\" puts the clipboard at the cursor, not the word", async () => {
+  const args = [];
+  const harness = createIntake({
+    transcript: "paste",
+    clipboardText: "text from the clipboard",
+    deliver: async (...a) => {
+      args.push(a);
+      return { kind: "inserted" };
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "pasted", text: "text from the clipboard" });
+  assert.deepEqual(args, [["text from the clipboard", "com.apple.TextEdit"]]);
+});
+
+test("#375: the aliases match; extra words do not", async () => {
+  for (const spoken of ["paste", "Paste.", "paste that", "paste the clipboard"]) {
+    const harness = createIntake({ transcript: spoken, clipboardText: "x" });
+    assert.equal((await harness.intake.complete(completedWav)).status, "pasted", spoken);
+  }
+  const dictated = createIntake({ transcript: "paste the report into the doc", clipboardText: "x" });
+  const result = await dictated.intake.complete(completedWav);
+  assert.equal(result.status, "delivered", "a sentence with 'paste' in it is ordinary dictation");
+  assert.deepEqual(dictated.delivered, ["Paste the report into the doc."]);
+});
+
+test("#375: multi-line clipboard is held in a non-break-safe app, delivered in a break-safe one", async () => {
+  let deliveries = 0;
+  const held = createIntake({
+    transcript: "paste",
+    bundleId: "com.apple.Terminal",
+    clipboardText: "line one\nline two",
+    deliver: async () => {
+      deliveries++;
+      return { kind: "inserted" };
+    },
+  });
+  const heldResult = await held.intake.complete(completedWav);
+  assert.equal(heldResult.status, "held");
+  assert.equal(heldResult.text, "line one\nline two");
+  assert.match(heldResult.reason, /line break there could run a command/);
+  assert.equal(deliveries, 0);
+
+  const ok = createIntake({ transcript: "paste", bundleId: "com.apple.TextEdit", clipboardText: "line one\nline two" });
+  assert.equal((await ok.intake.complete(completedWav)).status, "pasted");
+});
+
+test("#375: a single-line clipboard pastes even in a terminal", async () => {
+  const harness = createIntake({
+    transcript: "paste",
+    bundleId: "com.apple.Terminal",
+    clipboardText: "npm run build",
+  });
+  assert.equal((await harness.intake.complete(completedWav)).status, "pasted");
+});
+
+test("#375: nothing or too much on the clipboard is a message, not a paste", async () => {
+  const empty = createIntake({ transcript: "paste", clipboardText: "" });
+  const emptyResult = await empty.intake.complete(completedWav);
+  assert.equal(emptyResult.status, "info");
+  assert.match(emptyResult.message, /Nothing on the clipboard/);
+
+  const huge = createIntake({ transcript: "paste", clipboardText: "x".repeat(10001) });
+  const hugeResult = await huge.intake.complete(completedWav);
+  assert.equal(hugeResult.status, "info");
+  assert.match(hugeResult.message, /too big/);
+});
+
+test("#375: with no clipboard adapter, \"paste\" is just dictation", async () => {
+  const harness = createIntake({ transcript: "paste" });
+  const result = await harness.intake.complete(completedWav);
+  assert.equal(result.status, "delivered");
+  assert.deepEqual(harness.delivered, ["Paste."]);
 });
 
 test("delivery failure holds the complete finished text without retrying delivery", async () => {

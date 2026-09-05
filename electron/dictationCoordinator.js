@@ -1,5 +1,30 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
+
+// #375: a bare spoken "paste" is a command, not dictation. Strict
+// whole-utterance match - "paste the report" types literally, like any
+// other sentence with the word in it.
+const PASTE_PHRASES = new Set([
+  "paste",
+  "paste that",
+  "paste it",
+  "paste clipboard",
+  "paste the clipboard",
+  "paste from clipboard",
+  "paste from the clipboard",
+]);
+
+// A clipboard bigger than this is not what a spoken "paste" is for.
+const PASTE_MAX_CHARS = 10000;
+
+function isPasteCommand(rawText) {
+  return PASTE_PHRASES.has(
+    rawText
+      .toLowerCase()
+      .trim()
+      .replace(/[.,!?;:]+$/, ""),
+  );
+}
 const {
   splitSentences,
   repairBreakIndices,
@@ -26,6 +51,10 @@ function createDictationIntake(options) {
     // prompt needs - but the range is only rendered when this is switched on.
     // See spike/list-boundaries-125/FINDINGS.md.
     listDetection = false,
+    // #375: optional - only reached when the whole utterance is a bare
+    // "paste" command. Callers/tests that don't wire it get no paste
+    // command, everything else unchanged.
+    clipboard = null,
   } = options;
 
   assertAdapter("transcription", transcription, "transcribe");
@@ -129,6 +158,51 @@ function createDictationIntake(options) {
     const breakSafe = isBreakSafeApplication(focusContext.bundleId);
     emitDiagnostic("context.breakSafe", breakSafe);
     emitDiagnostic("context.oneLineField", focusContext.isOneLineField);
+
+    // #375: a bare "paste" puts the clipboard at the cursor. Gated the
+    // same way spoken line breaks are - a clipboard with newlines can run
+    // a command in a terminal, so multi-line paste only goes through in a
+    // break-safe app; a single-line clipboard is just text and is allowed
+    // anywhere. #355's app-switch guard already ran above, so the target
+    // is still the app dictation started in.
+    if (clipboard && typeof clipboard.readText === "function" && isPasteCommand(rawText)) {
+      emitDiagnostic("paste.command", true);
+      const clipboardText = clipboard.readText();
+      if (!clipboardText) {
+        return { status: "info", message: "Nothing on the clipboard to paste" };
+      }
+      if (clipboardText.length > PASTE_MAX_CHARS) {
+        emitDiagnostic("paste.tooLarge", clipboardText.length);
+        return { status: "info", message: `The clipboard is too big to paste (${clipboardText.length} characters)` };
+      }
+      if (/[\r\n]/.test(clipboardText) && !breakSafe) {
+        emitDiagnostic("paste.blockedInUnsafeApp", focusContext.bundleId);
+        return {
+          status: "held",
+          text: clipboardText,
+          reason: `won't paste multi-line text into ${focusContext.bundleId} — a line break there could run a command`,
+        };
+      }
+      try {
+        const deliveryResult = await delivery.deliver(clipboardText, focusContext.bundleId);
+        if (deliveryResult?.kind === "inserted") {
+          return { status: "pasted", text: clipboardText };
+        }
+        if (deliveryResult?.kind === "held") {
+          return {
+            status: "held",
+            text: clipboardText,
+            reason:
+              typeof deliveryResult.reason === "string" ? deliveryResult.reason : "the paste could not be placed",
+          };
+        }
+        throw new Error("delivery adapter returned an invalid result");
+      } catch (error) {
+        const reason = errorMessage(error);
+        emitDiagnostic("paste.deliveryFailure", reason);
+        return { status: "held", text: clipboardText, reason };
+      }
+    }
 
     // #307: when the focused element wasn't AX-ready, isOneLineField is a
     // guess, not a real role read - and the guess is "one-line" (#181). In a
