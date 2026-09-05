@@ -11,7 +11,10 @@ const { interpretVoiceEditCommand } = require("./voiceEditCommands");
 // and `delivery` are injected and asserted, and completions are queued so
 // two edits process strictly FIFO.
 function createVoiceEditIntake(options) {
-  const { transcription, delivery, onDiagnostic = () => {} } = options;
+  // #374: clipboard is optional so existing callers (and every test that
+  // doesn't care about "copy that") don't need to know it exists. Only
+  // reached if the command actually is copy - see below.
+  const { transcription, delivery, clipboard, onDiagnostic = () => {} } = options;
 
   assertAdapter("transcription", transcription, "transcribe");
   assertAdapter("delivery", delivery, "deliver");
@@ -68,6 +71,19 @@ function createVoiceEditIntake(options) {
     }
 
     const { commandId, result } = interpreted;
+
+    // #374: "copy that" never rewrites the selection or touches the
+    // target app - it reads the selection captured at key-down and writes
+    // it to the clipboard. No injection, so none of the newline / delivery
+    // machinery below applies.
+    if (commandId === "copy") {
+      if (!clipboard || typeof clipboard.writeText !== "function") {
+        return failed("copy", new Error("no clipboard adapter was configured"));
+      }
+      clipboard.writeText(result);
+      emitDiagnostic("voiceEdit.copied", result.length);
+      return { status: "copied", commandId, text: result };
+    }
 
     const needsNewlines = result.includes("\n");
     const targetTakesNewlines =

@@ -22,6 +22,12 @@ function fakeAdapters(overrides = {}) {
         return { kind: "inserted" };
       },
     },
+    // #374: omit entirely to test the "no clipboard adapter configured" path.
+    clipboard: overrides.noClipboard
+      ? undefined
+      : {
+          writeText: (text) => calls.push(["clipboard.writeText", text]),
+        },
     onDiagnostic: (name, value) => calls.push(["diag", name, value]),
   };
 }
@@ -57,6 +63,32 @@ test("a declined command (prose given to an identifier case) never calls deliver
   assert.equal(result.status, "declined");
   assert.equal(result.commandId, "snake");
   assert.ok(!a.calls.some((c) => c[0] === "deliver"));
+});
+
+test("#374: copy that writes the selection to the clipboard and never calls deliver", async () => {
+  const a = fakeAdapters({ transcript: "copy that" });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("the quick brown fox"));
+  assert.deepEqual(result, { status: "copied", commandId: "copy", text: "the quick brown fox" });
+  assert.deepEqual(a.calls.find((c) => c[0] === "clipboard.writeText"), ["clipboard.writeText", "the quick brown fox"]);
+  assert.ok(!a.calls.some((c) => c[0] === "deliver"), "copy never injects");
+});
+
+test("#374: copy works in an app that isn't break-safe, since nothing is injected", async () => {
+  // The newline / break-safe gate below is about what can land in the
+  // document - copy never reaches it, because it never writes anything.
+  const a = fakeAdapters({ transcript: "copy this" });
+  const result = await createVoiceEditIntake(a).complete(
+    WAV,
+    ctx("some code\nwith a line break", { bundleId: "com.apple.Terminal" }),
+  );
+  assert.equal(result.status, "copied");
+});
+
+test("#374: copy without a clipboard adapter configured fails cleanly", async () => {
+  const a = fakeAdapters({ transcript: "copy that", noClipboard: true });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("hello"));
+  assert.equal(result.status, "failed");
+  assert.equal(result.stage, "copy");
 });
 
 test("a newline result into a non-break-safe app is held, not delivered", async () => {

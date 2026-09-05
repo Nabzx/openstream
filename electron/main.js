@@ -190,6 +190,8 @@ const dictationIntake = createDictationIntake({
 const voiceEditIntake = createVoiceEditIntake({
   transcription,
   delivery: accessibilityHelper,
+  // #374: "copy that" writes the selection here instead of injecting.
+  clipboard: { writeText: (text) => clipboard.writeText(text) },
   onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
 });
 
@@ -528,6 +530,9 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
       console.log(`[voice-edit] release-to-insertion: ${(performance.now() - timing.releasedAtMs).toFixed(1)}ms`);
     }
     setUserVisibleState("idle");
+  } else if (result.status === "copied") {
+    console.log(`[voice-edit] copied ${result.text.length} characters to the clipboard`);
+    showVoiceEditMessage("Copied");
   } else if (result.status === "held") {
     console.log(`[voice-edit] held: ${result.reason}`);
     setUserVisibleState("held", { text: result.text, reason: result.reason });

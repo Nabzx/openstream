@@ -27,7 +27,7 @@ The finished text from a completed recording that could not be placed at the cur
 _Avoid_: Failed dictation, lost text
 
 **Voice edit**:
-A transform of text the user has already selected, requested by speaking a Voice-edit command such as "snake case" or "bullet list". Distinct from dictation: the user selects text first and asks for the change explicitly. In v0.3 the transforms are deterministic and run with no model - a semantic rewrite ("make this shorter") is out of scope until a capable model fills the rewrite model server role.
+A transform of text the user has already selected, requested by speaking a Voice-edit command such as "snake case" or "bullet list". Distinct from dictation: the user selects text first and asks for the change explicitly. In v0.3 the transforms are deterministic and run with no model - a semantic rewrite ("make this shorter") is out of scope until a capable model fills the rewrite model server role. "Copy that" is the exception that proves the shape: same trigger, but it writes the selection to the clipboard and never touches the document (#374).
 _Avoid_: Cleanup, correction, LLM pass, rewrite
 
 **Voice-edit command**:
