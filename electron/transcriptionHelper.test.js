@@ -130,3 +130,71 @@ test("an {event:error} line is logged but does not reject the ready gate outrigh
   assert.ok(chunks.join("").includes("download failed"));
   helper.stop();
 });
+
+function crashLoopHelper() {
+  const children = [];
+  const statuses = [];
+  const helper = createTranscriptionHelper({
+    spawnProcess: () => {
+      const c = fakeProcess();
+      children.push(c);
+      return c;
+    },
+    stderr: captureStream([]),
+    setRestartTimer: (fn) => {
+      fn();
+      return 0;
+    },
+    now: () => 0,
+    failureWindowMs: 1000,
+  });
+  helper.onStatusChange((s) => statuses.push(s));
+  return { helper, children, statuses, latest: () => children[children.length - 1] };
+}
+
+test("#254: three fast exits in a row report the helper as failed", async () => {
+  const { helper, latest, statuses } = crashLoopHelper();
+  helper.start();
+  assert.equal(helper.status(), "starting");
+
+  for (let i = 0; i < 2; i += 1) {
+    latest().emit("exit", 1);
+    await nextTurn();
+    assert.equal(helper.status(), "starting");
+  }
+  latest().emit("exit", 1);
+  await nextTurn();
+
+  assert.equal(helper.status(), "failed");
+  assert.deepEqual(statuses, ["failed"]);
+  helper.stop();
+});
+
+test("#254: a ready event ends the crash loop", async () => {
+  const { helper, latest } = crashLoopHelper();
+  helper.start();
+  for (let i = 0; i < 3; i += 1) {
+    latest().emit("exit", 1);
+    await nextTurn();
+  }
+  assert.equal(helper.status(), "failed");
+
+  latest().stdout.write('{"event":"ready"}\n');
+  await nextTurn();
+  assert.equal(helper.status(), "running");
+  helper.stop();
+});
+
+test("#254: restart() clears a failed state", async () => {
+  const { helper, latest } = crashLoopHelper();
+  helper.start();
+  for (let i = 0; i < 3; i += 1) {
+    latest().emit("exit", 1);
+    await nextTurn();
+  }
+  assert.equal(helper.status(), "failed");
+
+  helper.restart();
+  assert.equal(helper.status(), "starting");
+  helper.stop();
+});

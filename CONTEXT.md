@@ -51,7 +51,7 @@ The process that rewrites existing text on request. It serves voice edits, and i
 _Avoid_: llama-server, the LLM, cleanup model
 
 **Model supervisor**:
-The single component that owns the lifecycle of every model server: starting it, restarting it after a crash or a settings change, and releasing it.
+The single component that owns the lifecycle of every model server: starting it, restarting it after a crash or a settings change, and releasing it. It keeps retrying a crashed server, but after several fast failures in a row it reports the server as **failed** so the app can say so rather than sit silent (#254).
 _Avoid_: Process manager, runner, daemon
 
 **Resident**:

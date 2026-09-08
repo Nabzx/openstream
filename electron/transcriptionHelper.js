@@ -13,8 +13,13 @@ const { resourcesRoot } = require("./paths");
 // a {"event":"ready"} line once the model is loaded, then id-tagged
 // request/reply pairs.
 
+const { CRASH_LOOP_THRESHOLD } = require("./modelSupervisor");
+
 const BIN_PATH = path.join(resourcesRoot(), "bin", "transcription-helper");
 const RESTART_DELAY_MS = 1000;
+// #254: matches modelSupervisor - this many fast failures in a row means
+// the helper is crash-looping, not hitting a blip.
+const FAILURE_WINDOW_MS = 12000;
 
 // Parakeet on the ANE is well under a second on a short clip once warm, but
 // the first call after launch pays a Metal/ANE warm-up and a long dictation
@@ -31,12 +36,42 @@ function createTranscriptionHelper({
   setRestartTimer = setTimeout,
   clearRestartTimer = clearTimeout,
   stderr = process.stderr,
+  now = () => Date.now(),
+  crashLoopThreshold = CRASH_LOOP_THRESHOLD,
+  failureWindowMs = FAILURE_WINDOW_MS,
 } = {}) {
   let child = null;
   let stopping = false;
   let restartTimer = null;
   let nextId = 1;
   const pending = new Map();
+
+  // #254: crash-loop tracking, so the app can show the model as failed
+  // rather than silently retrying forever.
+  let consecutiveFailures = 0;
+  let lastStartAt = 0;
+  const statusListeners = new Set();
+
+  function emitStatus(value) {
+    for (const listener of statusListeners) {
+      try {
+        listener(value);
+      } catch {
+        // A listener must never break the helper.
+      }
+    }
+  }
+
+  function onStatusChange(listener) {
+    statusListeners.add(listener);
+    return () => statusListeners.delete(listener);
+  }
+
+  function status() {
+    if (consecutiveFailures >= crashLoopThreshold) return "failed";
+    if (ready) return "running";
+    return "starting";
+  }
 
   let ready = false;
   let readyResolve;
@@ -53,6 +88,11 @@ function createTranscriptionHelper({
 
   function markReady() {
     ready = true;
+    // A clean ready signal ends any crash loop.
+    if (consecutiveFailures > 0) {
+      consecutiveFailures = 0;
+      emitStatus("running");
+    }
     readyResolve();
   }
 
@@ -94,6 +134,7 @@ function createTranscriptionHelper({
   function start() {
     if (child) return;
     stopping = false;
+    lastStartAt = now();
     const spawnedChild = spawnProcess(BIN_PATH);
     child = spawnedChild;
 
@@ -108,9 +149,11 @@ function createTranscriptionHelper({
         settle(id, null, new Error("transcription-helper exited before replying"));
       }
       if (stopping) return;
+      consecutiveFailures = now() - lastStartAt < failureWindowMs ? consecutiveFailures + 1 : 1;
       stderr.write(
         `[transcription-helper] exited unexpectedly (code ${code}), restarting in ${restartDelayMs}ms\n`,
       );
+      if (consecutiveFailures === crashLoopThreshold) emitStatus("failed");
       restartTimer = setRestartTimer(() => {
         restartTimer = null;
         start();
@@ -174,7 +217,15 @@ function createTranscriptionHelper({
     return reply.text.trim();
   }
 
-  return { start, stop, isReady, whenReady, transcribe };
+  // #254: a user-driven restart of a failed helper - clear the crash-loop
+  // count so it isn't still "failed" the moment it comes back.
+  function restart() {
+    consecutiveFailures = 0;
+    stop();
+    start();
+  }
+
+  return { start, stop, restart, isReady, whenReady, status, onStatusChange, transcribe };
 }
 
 module.exports = {

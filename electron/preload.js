@@ -23,6 +23,15 @@ function onSetupProgress(callback) {
   return () => ipcRenderer.removeListener("setup-progress", listener);
 }
 
+// #254: main pushes this when a model server's health changes (a crash
+// loop, or a recovery), so the System panel refreshes without waiting for
+// its poll. Carries no payload - the renderer re-fetches getHealth().
+function onHealthChanged(callback) {
+  const listener = () => callback();
+  ipcRenderer.on("health-changed", listener);
+  return () => ipcRenderer.removeListener("health-changed", listener);
+}
+
 // The renderer's only route to the main process, per contextIsolation - see
 // the settings window's webPreferences in main.js. First surface: settings
 // (#19). This will grow to cover the hotkey helper, the accessibility
@@ -36,6 +45,7 @@ contextBridge.exposeInMainWorld("openstream", {
     openPrivacySettings: (key) => ipcRenderer.invoke("app:open-privacy-settings", key),
     getSetupProgress: () => ipcRenderer.invoke("app:get-setup-progress"),
     retryModelDownload: () => ipcRenderer.invoke("app:retry-model-download"),
+    restartModel: (role) => ipcRenderer.invoke("app:restart-model", role),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),
@@ -62,4 +72,5 @@ contextBridge.exposeInMainWorld("openstream", {
   onNavigate,
   onDictationState,
   onSetupProgress,
+  onHealthChanged,
 });

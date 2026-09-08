@@ -620,7 +620,11 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "failed") {
     console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
-    setUserVisibleState("idle");
+    // #254: don't drop to idle in silence - a failed transcription looks
+    // exactly like a dead hotkey otherwise. Say which stage broke.
+    showVoiceEditMessage(
+      result.stage === "transcription" ? "Couldn’t transcribe that" : "That didn’t go through",
+    );
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");
     setUserVisibleState("idle");
@@ -679,6 +683,8 @@ function loadTrayIcons() {
 }
 
 let permissionsBlocked = false;
+// #254: the roles (transcription / rewrite) whose server is crash-looping.
+const failedModels = new Set();
 
 function setTrayState(state) {
   if (!trayIcons[state]) {
@@ -687,7 +693,12 @@ function setTrayState(state) {
   trayState = state;
   tray.setImage(trayIcons[state]);
   const base = state === "idle" ? "OpenStream" : `OpenStream — ${state}`;
-  tray.setToolTip(permissionsBlocked ? `${base} (permissions needed)` : base);
+  const note = permissionsBlocked
+    ? " (permissions needed)"
+    : failedModels.size > 0
+      ? " (model not running)"
+      : "";
+  tray.setToolTip(`${base}${note}`);
 }
 
 // #47: reflected in the tray tooltip so a degraded app is visible without
@@ -695,6 +706,18 @@ function setTrayState(state) {
 function updateTrayForPermissions(verdict) {
   permissionsBlocked = !verdict.ok;
   if (tray) setTrayState(trayState);
+}
+
+// #254: a model server entering / leaving its crash-looped state. Update the
+// tray, and push a health refresh to the window so the System panel reacts
+// immediately rather than on its next poll.
+function reflectModelStatus(role, status) {
+  if (status === "failed") failedModels.add(role);
+  else failedModels.delete(role);
+  console.error(`[${role} model] status: ${status}`);
+  if (tray) setTrayState(trayState);
+  if (win && !win.isDestroyed()) win.webContents.send("health-changed");
+  if (status === "failed") openWindowTo("home");
 }
 
 // Positioned fresh on every show, not once at creation, so it follows
@@ -860,6 +883,14 @@ ipcMain.handle("app:open-privacy-settings", (event, key) => {
   if (url) shell.openExternal(url);
 });
 
+// #254: a crash-looping server is "failed", not perpetually "starting" -
+// readiness (is it up?) and supervisor status (is it giving up?) together
+// decide what the user is told.
+function modelHealth(ready, status) {
+  if (ready) return "ready";
+  return status === "failed" ? "failed" : "starting";
+}
+
 ipcMain.handle("app:get-health", async () => {
   const [transcription, rewrite, permissions] = await Promise.all([
     transcriptionHelper.isReady(),
@@ -868,9 +899,18 @@ ipcMain.handle("app:get-health", async () => {
   ]);
   return {
     permissions: permissions.grants,
-    transcriptionModel: transcription ? "ready" : "starting",
-    rewriteModel: rewrite ? "ready" : "starting",
+    transcriptionModel: modelHealth(transcription, transcriptionHelper.status()),
+    rewriteModel: modelHealth(rewrite, rewriteModelServer.status()),
   };
+});
+
+ipcMain.handle("app:restart-model", (event, role) => {
+  // #254: the "Restart" affordance on the Home System panel.
+  if (role === "transcription") transcriptionHelper.restart();
+  else if (role === "rewrite") rewriteModelServer.restart();
+  else return { ok: false };
+  console.log(`[${role} model] restart requested by the user`);
+  return { ok: true };
 });
 
 ipcMain.handle("settings:start-shortcut-capture", (event) => {
@@ -1043,6 +1083,11 @@ app.whenReady().then(() => {
   const startModelServers = () => {
     transcriptionHelper.start();
     rewriteModelServer.start();
+    // #254: a crash-looping server updates the tray tooltip and nudges the
+    // window open, the same way a missing permission does - a dictation tool
+    // that silently does nothing is indistinguishable from a broken hotkey.
+    transcriptionHelper.onStatusChange((status) => reflectModelStatus("transcription", status));
+    rewriteModelServer.onStatusChange((status) => reflectModelStatus("rewrite", status));
   };
 
   // #249: a packaged app ships without the model weights and fetches them

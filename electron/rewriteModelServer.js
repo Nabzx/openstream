@@ -41,6 +41,12 @@ function createRewriteModelServer(options = {}) {
   return {
     start: () => ensureSupervisor().start(),
     stop: () => supervisor?.stop(),
+    // #254: "failed" once it is crash-looping; "starting" until the first
+    // spawn; "running" while a process is up (readiness is a separate HTTP
+    // probe in main.js).
+    status: () => (supervisor ? supervisor.status() : "starting"),
+    onStatusChange: (listener) => ensureSupervisor().onStatusChange(listener),
+    restart: () => ensureSupervisor().restart(),
     healthUrl: () => `http://${HOST}:${port}/health`,
     chatCompletionsUrl: () => `http://${HOST}:${port}/v1/chat/completions`,
   };
