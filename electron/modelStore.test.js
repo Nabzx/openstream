@@ -88,6 +88,5 @@ test("ensureModels throws a clear error when a weight is missing and nothing is 
 
 test("the model list matches what the servers expect", () => {
   const files = MODELS.map((m) => m.file);
-  assert.ok(files.includes("ggml-base.en.bin"));
   assert.ok(files.includes("smollm2-1.7b-instruct-q4_k_m.gguf"));
 });

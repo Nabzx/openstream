@@ -3,8 +3,8 @@
 // either still matches every hand-verified sample or it doesn't.
 //
 // Every sample here must come from a real recording transcribed by the real
-// whisper-server, never from `say`/TTS - see fixtures/README.md for why, and
-// for how to add a new one.
+// transcription helper, never from `say`/TTS - see fixtures/README.md for
+// why, and for how to add a new one.
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { cleanup } = require("./rules");

@@ -1,5 +1,7 @@
 # Whisper configuration and dictation cleanup
 
+> **Superseded.** Transcription moved to Parakeet ([ADR-0003](../adr/0003-parakeet-for-transcription.md)) and the whisper.cpp path was removed in [#326](https://github.com/Nabzx/openstream/issues/326). Kept as a record of the investigation; the whisper-specific findings and the `scripts/model-artifacts.mjs` pointer below no longer describe the shipping app.
+
 Research note for [#196](https://github.com/Nabzx/openstream/issues/196). This note is research only. It does not change the transcription model server, the final dictation text contract, or production code.
 
 ## Question

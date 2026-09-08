@@ -43,7 +43,7 @@ _Avoid_: Failed edit
 Named by the role they fill, never by the model that currently fills it. Which model occupies a role is a separate, still-open question.
 
 **Transcription model server**:
-The process that turns captured audio into text. Fills the role currently held by `whisper-server`.
+The process that turns captured audio into text. Currently `transcription-helper` (Parakeet TDT 0.6b v3 via FluidAudio, ADR-0003).
 _Avoid_: whisper, STT engine, the transcriber
 
 **Rewrite model server**:
