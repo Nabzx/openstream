@@ -22,11 +22,15 @@ function fakeAdapters(overrides = {}) {
         return { kind: "inserted" };
       },
     },
-    // #374: omit entirely to test the "no clipboard adapter configured" path.
+    // #374/#378: omit entirely to test the "no clipboard adapter configured" path.
     clipboard: overrides.noClipboard
       ? undefined
       : {
           writeText: (text) => calls.push(["clipboard.writeText", text]),
+          readText: () => {
+            calls.push(["clipboard.readText"]);
+            return overrides.clipboardText ?? "";
+          },
         },
     onDiagnostic: (name, value) => calls.push(["diag", name, value]),
   };
@@ -89,6 +93,51 @@ test("#374: copy without a clipboard adapter configured fails cleanly", async ()
   const result = await createVoiceEditIntake(a).complete(WAV, ctx("hello"));
   assert.equal(result.status, "failed");
   assert.equal(result.stage, "copy");
+});
+
+test("#378: paste over the selection delivers the clipboard, not the selection", async () => {
+  const a = fakeAdapters({ transcript: "paste over this", clipboardText: "newIdentifier" });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("oldIdentifier"));
+  assert.deepEqual(result, { status: "delivered", commandId: "paste-over", text: "newIdentifier" });
+  assert.deepEqual(a.calls.find((c) => c[0] === "deliver"), ["deliver", "newIdentifier"]);
+});
+
+test("#378: paste over the selection with an empty clipboard reports it and never delivers", async () => {
+  const a = fakeAdapters({ transcript: "paste over that", clipboardText: "" });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("something"));
+  assert.equal(result.status, "info");
+  assert.equal(result.message, "Nothing on the clipboard to paste");
+  assert.ok(!a.calls.some((c) => c[0] === "deliver"));
+});
+
+test("#378: paste over the selection refuses an oversized clipboard", async () => {
+  const a = fakeAdapters({ transcript: "paste over this", clipboardText: "x".repeat(10001) });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("something"));
+  assert.equal(result.status, "info");
+  assert.match(result.message, /too big to paste \(10001 characters\)/);
+  assert.ok(!a.calls.some((c) => c[0] === "deliver"));
+});
+
+test("#378: a multi-line clipboard is held out of a non-break-safe app", async () => {
+  const a = fakeAdapters({ transcript: "paste over this", clipboardText: "line one\nline two" });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("target", { bundleId: "com.apple.Terminal" }));
+  assert.equal(result.status, "held");
+  assert.equal(result.commandId, "paste-over");
+  assert.ok(!a.calls.some((c) => c[0] === "deliver"));
+});
+
+test("#378: a multi-line clipboard goes through in a break-safe app", async () => {
+  const a = fakeAdapters({ transcript: "paste over this", clipboardText: "line one\nline two" });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("target"));
+  assert.equal(result.status, "delivered");
+  assert.equal(result.text, "line one\nline two");
+});
+
+test("#378: paste over the selection without a clipboard adapter fails cleanly", async () => {
+  const a = fakeAdapters({ transcript: "paste over this", noClipboard: true });
+  const result = await createVoiceEditIntake(a).complete(WAV, ctx("hello"));
+  assert.equal(result.status, "failed");
+  assert.equal(result.stage, "paste");
 });
 
 test("a newline result into a non-break-safe app is held, not delivered", async () => {

@@ -1,5 +1,10 @@
 const { isBreakSafeApplication } = require("./breakSafety");
 const { interpretVoiceEditCommand } = require("./voiceEditCommands");
+const {
+  PASTE_MAX_CHARS,
+  EMPTY_CLIPBOARD_MESSAGE,
+  clipboardTooBigMessage,
+} = require("./clipboardPasteLimits");
 
 // Voice-edit intake (#17). The user selected text, held push-to-talk, and
 // spoke a command. This transcribes the command, matches it against the
@@ -85,28 +90,48 @@ function createVoiceEditIntake(options) {
       return { status: "copied", commandId, text: result };
     }
 
-    const needsNewlines = result.includes("\n");
+    // #378: "paste over this" delivers the clipboard in place of the
+    // selection. From here on it is an ordinary transform - the text just
+    // came from the clipboard rather than a rewrite of the selection - so
+    // it flows through the same newline gate and delivery below.
+    let deliverable = result;
+    if (commandId === "paste-over") {
+      if (!clipboard || typeof clipboard.readText !== "function") {
+        return failed("paste", new Error("no clipboard adapter was configured"));
+      }
+      const clipboardText = clipboard.readText();
+      if (!clipboardText) {
+        return { status: "info", commandId, message: EMPTY_CLIPBOARD_MESSAGE };
+      }
+      if (clipboardText.length > PASTE_MAX_CHARS) {
+        emitDiagnostic("voiceEdit.pasteTooLarge", clipboardText.length);
+        return { status: "info", commandId, message: clipboardTooBigMessage(clipboardText.length) };
+      }
+      deliverable = clipboardText;
+    }
+
+    const needsNewlines = deliverable.includes("\n");
     const targetTakesNewlines =
       isBreakSafeApplication(focusContext.bundleId) && !focusContext.isOneLineField;
     if (needsNewlines && !targetTakesNewlines) {
       return {
         status: "held",
         commandId,
-        text: result,
+        text: deliverable,
         reason: "this app can't take the line breaks this edit needs",
       };
     }
 
     try {
-      const deliveryResult = await delivery.deliver(result);
+      const deliveryResult = await delivery.deliver(deliverable);
       if (deliveryResult?.kind === "inserted") {
-        return { status: "delivered", commandId, text: result };
+        return { status: "delivered", commandId, text: deliverable };
       }
       if (deliveryResult?.kind === "held") {
         return {
           status: "held",
           commandId,
-          text: result,
+          text: deliverable,
           reason:
             typeof deliveryResult.reason === "string" ? deliveryResult.reason : "delivery could not proceed",
         };
@@ -115,7 +140,7 @@ function createVoiceEditIntake(options) {
     } catch (error) {
       const reason = errorMessage(error);
       emitDiagnostic("voiceEdit.deliveryFailure", reason);
-      return { status: "held", commandId, text: result, reason };
+      return { status: "held", commandId, text: deliverable, reason };
     }
   }
 

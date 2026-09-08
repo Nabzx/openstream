@@ -193,7 +193,11 @@ const voiceEditIntake = createVoiceEditIntake({
   transcription,
   delivery: accessibilityHelper,
   // #374: "copy that" writes the selection here instead of injecting.
-  clipboard: { writeText: (text) => clipboard.writeText(text) },
+  // #378: "paste over this" reads from here and delivers it over the selection.
+  clipboard: {
+    writeText: (text) => clipboard.writeText(text),
+    readText: () => clipboard.readText(),
+  },
   onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
 });
 
@@ -535,6 +539,10 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
   } else if (result.status === "copied") {
     console.log(`[voice-edit] copied ${result.text.length} characters to the clipboard`);
     showVoiceEditMessage("Copied");
+  } else if (result.status === "info") {
+    // #378: nothing to paste over the selection, or the clipboard was too big.
+    console.log(`[voice-edit] ${result.message}`);
+    showVoiceEditMessage(result.message);
   } else if (result.status === "held") {
     console.log(`[voice-edit] held: ${result.reason}`);
     setUserVisibleState("held", { text: result.text, reason: result.reason });

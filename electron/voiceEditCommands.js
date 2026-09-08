@@ -30,6 +30,18 @@ const COMMANDS = {
   // commandId "copy"; the coordinator reads that id to route to the
   // clipboard instead of injection, same as it already reads other ids.
   copy: { kind: "copy", aliases: ["copy that", "copy this", "copy it", "copy"] },
+  // #378: replace the selection with the clipboard. Like copy, the grammar
+  // layer has no clipboard, so applyCommand returns the selection only to
+  // signal "ok"; the coordinator sees commandId "paste-over" and swaps in
+  // the clipboard text before it runs the newline / delivery checks.
+  "paste-over": {
+    kind: "paste-over",
+    aliases: [
+      "paste over this", "paste over that", "paste over the selection", "paste over",
+      "replace with clipboard", "replace with the clipboard",
+      "replace this with the clipboard", "replace that with the clipboard",
+    ],
+  },
 };
 
 const ALIAS_TO_ID = new Map();
@@ -134,6 +146,7 @@ function applyCommand(command, selection) {
   if (command.kind === "wrap") return applyWrap(command, selection);
   if (command.kind === "list") return applyList(command, selection);
   if (command.kind === "copy") return selection;
+  if (command.kind === "paste-over") return selection;
   return null;
 }
 

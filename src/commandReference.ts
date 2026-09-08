@@ -156,6 +156,7 @@ export const COMMAND_SECTIONS: CommandSection[] = [
         title: "Clipboard",
         commands: [
           { say: "copy that  ·  copy this", becomes: "copies the selection — the document is left untouched" },
+          { say: "paste over this  ·  replace with clipboard", becomes: "swaps the selection for the clipboard. Multi-line only in break-safe apps." },
         ],
       },
     ],
