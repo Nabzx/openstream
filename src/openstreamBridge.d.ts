@@ -1,9 +1,12 @@
 import type { StoredHotkey } from "./hotkey/captureHotkey";
 
+export type TermCorrection = { heard: string; write: string };
+
 export type StoredSettings = {
   hotkey: StoredHotkey;
   breakSafeApps: string[];
   vocabularyProjectPath: string | null;
+  termCorrections: TermCorrection[];
 };
 
 export type SetShortcutResult =
@@ -74,6 +77,7 @@ declare global {
         setVocabularyProjectPath(
           projectPath: string | null
         ): Promise<{ settings: StoredSettings; status: VocabularyStatus }>;
+        setTermCorrections(entries: TermCorrection[]): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;

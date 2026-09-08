@@ -43,6 +43,10 @@ function createDictationIntake(options) {
     // no-op that biases nothing, rather than forcing every caller/test to
     // know about vocabulary scanning.
     vocabulary = { getPrompt: () => "" },
+    // #321: user-maintained term corrections from Settings. Optional and
+    // defaulting to none, same as vocabulary - callers/tests that don't wire
+    // it get ordinary cleanup with only the built-in vocabulary.
+    corrections = { getEntries: () => [] },
     onDiagnostic = () => {},
     // #125: the spike found SmolLM2-1.7B over-triggers list detection (a list
     // flagged on 5 of 6 non-lists) and the live prompt is break-only for now,
@@ -62,6 +66,7 @@ function createDictationIntake(options) {
   assertAdapter("breakPlacement", breakPlacement, "placeParagraphBreaks");
   assertAdapter("delivery", delivery, "deliver");
   assertAdapter("vocabulary", vocabulary, "getPrompt");
+  assertAdapter("corrections", corrections, "getEntries");
 
   let queue = Promise.resolve();
 
@@ -98,6 +103,13 @@ function createDictationIntake(options) {
       return { status: "no-speech" };
     }
 
+    // #321: read the user's correction table once for this dictation and fold
+    // it into every cleanup() call below (the main path and both salvage
+    // paths), so a held transcript still gets the name spelled right.
+    const correctionEntries = corrections.getEntries();
+    emitDiagnostic("corrections.count", Array.isArray(correctionEntries) ? correctionEntries.length : 0);
+    const clean = (text, opts) => cleanup(text, { ...opts, corrections: correctionEntries });
+
     let focusContext;
     try {
       focusContext = await contextDetection.getFocusContext();
@@ -127,7 +139,7 @@ function createDictationIntake(options) {
         recordStartBundleId !== focusContext.bundleId
       ) {
         emitDiagnostic("context.appSwitchedDuringDictation", `${recordStartBundleId} -> ${focusContext.bundleId}`);
-        const salvaged = cleanup(rawText, { oneLineBox: false, breakSafe: false });
+        const salvaged = clean(rawText, { oneLineBox: false, breakSafe: false });
         if (!salvaged) {
           return { status: "no-speech" };
         }
@@ -144,7 +156,7 @@ function createDictationIntake(options) {
       // cleaned with the safe defaults (deny line breaks), exactly as a
       // failed delivery does.
       emitDiagnostic("context.failure", errorMessage(error));
-      const salvaged = cleanup(rawText, { oneLineBox: false, breakSafe: false });
+      const salvaged = clean(rawText, { oneLineBox: false, breakSafe: false });
       if (!salvaged) {
         return { status: "no-speech" };
       }
@@ -229,7 +241,7 @@ function createDictationIntake(options) {
       emitDiagnostic("context.breakCommandDropped", focusContext.bundleId);
     }
 
-    let finishedText = cleanup(rawText, {
+    let finishedText = clean(rawText, {
       oneLineBox: treatAsOneLine,
       breakSafe,
     });

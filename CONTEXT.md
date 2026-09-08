@@ -68,6 +68,10 @@ _Avoid_: Eviction, unloading, timeout kill
 Deterministic, non-model text tidying applied to every dictation. Costs under a millisecond. It does all cleanup except break placement, which it asks the rewrite model server to decide.
 _Avoid_: Post-processing, formatting pass
 
+**Term correction**:
+A user-supplied "heard this, write that" pair (#321), applied during rules cleanup after the built-in vocabulary. It rewrites one exact word or phrase the transcription reliably gets wrong, most often a name. Deterministic and literal - it never guesses at a near-miss it was not told about.
+_Avoid_: vocabulary biasing (that acts during transcription, not after), autocorrect, dictionary
+
 **Context detection**:
 Resolving the frontmost application and the focused field via the macOS Accessibility API. It is the input to break-safe determination, not the decision itself: it reports the bundle id and the AX role, and what is done with them is defined separately.
 _Avoid_: App detection, focus detection, context

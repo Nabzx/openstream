@@ -768,6 +768,41 @@ button { font: inherit; }
   border-style: dashed;
 }
 
+/* #321: the Names & terms table - one row per correction, laid out like a
+   stack of chips rather than a data grid. */
+.correction-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 9px;
+}
+.correction-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 7px 4px 11px;
+  font-size: 12px;
+  border-radius: var(--r-sm);
+  background: var(--screen-2);
+  border: 1px solid var(--line-hi);
+  color: var(--fg-hi);
+  align-self: flex-start;
+}
+.correction-row__arrow { color: var(--faint); }
+.correction-row__write { color: var(--acc); }
+.correction-row button {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  cursor: default;
+  padding: 0 2px;
+  margin-left: 2px;
+  font-size: 14px;
+  line-height: 1;
+}
+.correction-row button:hover { color: var(--err); }
+.correction-list .chip--empty { align-self: flex-start; }
+
 .settings-advanced { margin-top: 12px; }
 .settings-advanced > summary {
   font-size: 12px;

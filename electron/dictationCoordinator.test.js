@@ -18,6 +18,8 @@ function createIntake({
   placeParagraphBreaks,
   deliver,
   vocabulary,
+  // #321: undefined = no corrections adapter wired (the default no-op).
+  corrections,
   onDiagnostic,
   listDetection,
   // #375: undefined = no clipboard adapter wired at all.
@@ -47,6 +49,7 @@ function createIntake({
       }),
     },
     vocabulary,
+    ...(corrections !== undefined ? { corrections } : {}),
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
     listDetection,
     clipboard: clipboardText !== undefined ? { readText: () => clipboardText } : null,
@@ -111,6 +114,39 @@ test("#16: with no vocabulary adapter configured, transcribe gets an empty promp
   await harness.intake.complete(completedWav);
 
   assert.deepEqual(transcriptionCalls, [""]);
+});
+
+test("#321: the corrections adapter's table is applied to the finished text", async () => {
+  const { result, delivered } = await deliveredText({
+    transcript: "i spoke to nabeel about open stream",
+    corrections: {
+      getEntries: () => [
+        { heard: "Nabeel", write: "Nabil" },
+        { heard: "open stream", write: "OpenStream" },
+      ],
+    },
+  });
+  assert.equal(result.status, "delivered");
+  assert.deepEqual(delivered, ["I spoke to Nabil about OpenStream."]);
+});
+
+test("#321: corrections also reach a held (salvaged) transcript", async () => {
+  const harness = createIntake({
+    transcript: "tell nabeel it works",
+    corrections: { getEntries: () => [{ heard: "Nabeel", write: "Nabil" }] },
+    getFocusContext: async () => {
+      throw new Error("helper is down");
+    },
+  });
+  const result = await harness.intake.complete(completedWav);
+  assert.equal(result.status, "held");
+  assert.equal(result.text, "Tell Nabil it works.");
+});
+
+test("#321: with no corrections adapter, cleanup runs unchanged", async () => {
+  const { result, delivered } = await deliveredText({ transcript: "hello nabeel" });
+  assert.equal(result.status, "delivered");
+  assert.deepEqual(delivered, ["Hello nabeel."]);
 });
 
 test("a known unsafe application never receives spoken line breaks", async () => {
@@ -283,6 +319,7 @@ test("repairs malformed break indices without retrying and records format and re
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["context.breakSafe", true],
@@ -340,6 +377,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["context.breakSafe", true],
@@ -366,6 +404,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["context.breakSafe", true],
@@ -392,6 +431,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["context.breakSafe", true],
@@ -417,6 +457,7 @@ test("list detection is off by default: a valid range is parsed and reported but
   });
   assert.deepEqual(harness.diagnostics, [
     ["vocabulary.promptLength", 0],
+    ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
     ["context.breakSafe", true],
