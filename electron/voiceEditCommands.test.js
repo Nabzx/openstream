@@ -97,6 +97,16 @@ test("#374: copy never declines - any selection, however prose-like, can be copi
   assert.equal(result("copy that", "a whole sentence, with punctuation!").status, "ok");
 });
 
+test("#378: paste over the selection matches and returns ok, whatever the selection", () => {
+  for (const spoken of [
+    "paste over this", "paste over that", "paste over", "Paste over the selection.",
+    "replace with clipboard", "replace with the clipboard",
+  ]) {
+    assert.equal(result(spoken, "old value, with prose").commandId, "paste-over", spoken);
+    assert.equal(result(spoken, "old value").status, "ok", spoken);
+  }
+});
+
 test("unrecognised command leaves an explicit status", () => {
   assert.deepEqual(result("make this sing", "whatever"), { status: "unrecognised" });
 });

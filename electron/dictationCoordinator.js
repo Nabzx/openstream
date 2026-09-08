@@ -14,8 +14,11 @@ const PASTE_PHRASES = new Set([
   "paste from the clipboard",
 ]);
 
-// A clipboard bigger than this is not what a spoken "paste" is for.
-const PASTE_MAX_CHARS = 10000;
+const {
+  PASTE_MAX_CHARS,
+  EMPTY_CLIPBOARD_MESSAGE,
+  clipboardTooBigMessage,
+} = require("./clipboardPasteLimits");
 
 function isPasteCommand(rawText) {
   return PASTE_PHRASES.has(
@@ -169,11 +172,11 @@ function createDictationIntake(options) {
       emitDiagnostic("paste.command", true);
       const clipboardText = clipboard.readText();
       if (!clipboardText) {
-        return { status: "info", message: "Nothing on the clipboard to paste" };
+        return { status: "info", message: EMPTY_CLIPBOARD_MESSAGE };
       }
       if (clipboardText.length > PASTE_MAX_CHARS) {
         emitDiagnostic("paste.tooLarge", clipboardText.length);
-        return { status: "info", message: `The clipboard is too big to paste (${clipboardText.length} characters)` };
+        return { status: "info", message: clipboardTooBigMessage(clipboardText.length) };
       }
       if (/[\r\n]/.test(clipboardText) && !breakSafe) {
         emitDiagnostic("paste.blockedInUnsafeApp", focusContext.bundleId);
