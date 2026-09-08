@@ -326,6 +326,42 @@ const NUMBER_WORD_PATTERN =
   "thousand|and)";
 const NUMBER_PHRASE_PATTERN = `${NUMBER_WORD_PATTERN}(?:[\\s-]+${NUMBER_WORD_PATTERN})*`;
 
+// #332: a spoken compound number in the tens ("twenty three", "forty
+// seven") is a quantity and reads better as digits. Deliberately narrow -
+// bare "twenty", hundred-scale numbers, years ("nineteen eighty four")
+// and "X and Y" enumerations ("chapters one and two") are all left as
+// words until the eval corpus (#171) can prove a wider pass doesn't
+// mangle ordinary writing. This form has no such ambiguity: nobody says
+// "twenty three" in prose meaning anything but 23.
+const SPOKEN_TENS = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+const SPOKEN_ONES = {
+  one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+};
+
+// Any number word that, sitting either side of a "twenty three", means we
+// are looking at something bigger or stranger than a plain two-digit count
+// - a year ("nineteen eighty four"), a larger figure ("twenty three
+// hundred"). Leave those alone.
+const SPOKEN_NUMBER_CONTEXT =
+  "one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|" +
+  "fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|" +
+  "fifty|sixty|seventy|eighty|ninety|hundred|thousand|million|billion";
+const SPOKEN_NUMBER_PATTERN = new RegExp(
+  `(?<!\\b(?:${SPOKEN_NUMBER_CONTEXT})[\\s-])` +
+    "\\b(twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety)[\\s-]" +
+    "(one|two|three|four|five|six|seven|eight|nine)\\b" +
+    `(?![\\s-](?:${SPOKEN_NUMBER_CONTEXT})\\b)`,
+  "gi",
+);
+
+function applySpokenNumbers(text) {
+  return text.replace(SPOKEN_NUMBER_PATTERN, (_match, tens, ones) =>
+    String(SPOKEN_TENS[tens.toLowerCase()] + SPOKEN_ONES[ones.toLowerCase()]),
+  );
+}
+
 function applyCurrency(text) {
   // Combined form first, so a standalone "cents" pass below can't run on a
   // span this pass already consumed.
@@ -507,6 +543,7 @@ function cleanup(text, options = {}) {
   text = applySpokenEmoji(text);
   text = applyQuoteMarkers(text);
   text = applyCurrency(text);
+  text = applySpokenNumbers(text);
   text = stripLeadingFillers(text);
   if (!oneLineBox) {
     text = segmentSentences(text);
@@ -542,6 +579,7 @@ module.exports = {
   applyQuoteMarkers,
   parseNumberWords,
   applyCurrency,
+  applySpokenNumbers,
   applySpellOut,
   stripLeadingFillers,
   segmentSentences,

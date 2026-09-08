@@ -341,6 +341,29 @@ test("\"a\"/\"an\" as a number word means one, the same idiom as ordinary Englis
   assert.equal(cleanup("that will cost a dollar and fifty cents"), "That will cost $1.50.");
 });
 
+test("compound spoken numbers in the tens become digits (#332)", () => {
+  const cases = [
+    ["i counted twenty three of them", "I counted 23 of them."],
+    ["she is forty seven", "She is 47."],
+    ["press the button ninety nine times", "Press the button 99 times."],
+    ["chapter twenty-one", "Chapter 21."],
+  ];
+  for (const [raw, expected] of cases) {
+    assert.equal(cleanup(raw), expected, raw);
+  }
+});
+
+test("spoken-number conversion stays clear of anything ambiguous (#332)", () => {
+  // A bare number word can still be prose ("twenty of them").
+  assert.equal(cleanup("i have twenty of them"), "I have twenty of them.");
+  // "X and Y" is an enumeration, not a sum.
+  assert.equal(cleanup("read chapters one and two"), "Read chapters one and two.");
+  // Hundred-scale numbers are left alone for now (often hyperbole).
+  assert.equal(cleanup("i told you a hundred times"), "I told you a hundred times.");
+  // Years read wrong if summed, so the teens form is untouched.
+  assert.equal(cleanup("it was nineteen eighty four"), "It was nineteen eighty four.");
+});
+
 test("spell:/spell that: assembles single-letter tokens into one capitalised word (#132)", () => {
   assert.equal(cleanup("my name is spell that j o h n"), "My name is John.");
   assert.equal(cleanup("spell: b o o k"), "Book.");

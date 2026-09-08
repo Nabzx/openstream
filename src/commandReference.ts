@@ -102,6 +102,7 @@ export const COMMAND_SECTIONS: CommandSection[] = [
           { say: "spell, then the letters", becomes: "“spell J O H N” → John", mono: false },
           { say: "fifty dollars", becomes: "$50", mono: true },
           { say: "three dollars and twenty cents", becomes: "$3.20", mono: true },
+          { say: "twenty three", becomes: "23 — compound tens only; “twenty” on its own stays a word", mono: false },
         ],
       },
       {
