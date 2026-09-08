@@ -6,7 +6,7 @@
 
 App size is OpenStream's most visible competitive weakness. OpenSuperWhisper's DMG is **11 MB**; ours — even after #249 — is an estimated **~150 MB**, and ~120–150 MB of that is the Electron runtime alone. To be the obvious choice for a local dictation tool, the download has to feel light.
 
-**Hard guardrail:** transcription accuracy (whisper `base.en`) and the deterministic cleanup must not regress. The only quality lever genuinely at risk is paragraph-break placement, which is the one thing the resident rewrite model does.
+**Hard guardrail:** transcription accuracy (Parakeet TDT 0.6b v3, since [ADR-0003](../adr/0003-parakeet-for-transcription.md)) and the deterministic cleanup must not regress. The only quality lever genuinely at risk is paragraph-break placement, which is the one thing the resident rewrite model does.
 
 ## Where the bytes are (post-#249, arm64 `.app` → DMG estimate)
 
@@ -14,7 +14,7 @@ App size is OpenStream's most visible competitive weakness. OpenSuperWhisper's D
 |---|---|---|
 | **Electron runtime** (Chromium + Node) | **~120–150 MB** | The whole ballgame. `node_modules/electron/dist` is 295 MB unpacked; the packaged arm64 slice is smaller but dominant. |
 | `resources/bin/llama/` | ~26 MB | `llama-server` + ~50 dylibs. The dylibs (`libllama`, `libggml-metal`, `libmtmd`, …) are the bulk, not the extra CLI binaries. |
-| `resources/bin/whisper-server` + 6 dylibs | ~4 MB | Not worth optimising. |
+| `resources/bin/transcription-helper` | ~1 MB | Swift, statically links FluidAudio. Parakeet's CoreML bundles (~470 MB) download on first run, not bundled. Not worth optimising. |
 | Native helpers (`hotkey-helper`, `accessibility-helper`) | ~0.25 MB | Swift, tiny. |
 | Renderer (`dist/`) | ~0.2 MB | React build. |
 
@@ -26,7 +26,7 @@ Runtime dependencies are just `react` + `react-dom` — no bloat there.
 
 - electron-builder pruning: drop unused locales, `inspector`, other-arch bits.
 - Drop `libmtmd` (multimodal) and the unused CLI binaries from the llama bundle if `llama-server` still links.
-- Strip symbols from `whisper-server` and its dylibs.
+- Strip symbols from `transcription-helper` and the llama dylibs.
 
 Marginal. Do it, but it doesn't change the story.
 

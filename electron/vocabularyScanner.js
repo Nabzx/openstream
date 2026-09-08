@@ -1,10 +1,8 @@
-// #16: scan a git repo for project-specific identifiers and turn them into
-// a prompt whisper.cpp can be biased with. Whisper's per-request "prompt"
-// form field on /inference genuinely changes output - verified directly
-// against the pinned whisper-server binary, not assumed from docs: given
-// the prompt "useEffect, useState, React", a dictation of "the react
-// component uses use effect and use state" transcribed useState with the
-// prompt's exact casing, where it came out UseState without one.
+// #16: scan a git repo for project-specific identifiers and rank them into
+// a vocabulary list to bias transcription towards. Built for whisper.cpp's
+// per-request "prompt" field originally; Parakeet (ADR-0003) doesn't expose
+// an equivalent, so the list is currently produced but unused, kept for the
+// FluidAudio keyword-boosting path (#322) that will consume it.
 const path = require("path");
 const { execFile } = require("child_process");
 const { promisify } = require("util");
@@ -23,10 +21,11 @@ const SOURCE_EXTENSIONS = new Set([
 ]);
 
 // Language keywords common enough to dominate a frequency-ranked list
-// without being project-specific vocabulary at all - whisper already
-// transcribes these correctly, so including them just wastes prompt budget
-// that should go to identifiers whisper hasn't seen. Not exhaustive, not
-// trying to be a real lexer - just enough to stop the obvious flood.
+// without being project-specific vocabulary at all - the transcription
+// engine already gets these right, so including them just wastes the
+// vocabulary budget that should go to identifiers it hasn't seen. Not
+// exhaustive, not trying to be a real lexer - just enough to stop the
+// obvious flood.
 const KEYWORD_DENYLIST = new Set([
   "const", "let", "var", "function", "return", "import", "export", "default",
   "class", "interface", "type", "enum", "extends", "implements", "public",
@@ -68,7 +67,7 @@ function extractIdentifiers(text, counts) {
 }
 
 // tools is injected so this is testable against a fake repo without a real
-// git checkout or real filesystem - same DI shape as scripts/model-artifacts.mjs.
+// git checkout or real filesystem.
 async function scanRepository(repoPath, options = {}) {
   const {
     maxTerms = DEFAULT_MAX_TERMS,
@@ -107,10 +106,10 @@ async function gitListFiles(repoPath) {
   return stdout.split("\n").filter(Boolean);
 }
 
-// Whisper's initial prompt is context for the decoder, not a hard
-// dictionary - past some length the marginal terms stop earning their
-// tokens and just crowd out the ones that matter most (already frequency-
-// ranked, so the crowd-out is the least-frequent terms, not random).
+// A biasing vocabulary is context for the decoder, not a hard dictionary -
+// past some length the marginal terms stop earning their place and just
+// crowd out the ones that matter most (already frequency-ranked, so the
+// crowd-out is the least-frequent terms, not random).
 function buildPrompt(terms, options = {}) {
   const { charBudget = DEFAULT_PROMPT_CHAR_BUDGET } = options;
   if (terms.length === 0) return "";

@@ -14,18 +14,12 @@ try {
 
 // The model weights the packaged app downloads on first run instead of
 // bundling (#249 - a bundled DMG is ~1.3 GB). Kept in step with
-// scripts/model-artifacts.mjs (transcription) and scripts/fetch-llama.sh
-// (rewrite): those fill <repo>/resources/models for a source install; this
-// fills <userData>/models for the packaged app, which can't write inside
-// its own signed bundle.
+// scripts/fetch-llama.sh (rewrite): that fills <repo>/resources/models for
+// a source install; this fills <userData>/models for the packaged app,
+// which can't write inside its own signed bundle. Transcription is not
+// here - Parakeet's CoreML bundles are pulled by FluidAudio itself on the
+// transcription helper's first run (#317, ADR-0003).
 const MODELS = [
-  {
-    role: "transcription",
-    file: "ggml-base.en.bin",
-    url: "https://huggingface.co/ggerganov/whisper.cpp/resolve/5359861c739e955e79d9a303bcbc70fb988958b1/ggml-base.en.bin",
-    sha256: "a03779c86df3323075f5e796cb2ce5029f00ec8869eee3fdfb897afe36c6d002",
-    bytes: 147964211,
-  },
   {
     role: "rewrite",
     file: "smollm2-1.7b-instruct-q4_k_m.gguf",

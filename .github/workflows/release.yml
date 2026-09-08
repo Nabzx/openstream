@@ -30,8 +30,10 @@ jobs:
           node-version: 22.12
           cache: npm
 
-      # postinstall compiles whisper.cpp and fetches ~1.15 GiB of weights -
-      # slow, but it's the same work every push already does in build.yml.
+      # postinstall compiles the Swift helpers and FluidAudio and fetches the
+      # llama weight - slow, but it's the same work every push already does in
+      # build.yml. Parakeet's CoreML bundles download on the helper's first
+      # run, not here.
       - run: npm ci
 
       - name: Set the package version from the tag

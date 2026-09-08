@@ -14,7 +14,7 @@ From the repository root:
 
 The automated coverage behind the wizard also includes:
 
-- `whisper-server` serving `/inference` and producing a transcription from a synthetic WAV.
+- the `transcription-helper` process producing a transcription from a synthetic WAV over its stdio protocol.
 - A valid mono 16kHz 16-bit WAV from the capture path.
 - `hotkey-helper` and `accessibility-helper` handling missing permissions without hanging or crashing.
 - Fourteen `InjectionEngine` tests covering the fallback chain, settle guard, blind-paste gate, and the #227 focus-resolution retry. Run them with `swift test --package-path native/accessibility-helper` on a full Xcode installation.
@@ -29,7 +29,7 @@ The wizard checks the build, then walks through seven stages:
 2. Start OpenStream and grant Microphone, Input Monitoring, and Accessibility permissions.
 3. Use standalone `Option` outside OpenStream and inspect the tray, push-to-talk overlay, and sound meter. Confirm that the overlay sits bottom-center, clear of the Dock: a rounded translucent blue glass panel (the desktop behind it is visibly blurred), a bright rim light, reading `> listening` with a blinking block cursor and a white waveform that reacts to your voice. Check it stays legible over a bright / busy wallpaper and with System Settings > Accessibility > Display > Reduce Transparency on (it falls back to the more opaque wash). On a multi-monitor setup, move the cursor to another display before pressing the key and confirm the overlay follows it.
 4. Dictate into TextEdit and confirm the finished text is inserted once.
-5. Inspect both model-server listeners and sample their TCP connections during a dictation. Ports 8178 and 8179 must stay on `127.0.0.1`.
+5. The transcription helper (#204) talks over stdio and opens no port. Inspect the rewrite model server's listener and sample its TCP connections during a dictation. Port 8179 must stay on `127.0.0.1`, and the transcription helper must hold no network listener at all.
 6. Measure three warm dictations from key release to confirmed insertion. Every measurement must be below 1000 ms.
 7. Write a Markdown report and optionally post it to issue #105.
 8. Try a terminal window and an Electron-based editor such as VS Code or Slack. A terminal prompt should receive a clipboard paste, not have its scrollback overwritten. In the Electron app, check whether `AXManualAccessibility` produces a usable focused element, rather than the bare `AXWebArea` measured in #28. This real cross-app testing is the remaining scope of #10; the automated tests exercise the decision logic against fakes but cannot confirm how a real app handles paste or synthesized keystrokes.
@@ -58,6 +58,6 @@ Use the prefixes in the wizard's application log to locate failures:
 
 - `[hotkey-helper]` for Input Monitoring and global key events
 - `[accessibility-helper]` for context detection and insertion
-- `[transcription model server]` for port 8178 and transcription
+- `[transcription-helper]` for transcription (stdio, no port)
 - `[rewrite model server]` for port 8179 and paragraph placement
 - `[dictation]` for pipeline outcomes and latency

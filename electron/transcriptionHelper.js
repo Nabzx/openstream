@@ -5,9 +5,9 @@ const { resourcesRoot } = require("./paths");
 
 // Transcription model server (#204): the native/transcription-helper Swift
 // process running Parakeet TDT 0.6b v3 as CoreML on the Neural Engine, via
-// FluidAudio. It replaces whisper.cpp's whisper-server - same job (resident
-// for the app's life, one transcript per WAV), different engine, so this
-// module is the drop-in replacement for whisperServer.js + the HTTP adapter.
+// FluidAudio. Resident for the app's life, one transcript per WAV. This is
+// the only transcription path - the earlier whisper.cpp one was removed in
+// #326.
 //
 // The wire protocol is newline-delimited JSON, matching accessibilityHelper.js:
 // a {"event":"ready"} line once the model is loaded, then id-tagged

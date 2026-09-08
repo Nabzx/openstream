@@ -51,11 +51,13 @@ The two-stage shape ADR-0002 fixed is unchanged: Parakeet returns raw text, then
   whisper did. FluidAudio exposes a separate vocabulary-boosting API that a later pass
   can wire in; for now the coordinator still builds the prompt and the helper ignores
   it.
-- **whisper.cpp is kept, dormant.** `whisperServer.js`, `transcriptionHttpAdapter.js`,
-  `build-whisper.sh`, the `model-artifacts.mjs` transcription role and the
-  `ggml-base.en.bin` entry in `modelStore.js` are all still present but unwired. This
-  swap is a trial - if Parakeet does not hold up on real use, reverting is flipping
-  `electron/main.js` back to `whisperServer`. A later PR removes the whisper machinery
-  once Parakeet is proven.
-- **`scripts/verify-dictation-pipeline.sh` is stale** - it waits on a listener on port
-  8178. It needs updating for the stdio helper (follow-up).
+- **whisper.cpp was kept dormant, then removed.** For one release cycle
+  `whisperServer.js`, `transcriptionHttpAdapter.js`, `build-whisper.sh`, the
+  `model-artifacts.mjs` transcription role and the `ggml-base.en.bin` entry in
+  `modelStore.js` stayed in the tree, unwired, as a one-flag revert path. Once
+  [#228](https://github.com/Nabzx/openstream/issues/228) confirmed Parakeet on a real
+  Mac, [#326](https://github.com/Nabzx/openstream/issues/326) deleted all of it -
+  removing the sole role also retired the `model-artifacts.mjs` build harness. Parakeet
+  is now the only transcription path.
+- **`scripts/verify-dictation-pipeline.sh`** was updated for the stdio helper; it no
+  longer waits on port 8178.

@@ -81,7 +81,7 @@ test("lets whisper's own inferred punctuation win on collision", () => {
   assert.equal(cleanup("are you sure period?"), "Are you sure?");
 });
 
-test("normalises whisper-server's hard line wraps", () => {
+test("normalises the transcription helper's hard line wraps", () => {
   assert.equal(cleanup("first part\nsecond part\nthird part"), "First part second part third part.");
 });
 

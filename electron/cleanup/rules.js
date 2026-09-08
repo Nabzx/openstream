@@ -510,7 +510,7 @@ function terminalPunct(text) {
 }
 
 /**
- * @param {string} text - raw transcript from whisper-server.
+ * @param {string} text - raw transcript from the transcription helper.
  * @param {object} [options]
  * @param {boolean} [options.oneLineBox] - AXTextField-style single-line
  *   field (#45 §2): no sentence breaks, no final full stop, no newline.
@@ -525,8 +525,9 @@ function cleanup(text, options = {}) {
   const allowNewlines = Boolean(options.breakSafe) && !oneLineBox;
 
   text = text.trim();
-  // whisper-server hard-wraps its output; that's an STT-layer artifact, not
-  // something the speaker said, and must go before anything else runs.
+  // The transcription helper can hard-wrap its output; that's an STT-layer
+  // artifact, not something the speaker said, and must go before anything
+  // else runs.
   text = text.replace(/\s*\n\s*/g, " ");
 
   // Both #127 and #132 must run before collapseRepeats and stripFillers -
