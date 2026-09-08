@@ -183,6 +183,9 @@ const dictationIntake = createDictationIntake({
   breakPlacement,
   delivery: accessibilityHelper,
   vocabulary,
+  // #321: the user's term-correction table, read fresh from settings on every
+  // dictation so an edit takes effect on the next utterance.
+  corrections: { getEntries: () => (settingsStore ? settingsStore.get().termCorrections : []) },
   onDiagnostic: recordDictationDiagnostic,
 });
 
@@ -891,6 +894,13 @@ ipcMain.handle("settings:set-break-safe-apps", (event, apps) => {
 ipcMain.handle("app:get-setup-progress", () => lastSetupProgress);
 ipcMain.handle("app:retry-model-download", () => {
   retryModelDownload();
+});
+
+ipcMain.handle("settings:set-term-corrections", (event, entries) => {
+  // #321: setTermCorrections validates and throws on anything malformed, the
+  // same shape as settings:set-break-safe-apps, so a bad renderer edit can't
+  // write a corrupt table that cleanup() would then choke on.
+  return settingsStore.setTermCorrections(entries);
 });
 
 ipcMain.handle("settings:reset-break-safe-apps", () => {

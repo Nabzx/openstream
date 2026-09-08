@@ -265,3 +265,43 @@ test("rejects windowBounds with a non-numeric position", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   assert.throws(() => store.setWindowBounds({ width: 800, height: 600, x: "left" }), /must be a number/);
 });
+
+test("#321: termCorrections defaults to an empty list", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.deepEqual(store.get().termCorrections, []);
+});
+
+test("#321: setTermCorrections persists, trims, and dedupes by heard", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  store.setTermCorrections([
+    { heard: "  Nabeel  ", write: "  Nabil  " },
+    { heard: "nabeel", write: "Nabil B" },
+    { heard: "open stream", write: "OpenStream" },
+  ]);
+  assert.deepEqual(store.get().termCorrections, [
+    { heard: "Nabeel", write: "Nabil" },
+    { heard: "open stream", write: "OpenStream" },
+  ]);
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.equal(onDisk.termCorrections.length, 2);
+});
+
+test("#321: setTermCorrections rejects malformed entries", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setTermCorrections("nope"), /must be an array/);
+  assert.throws(() => store.setTermCorrections([{ heard: "x" }]), /non-empty "write"/);
+  assert.throws(() => store.setTermCorrections([{ heard: "  ", write: "y" }]), /non-empty "heard"/);
+  assert.throws(() => store.setTermCorrections([{ heard: "a".repeat(81), write: "b" }]), /cannot exceed/);
+  assert.throws(
+    () => store.setTermCorrections(Array.from({ length: 201 }, (_v, i) => ({ heard: `h${i}`, write: "w" }))),
+    /more than 200/,
+  );
+});
+
+test("#321: an invalid setTermCorrections call leaves the previous value untouched", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  store.setTermCorrections([{ heard: "Nabeel", write: "Nabil" }]);
+  assert.throws(() => store.setTermCorrections([{ heard: "", write: "y" }]));
+  assert.deepEqual(store.get().termCorrections, [{ heard: "Nabeel", write: "Nabil" }]);
+});

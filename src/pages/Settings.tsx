@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import HotkeySettings from "../HotkeySettings";
 import BreakSafeAppsSettings from "../BreakSafeAppsSettings";
+import TermCorrectionsSettings from "../TermCorrectionsSettings";
 import Toggle from "../components/Toggle";
 
 function StartupSection() {
@@ -45,6 +46,15 @@ export default function Settings() {
             since a newline can submit a half-typed terminal command or send an unfinished message.
           </p>
           <BreakSafeAppsSettings />
+        </div>
+
+        <div className="setting-item">
+          <h3 className="setting-item__name">Names &amp; terms</h3>
+          <p className="setting-item__desc">
+            Fix a name or a project term the transcription keeps getting wrong. Each entry rewrites a word or
+            phrase wherever it is heard, whatever the capitalisation.
+          </p>
+          <TermCorrectionsSettings />
         </div>
 
         <StartupSection />

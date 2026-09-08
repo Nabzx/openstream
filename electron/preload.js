@@ -51,6 +51,7 @@ contextBridge.exposeInMainWorld("openstream", {
     resetBreakSafeApps: () => ipcRenderer.invoke("settings:reset-break-safe-apps"),
     pickBreakSafeApp: () => ipcRenderer.invoke("settings:pick-break-safe-app"),
     setVocabularyProjectPath: (projectPath) => ipcRenderer.invoke("settings:set-vocabulary-path", projectPath),
+    setTermCorrections: (entries) => ipcRenderer.invoke("settings:set-term-corrections", entries),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

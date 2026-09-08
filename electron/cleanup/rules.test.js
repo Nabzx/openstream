@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { cleanup, parseNumberWords } = require("./rules");
+const { cleanup, parseNumberWords, applyCorrections } = require("./rules");
 const samples = require("../../spike/llm-cleanup-latency/samples.json");
 
 test("removes standalone and phrase fillers", () => {
@@ -101,6 +101,42 @@ test("applies technical vocabulary fixups", () => {
   for (const [raw, expected] of cases) {
     assert.equal(cleanup(raw), expected, raw);
   }
+});
+
+test("#321: user term corrections rewrite a whole word or phrase, any casing", () => {
+  const corrections = [
+    { heard: "Nabeel", write: "Nabil" },
+    { heard: "open stream", write: "OpenStream" },
+  ];
+  assert.equal(
+    cleanup("i told nabeel about open stream", { corrections }),
+    "I told Nabil about OpenStream.",
+  );
+  assert.equal(cleanup("NABEEL says hi", { corrections }), "Nabil says hi.");
+});
+
+test("#321: a correction never fires inside a longer word", () => {
+  assert.equal(
+    applyCorrections("Nabila met Nabeel", [{ heard: "Nabeel", write: "Nabil" }]),
+    "Nabila met Nabil",
+  );
+});
+
+test("#321: no corrections option leaves cleanup exactly as before", () => {
+  assert.equal(cleanup("hello nabeel"), "Hello nabeel.");
+  assert.equal(cleanup("hello nabeel", { corrections: [] }), "Hello nabeel.");
+  assert.equal(cleanup("hello nabeel", { corrections: null }), "Hello nabeel.");
+});
+
+test("#321: a $ in the replacement stays literal", () => {
+  assert.equal(
+    applyCorrections("that costs five bucks", [{ heard: "five bucks", write: "$5" }]),
+    "that costs $5",
+  );
+});
+
+test("#321: corrections can override a built-in vocabulary rule", () => {
+  assert.equal(cleanup("i run macos", { corrections: [{ heard: "macOS", write: "Mac OS" }] }), "I run Mac OS.");
 });
 
 test("handles spoken self-correction by discarding the preceding clause", () => {

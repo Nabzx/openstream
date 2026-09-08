@@ -482,6 +482,35 @@ function applyVocab(text) {
   return text;
 }
 
+// #321: user-maintained proper-noun / project-term corrections. Same idea as
+// VOCAB above - a fixed "heard this, write that" table - but supplied at call
+// time from Settings rather than hardcoded, because the terms are personal
+// (someone's name, their project's vocabulary). Each entry is
+// { heard, write }: a case-insensitive whole-word / whole-phrase match on
+// `heard`, replaced with `write` exactly as typed. Deterministic like VOCAB;
+// it only ever rewrites a phrase the user listed verbatim, it never guesses
+// at near-misses (that needs the eval corpus, #171, and a different design).
+const CORRECTION_WORD_CHAR = "[\\p{L}\\p{N}_]";
+
+function applyCorrections(text, corrections) {
+  if (!Array.isArray(corrections)) return text;
+  for (const entry of corrections) {
+    const heard = typeof entry?.heard === "string" ? entry.heard.trim() : "";
+    const write = typeof entry?.write === "string" ? entry.write : "";
+    if (!heard) continue;
+    const escaped = heard.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // Word-boundary guard, but only on a side where `heard` actually ends in
+    // a word character: "Nabil" won't match inside "Nabila", yet a term like
+    // "C#" still matches with a space right after it.
+    const lead = new RegExp(`^${CORRECTION_WORD_CHAR}`, "u").test(heard) ? `(?<!${CORRECTION_WORD_CHAR})` : "";
+    const trail = new RegExp(`${CORRECTION_WORD_CHAR}$`, "u").test(heard) ? `(?!${CORRECTION_WORD_CHAR})` : "";
+    const pattern = new RegExp(`${lead}${escaped}${trail}`, "giu");
+    // A function replacement so a `$` in the user's text stays literal.
+    text = text.replace(pattern, () => write);
+  }
+  return text;
+}
+
 function capitalise(text) {
   text = text.replace(/\bi\b/g, "I");
   text = text.replace(/\bi'(m|ve|ll|d)\b/g, (_match, suffix) => "I'" + suffix);
@@ -517,6 +546,9 @@ function terminalPunct(text) {
  * @param {boolean} [options.breakSafe] - frontmost app is on the break-safe
  *   allow-list (#45 §3). Deny-by-default: unknown/unlisted apps get no
  *   literal newlines even when the user says "new line"/"new paragraph".
+ * @param {{heard: string, write: string}[]} [options.corrections] - #321
+ *   user-maintained term corrections from Settings, applied after the
+ *   built-in vocabulary.
  */
 function cleanup(text, options = {}) {
   const oneLineBox = Boolean(options.oneLineBox);
@@ -553,6 +585,9 @@ function cleanup(text, options = {}) {
   // Apply fixed casing after sentence capitalisation so names such as macOS
   // keep their settled spelling even at the start of a dictation.
   text = applyVocab(text);
+  // #321: user corrections run last of the vocab passes, so they can also
+  // override a built-in VOCAB rule the user disagrees with.
+  text = applyCorrections(text, options.corrections);
   text = oneLineBox ? text.replace(/\.\s*$/, "").replace(/\s+$/, "") : terminalPunct(text);
   // Spaces only, not [ \t]: a doubled "tab tab" (#129) is a deliberate
   // double indent, not doubled whitespace to squeeze down to one.
@@ -585,6 +620,7 @@ module.exports = {
   stripLeadingFillers,
   segmentSentences,
   applyVocab,
+  applyCorrections,
   capitalise,
   terminalPunct,
 };
