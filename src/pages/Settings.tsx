@@ -4,6 +4,37 @@ import BreakSafeAppsSettings from "../BreakSafeAppsSettings";
 import TermCorrectionsSettings from "../TermCorrectionsSettings";
 import Toggle from "../components/Toggle";
 
+function CopyTranscriptSection() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setEnabled(settings.copyTranscriptToClipboard));
+  }, []);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Copy every dictation</h3>
+      <p className="setting-item__desc">
+        Also puts the finished text on the clipboard, so a paste that doesn’t land is never lost. Off by default,
+        since it replaces whatever you had copied.
+      </p>
+      <div className="setting-item__control">
+        <Toggle
+          label="Copy each finished dictation to the clipboard"
+          checked={enabled ?? false}
+          disabled={enabled === null}
+          onChange={(next) => {
+            setEnabled(next);
+            window.openstream.settings
+              .setCopyTranscript(next)
+              .then((settings) => setEnabled(settings.copyTranscriptToClipboard));
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -56,6 +87,8 @@ export default function Settings() {
           </p>
           <TermCorrectionsSettings />
         </div>
+
+        <CopyTranscriptSection />
 
         <StartupSection />
       </div>

@@ -199,6 +199,26 @@ test("vocabularyProjectPath defaults to null", () => {
   assert.equal(store.get().vocabularyProjectPath, null);
 });
 
+test("#255: copyTranscriptToClipboard defaults to false", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().copyTranscriptToClipboard, false);
+});
+
+test("#255: setCopyTranscriptToClipboard persists and reflects afterwards", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  store.setCopyTranscriptToClipboard(true);
+  assert.equal(store.get().copyTranscriptToClipboard, true);
+  assert.equal(JSON.parse(fs.readFileSync(filePath, "utf8")).copyTranscriptToClipboard, true);
+  store.setCopyTranscriptToClipboard(false);
+  assert.equal(store.get().copyTranscriptToClipboard, false);
+});
+
+test("#255: setCopyTranscriptToClipboard rejects a non-boolean", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.throws(() => store.setCopyTranscriptToClipboard("yes"), /must be a boolean/);
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });

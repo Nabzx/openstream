@@ -7,6 +7,7 @@ export type StoredSettings = {
   breakSafeApps: string[];
   vocabularyProjectPath: string | null;
   termCorrections: TermCorrection[];
+  copyTranscriptToClipboard: boolean;
 };
 
 export type SetShortcutResult =
@@ -78,6 +79,7 @@ declare global {
           projectPath: string | null
         ): Promise<{ settings: StoredSettings; status: VocabularyStatus }>;
         setTermCorrections(entries: TermCorrection[]): Promise<StoredSettings>;
+        setCopyTranscript(enabled: boolean): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;
