@@ -564,6 +564,20 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
   }
 }
 
+// #255: when the option is on, every finished dictation also goes on the
+// clipboard, so a paste that doesn't land is still recoverable with Cmd+V.
+// Runs after delivery, so it deliberately overwrites the clipboard the
+// injection engine may have borrowed and restored.
+function maybeCopyTranscript(text) {
+  if (!text || !settingsStore || !settingsStore.get().copyTranscriptToClipboard) return;
+  try {
+    clipboard.writeText(text);
+    console.log("[dictation] transcript copied to the clipboard");
+  } catch (error) {
+    console.error("[dictation] could not copy the transcript:", error);
+  }
+}
+
 async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   let result;
   try {
@@ -585,6 +599,7 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   if (result.status === "delivered") {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
+    maybeCopyTranscript(result.text);
     if (Number.isFinite(timing?.releasedAtMs)) {
       const latencyMs = performance.now() - timing.releasedAtMs;
       const budgetResult = latencyMs < 1000 ? "within" : "over";
@@ -601,6 +616,7 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     showVoiceEditMessage(result.message);
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.reason}`);
+    maybeCopyTranscript(result.text);
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "failed") {
     console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
@@ -907,6 +923,11 @@ ipcMain.handle("settings:reset-break-safe-apps", () => {
   const settings = settingsStore.setBreakSafeApps([...DEFAULT_BREAK_SAFE_BUNDLE_IDS]);
   setBreakSafeApplications(settings.breakSafeApps);
   return settings;
+});
+
+ipcMain.handle("settings:set-copy-transcript", (event, enabled) => {
+  // #255: validated in the store, same as the other setters.
+  return settingsStore.setCopyTranscriptToClipboard(enabled);
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by

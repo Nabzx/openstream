@@ -19,6 +19,10 @@ const DEFAULT_SETTINGS = {
   // window has been opened and moved/resized once; windowState.js sanity
   // -checks it against the actual display before it's used.
   windowBounds: null,
+  // #255: also put every finished dictation on the clipboard, so a paste
+  // that doesn't land is never a lost dictation. Off by default - it
+  // clobbers whatever the user had copied.
+  copyTranscriptToClipboard: false,
 };
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
@@ -209,6 +213,13 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), termCorrections: normaliseTermCorrections(entries) });
   }
 
+  function setCopyTranscriptToClipboard(enabled) {
+    if (typeof enabled !== "boolean") {
+      throw new Error("copyTranscriptToClipboard must be a boolean");
+    }
+    return commit({ ...load(), copyTranscriptToClipboard: enabled });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -237,6 +248,7 @@ function createSettingsStore({ filePath }) {
     setBreakSafeApps,
     setVocabularyProjectPath,
     setTermCorrections,
+    setCopyTranscriptToClipboard,
     setWindowBounds,
     onChange,
   };
