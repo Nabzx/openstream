@@ -25,6 +25,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      # On a tag push, actions/checkout writes refs/tags/<tag> pointing
+      # straight at the commit, so `git tag -l --format=%(contents)` below
+      # reads the commit message instead of the tag's own annotation (#337).
+      # Re-fetch the tag objects so the annotation is really there.
+      - run: git fetch --force --tags
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22.12
@@ -53,11 +59,16 @@ jobs:
       - name: Assemble release notes
         id: notes
         run: |
+          # #337: the tag annotation - subject and body only, so a signed tag
+          # doesn't drop its PGP block into the notes. Falls back to the
+          # commit subject if a lightweight tag ever gets pushed.
+          NOTES="$(git tag -l --format='%(contents:subject)%0a%0a%(contents:body)' "${GITHUB_REF_NAME}")"
+          [ -n "$(echo "${NOTES}" | tr -d '[:space:]')" ] || NOTES="$(git log -1 --format='%s' "${GITHUB_REF_NAME}")"
           {
             echo 'body<<EOF'
             echo '**Beta release.**'
             echo
-            git tag -l --format='%(contents)' "${GITHUB_REF_NAME}"
+            echo "${NOTES}"
             echo
             echo '---'
             echo
