@@ -14,7 +14,9 @@ export type SetShortcutResult =
   | { ok: true; settings: StoredSettings }
   | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
 
-export type ModelHealth = "ready" | "starting";
+export type ModelHealth = "ready" | "starting" | "failed";
+
+export type ModelRole = "transcription" | "rewrite";
 
 // #47. accessibility: granted | missing. inputMonitoring: granted | missing
 // | unknown (IOHIDCheckAccess couldn't tell). microphone: granted | missing
@@ -65,6 +67,7 @@ declare global {
         openPrivacySettings(key: PermissionKey): Promise<void>;
         getSetupProgress(): Promise<SetupProgress | null>;
         retryModelDownload(): Promise<void>;
+        restartModel(role: ModelRole): Promise<{ ok: boolean }>;
       };
       settings: {
         get(): Promise<StoredSettings>;
@@ -89,6 +92,7 @@ declare global {
       onNavigate(callback: (page: string) => void): () => void;
       onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
       onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
+      onHealthChanged(callback: () => void): () => void;
     };
   }
 }

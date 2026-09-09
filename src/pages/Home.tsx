@@ -47,9 +47,14 @@ function grantPill(state: GrantState): { tone: PillTone; label: string } {
 }
 
 function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
-  return state === "ready"
-    ? { tone: "ok", label: "Ready" }
-    : { tone: "wait", label: "Starting…" };
+  switch (state) {
+    case "ready":
+      return { tone: "ok", label: "Ready" };
+    case "failed":
+      return { tone: "err", label: "Not running" };
+    default:
+      return { tone: "wait", label: "Starting…" };
+  }
 }
 
 type Activity = "idle" | "recording" | "transcribing";
@@ -75,45 +80,63 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
     };
     poll();
     const timer = setInterval(poll, HEALTH_POLL_MS);
+    // #254: main pushes this on a crash loop / recovery so the panel doesn't
+    // wait out the poll interval to show it.
+    const unsubscribe = window.openstream.onHealthChanged(poll);
     return () => {
       active = false;
       clearInterval(timer);
+      unsubscribe();
     };
   }, []);
 
-  const rows: { icon: JSX.Element; label: string; sub?: string; pill: { tone: PillTone; label: string } }[] =
-    health
-      ? [
-          {
-            icon: <ShieldIcon className="row-icon" />,
-            label: "Accessibility",
-            pill: grantPill(health.permissions.accessibility),
-          },
-          {
-            icon: <InputMonitorIcon className="row-icon" />,
-            label: "Input Monitoring",
-            pill: grantPill(health.permissions.inputMonitoring),
-          },
-          {
-            icon: <MicIcon className="row-icon" />,
-            label: "Microphone",
-            pill: grantPill(health.permissions.microphone),
-          },
-          {
-            icon: <WaveformIcon className="row-icon" />,
-            label: "Transcription model",
-            sub: "Local · whisper.cpp",
-            pill: modelPill(health.transcriptionModel),
-          },
-          {
-            icon: <WaveformIcon className="row-icon" />,
-            label: "Rewrite model",
-            sub: "Local · paragraph breaks",
-            pill: modelPill(health.rewriteModel),
-          },
-        ]
-      : [];
+  const restartModel = (role: "transcription" | "rewrite") => {
+    window.openstream.app.restartModel(role).then(() => window.openstream.app.getHealth().then(setHealth));
+  };
 
+  type Row = {
+    icon: JSX.Element;
+    label: string;
+    sub?: string;
+    pill: { tone: PillTone; label: string };
+    restart?: "transcription" | "rewrite";
+  };
+  const rows: Row[] = health
+    ? [
+        {
+          icon: <ShieldIcon className="row-icon" />,
+          label: "Accessibility",
+          pill: grantPill(health.permissions.accessibility),
+        },
+        {
+          icon: <InputMonitorIcon className="row-icon" />,
+          label: "Input Monitoring",
+          pill: grantPill(health.permissions.inputMonitoring),
+        },
+        {
+          icon: <MicIcon className="row-icon" />,
+          label: "Microphone",
+          pill: grantPill(health.permissions.microphone),
+        },
+        {
+          icon: <WaveformIcon className="row-icon" />,
+          label: "Transcription model",
+          sub: "Local · Parakeet on the Neural Engine",
+          pill: modelPill(health.transcriptionModel),
+          restart: health.transcriptionModel === "failed" ? "transcription" : undefined,
+        },
+        {
+          icon: <WaveformIcon className="row-icon" />,
+          label: "Rewrite model",
+          sub: "Local · paragraph breaks",
+          pill: modelPill(health.rewriteModel),
+          restart: health.rewriteModel === "failed" ? "rewrite" : undefined,
+        },
+      ]
+    : [];
+
+  const modelFailed =
+    health && (health.transcriptionModel === "failed" || health.rewriteModel === "failed");
   const permissionsNeedAttention =
     health && (health.permissions.accessibility !== "granted" || health.permissions.inputMonitoring === "missing");
   const ready =
@@ -185,6 +208,13 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
               Fix
             </button>
           </div>
+        ) : modelFailed ? (
+          <div className="row">
+            <span className="row-label" style={{ color: "var(--err)" }}>
+              A model server keeps stopping — dictation won{"’"}t work until it{"’"}s back.
+            </span>
+            <StatusPill tone="err" label="Not running" />
+          </div>
         ) : ready ? (
           <button
             type="button"
@@ -215,6 +245,16 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
                 {row.sub && <small>{row.sub}</small>}
               </span>
               <StatusPill tone={row.pill.tone} label={row.pill.label} />
+              {row.restart && (
+                <button
+                  type="button"
+                  className="btn"
+                  style={{ marginLeft: 10 }}
+                  onClick={() => restartModel(row.restart!)}
+                >
+                  Restart
+                </button>
+              )}
             </div>
           ))}
       </div>

@@ -135,3 +135,67 @@ test("stop cancels a pending restart after an unexpected exit", () => {
 
   assert.equal(timer.cancelled, true);
 });
+
+function crashLoopSupervisor(overrides = {}) {
+  const spawned = [];
+  const statuses = [];
+  const supervisor = createModelSupervisor({
+    roleName: "rewrite model server",
+    command: "/tmp/rewrite-server",
+    spawn: () => {
+      const child = fakeChild();
+      spawned.push(child);
+      return child;
+    },
+    setRestartTimer: (fn) => {
+      fn();
+      return {};
+    },
+    stderr: captureStream([]),
+    now: () => 0,
+    failureWindowMs: 1000,
+    ...overrides,
+  });
+  supervisor.onStatusChange((s) => statuses.push(s));
+  return { supervisor, spawned, statuses, latest: () => spawned[spawned.length - 1] };
+}
+
+test("#254: three fast failures in a row report the server as failed", () => {
+  const { supervisor, latest, statuses } = crashLoopSupervisor();
+  supervisor.start();
+  assert.equal(supervisor.status(), "running");
+
+  latest().emit("exit", 1, null);
+  assert.equal(supervisor.status(), "running");
+  latest().emit("exit", 1, null);
+  assert.equal(supervisor.status(), "running");
+  latest().emit("exit", 1, null);
+
+  assert.equal(supervisor.status(), "failed");
+  assert.deepEqual(statuses, ["failed"]);
+});
+
+test("#254: a run that outlasts the failure window resets the crash count", () => {
+  let clock = 0;
+  const { supervisor, latest } = crashLoopSupervisor({ now: () => clock });
+  supervisor.start();
+  latest().emit("exit", 1, null);
+  latest().emit("exit", 1, null);
+  // The next run stays up well past the window before it dies.
+  clock = 5000;
+  latest().emit("exit", 1, null);
+
+  assert.equal(supervisor.status(), "running");
+});
+
+test("#254: restart() clears a failed server", () => {
+  const { supervisor, latest } = crashLoopSupervisor();
+  supervisor.start();
+  latest().emit("exit", 1, null);
+  latest().emit("exit", 1, null);
+  latest().emit("exit", 1, null);
+  assert.equal(supervisor.status(), "failed");
+
+  supervisor.restart();
+  assert.equal(supervisor.status(), "running");
+});
