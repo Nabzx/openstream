@@ -24,6 +24,7 @@ const { ensureModels, modelsMissing } = require("./modelStore");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
+const { createIdleUnloader } = require("./idleUnloader");
 const { setBreakSafeApplications, DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { createBundleIdReader } = require("./appBundleId");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
@@ -145,6 +146,8 @@ let captureReady = false;
 let modelsReady = false;
 let retryModelDownload = () => {};
 let settingsStore = null;
+// #257: set up once the settings store exists (in the startup block).
+let idleUnloader = null;
 let pushToTalkShortcut = null;
 let shortcutCaptureSender = null;
 // Chromium does not reliably deliver a standalone Fn keydown. A one-shot
@@ -476,6 +479,9 @@ const heldResultController = createHeldResultController({
 // failed read just means "ordinary dictation" and must never delay
 // recording, so this is deliberately not awaited here.
 function beginPushToTalk() {
+  // #257: a key-down means the user is back. Reload the servers first if
+  // they were parked, then restart the idle countdown.
+  if (idleUnloader) idleUnloader.noteActivity();
   pendingSelectionRead = accessibilityHelper.getSelection().catch(() => null);
   // #355: same treatment as the selection read - async, never delays
   // recording, and just gives dictation a "before" snapshot to compare
@@ -496,11 +502,17 @@ async function handleCompletedRecording(wavBuffer, timing) {
   pendingFrontmostAtRecordStart = null;
   const recordStartBundleId = frontmostRead ? await frontmostRead : null;
 
-  if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
-    showVoiceEditWorking();
-    return applyVoiceEdit(wavBuffer, selection, timing);
+  try {
+    if (selection && selection.text.length > 0 && selection.text.length <= VOICE_EDIT_MAX_CHARS) {
+      showVoiceEditWorking();
+      return await applyVoiceEdit(wavBuffer, selection, timing);
+    }
+    return await transcribeAndPrint(wavBuffer, timing, recordStartBundleId);
+  } finally {
+    // #257: dictation is done - restart the idle countdown from now, not
+    // from when the key went down.
+    if (idleUnloader) idleUnloader.noteActivity();
   }
-  return transcribeAndPrint(wavBuffer, timing, recordStartBundleId);
 }
 
 function showVoiceEditWorking() {
@@ -897,10 +909,13 @@ ipcMain.handle("app:get-health", async () => {
     probeHttp(rewriteModelServer.healthUrl()),
     checkPermissions(),
   ]);
+  // #257: parked servers aren't "starting" - they won't start until the
+  // next dictation, and saying so avoids a panel stuck on "Starting…".
+  const asleep = Boolean(idleUnloader && idleUnloader.isUnloaded());
   return {
     permissions: permissions.grants,
-    transcriptionModel: modelHealth(transcription, transcriptionHelper.status()),
-    rewriteModel: modelHealth(rewrite, rewriteModelServer.status()),
+    transcriptionModel: asleep ? "asleep" : modelHealth(transcription, transcriptionHelper.status()),
+    rewriteModel: asleep ? "asleep" : modelHealth(rewrite, rewriteModelServer.status()),
   };
 });
 
@@ -968,6 +983,13 @@ ipcMain.handle("settings:reset-break-safe-apps", () => {
 ipcMain.handle("settings:set-copy-transcript", (event, enabled) => {
   // #255: validated in the store, same as the other setters.
   return settingsStore.setCopyTranscriptToClipboard(enabled);
+});
+
+ipcMain.handle("settings:set-idle-unload-minutes", (event, minutes) => {
+  // #257: the store validates; the unloader re-arms with the new timeout.
+  const settings = settingsStore.setIdleUnloadMinutes(minutes);
+  if (idleUnloader) idleUnloader.setIdleMs(settings.idleUnloadMinutes * 60_000);
+  return settings;
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by
@@ -1090,6 +1112,22 @@ app.whenReady().then(() => {
     rewriteModelServer.onStatusChange((status) => reflectModelStatus("rewrite", status));
   };
 
+  // #257: park the model servers after a long idle, reload on the next
+  // dictation. Off unless the user sets a timeout in Settings.
+  idleUnloader = createIdleUnloader({
+    idleMs: settingsStore.get().idleUnloadMinutes * 60_000,
+    onUnload: () => {
+      console.log("[models] idle - unloading the model servers to free memory");
+      transcriptionHelper.stop();
+      rewriteModelServer.stop();
+    },
+    onReload: () => {
+      console.log("[models] reloading the model servers after idle");
+      transcriptionHelper.start();
+      rewriteModelServer.start();
+    },
+  });
+
   // #249: a packaged app ships without the model weights and fetches them
   // on first run. Gate the servers - and the hotkey - on the weights being
   // in place, and show the download on a Setup screen.
@@ -1123,6 +1161,7 @@ app.on("will-quit", () => {
   fnShortcutCapture.stop();
   shortcutCaptureSender = null;
   pushToTalkShortcut?.stop();
+  idleUnloader?.stop();
   accessibilityHelper.stop();
   transcriptionHelper.stop();
   rewriteModelServer.stop();

@@ -219,6 +219,26 @@ test("#255: setCopyTranscriptToClipboard rejects a non-boolean", () => {
   assert.throws(() => store.setCopyTranscriptToClipboard("yes"), /must be a boolean/);
 });
 
+test("#257: idleUnloadMinutes defaults to 0 (off)", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().idleUnloadMinutes, 0);
+});
+
+test("#257: setIdleUnloadMinutes persists and reflects afterwards", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  store.setIdleUnloadMinutes(10);
+  assert.equal(store.get().idleUnloadMinutes, 10);
+  assert.equal(JSON.parse(fs.readFileSync(filePath, "utf8")).idleUnloadMinutes, 10);
+});
+
+test("#257: setIdleUnloadMinutes rejects non-integers, negatives, and absurd values", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  for (const bad of [5.5, -1, "10", 10000, NaN]) {
+    assert.throws(() => store.setIdleUnloadMinutes(bad), /idleUnloadMinutes/);
+  }
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });
