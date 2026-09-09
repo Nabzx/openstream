@@ -239,6 +239,16 @@ test("#257: setIdleUnloadMinutes rejects non-integers, negatives, and absurd val
   }
 });
 
+test("#265: pauseMediaWhileRecording defaults to false and round-trips", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  assert.equal(store.get().pauseMediaWhileRecording, false);
+  store.setPauseMediaWhileRecording(true);
+  assert.equal(store.get().pauseMediaWhileRecording, true);
+  assert.equal(JSON.parse(fs.readFileSync(filePath, "utf8")).pauseMediaWhileRecording, true);
+  assert.throws(() => store.setPauseMediaWhileRecording("on"), /must be a boolean/);
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });

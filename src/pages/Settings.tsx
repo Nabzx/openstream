@@ -88,6 +88,37 @@ function IdleUnloadSection() {
   );
 }
 
+function PauseMediaSection() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setEnabled(settings.pauseMediaWhileRecording));
+  }, []);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Pause music while recording</h3>
+      <p className="setting-item__desc">
+        Pauses Music and Spotify when a recording starts and resumes them after, so the mic doesn’t pick them up.
+        The first time, macOS asks permission to control each app.
+      </p>
+      <div className="setting-item__control">
+        <Toggle
+          label="Pause Music and Spotify while recording"
+          checked={enabled ?? false}
+          disabled={enabled === null}
+          onChange={(next) => {
+            setEnabled(next);
+            window.openstream.settings
+              .setPauseMediaWhileRecording(next)
+              .then((settings) => setEnabled(settings.pauseMediaWhileRecording));
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -142,6 +173,8 @@ export default function Settings() {
         </div>
 
         <CopyTranscriptSection />
+
+        <PauseMediaSection />
 
         <IdleUnloadSection />
 

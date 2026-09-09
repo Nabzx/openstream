@@ -26,6 +26,9 @@ const DEFAULT_SETTINGS = {
   // #257: unload the model servers after this many minutes idle, reloading
   // (with a one-time warm-up) on the next dictation. 0 = off, stay resident.
   idleUnloadMinutes: 0,
+  // #265: pause Music / Spotify while recording so the mic doesn't pick them
+  // up. Off by default - the first use triggers a macOS Automation prompt.
+  pauseMediaWhileRecording: false,
 };
 
 // #257: a whole number of minutes, 0 (off) to a day. A day is already well
@@ -239,6 +242,13 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), idleUnloadMinutes: minutes });
   }
 
+  function setPauseMediaWhileRecording(enabled) {
+    if (typeof enabled !== "boolean") {
+      throw new Error("pauseMediaWhileRecording must be a boolean");
+    }
+    return commit({ ...load(), pauseMediaWhileRecording: enabled });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -269,6 +279,7 @@ function createSettingsStore({ filePath }) {
     setTermCorrections,
     setCopyTranscriptToClipboard,
     setIdleUnloadMinutes,
+    setPauseMediaWhileRecording,
     setWindowBounds,
     onChange,
   };

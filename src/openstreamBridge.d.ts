@@ -9,6 +9,7 @@ export type StoredSettings = {
   termCorrections: TermCorrection[];
   copyTranscriptToClipboard: boolean;
   idleUnloadMinutes: number;
+  pauseMediaWhileRecording: boolean;
 };
 
 export type SetShortcutResult =
@@ -85,6 +86,7 @@ declare global {
         setTermCorrections(entries: TermCorrection[]): Promise<StoredSettings>;
         setCopyTranscript(enabled: boolean): Promise<StoredSettings>;
         setIdleUnloadMinutes(minutes: number): Promise<StoredSettings>;
+        setPauseMediaWhileRecording(enabled: boolean): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;
