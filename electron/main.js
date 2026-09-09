@@ -533,7 +533,7 @@ function showVoiceEditWorking() {
   setTrayState("transcribing");
   notifyWindowState("editing");
   if (!overlayWin || overlayWin.isDestroyed()) return;
-  positionOverlayAtBottom();
+  positionOverlay();
   overlayWin.webContents.send("dictation-state", "editing");
   overlayWin.showInactive();
 }
@@ -760,12 +760,14 @@ function reflectModelStatus(role, status) {
 }
 
 // Positioned fresh on every show, not once at creation, so it follows
-// whichever display the user is actually on - #116, same spot macOS's own
-// dictation HUD uses: bottom-center, clear of the Dock.
-function positionOverlayAtBottom() {
+// whichever display the user is actually on - #116. Bottom-centre by
+// default (where macOS's own dictation HUD sits), or the edge / corner the
+// user picked in Settings (#256).
+function positionOverlay() {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
   const [width, height] = overlayWin.getSize();
-  const { x, y } = computeBottomCenteredPosition(display.workArea, width, height);
+  const position = settingsStore ? settingsStore.get().overlayPosition : undefined;
+  const { x, y } = computeOverlayPosition(display.workArea, width, height, position);
   overlayWin.setPosition(x, y);
 }
 
@@ -796,7 +798,7 @@ function setUserVisibleState(state, details) {
 
   if (state === "recording") {
     heldResultController.dismiss();
-    positionOverlayAtBottom();
+    positionOverlay();
   }
   overlayWin.webContents.send("dictation-state", state);
   if (state === "recording") {
