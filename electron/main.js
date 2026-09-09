@@ -1005,6 +1005,11 @@ ipcMain.handle("settings:set-idle-unload-minutes", (event, minutes) => {
   return settings;
 });
 
+ipcMain.handle("settings:set-pause-media", (event, enabled) => {
+  // #265: validated in the store, same as the other toggles.
+  return settingsStore.setPauseMediaWhileRecording(enabled);
+});
+
 // #19: pick an app from disk instead of hunting down its bundle id by
 // hand. Returns { bundleId, name } for the renderer to add, or null if the
 // dialog was cancelled; a bundle with no readable identifier rejects.

@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld("openstream", {
     setTermCorrections: (entries) => ipcRenderer.invoke("settings:set-term-corrections", entries),
     setCopyTranscript: (enabled) => ipcRenderer.invoke("settings:set-copy-transcript", enabled),
     setIdleUnloadMinutes: (minutes) => ipcRenderer.invoke("settings:set-idle-unload-minutes", minutes),
+    setPauseMediaWhileRecording: (enabled) => ipcRenderer.invoke("settings:set-pause-media", enabled),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),
