@@ -2,6 +2,14 @@ import type { StoredHotkey } from "./hotkey/captureHotkey";
 
 export type TermCorrection = { heard: string; write: string };
 
+export type OverlayPosition =
+  | "bottom"
+  | "bottom-left"
+  | "bottom-right"
+  | "top"
+  | "top-left"
+  | "top-right";
+
 export type StoredSettings = {
   hotkey: StoredHotkey;
   breakSafeApps: string[];
@@ -10,6 +18,8 @@ export type StoredSettings = {
   copyTranscriptToClipboard: boolean;
   idleUnloadMinutes: number;
   pauseMediaWhileRecording: boolean;
+  soundCues: boolean;
+  overlayPosition: OverlayPosition;
 };
 
 export type SetShortcutResult =
@@ -87,6 +97,8 @@ declare global {
         setCopyTranscript(enabled: boolean): Promise<StoredSettings>;
         setIdleUnloadMinutes(minutes: number): Promise<StoredSettings>;
         setPauseMediaWhileRecording(enabled: boolean): Promise<StoredSettings>;
+        setSoundCues(enabled: boolean): Promise<StoredSettings>;
+        setOverlayPosition(position: OverlayPosition): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;

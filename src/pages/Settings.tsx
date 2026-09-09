@@ -3,6 +3,7 @@ import HotkeySettings from "../HotkeySettings";
 import BreakSafeAppsSettings from "../BreakSafeAppsSettings";
 import TermCorrectionsSettings from "../TermCorrectionsSettings";
 import Toggle from "../components/Toggle";
+import type { OverlayPosition } from "../openstreamBridge";
 
 function CopyTranscriptSection() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -119,6 +120,78 @@ function PauseMediaSection() {
   );
 }
 
+function SoundCuesSection() {
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setEnabled(settings.soundCues));
+  }, []);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Sound cues</h3>
+      <p className="setting-item__desc">
+        A short sound when a recording starts and when the text lands, so you don’t have to watch the overlay.
+      </p>
+      <div className="setting-item__control">
+        <Toggle
+          label="Play a sound at the start and end of a dictation"
+          checked={enabled ?? false}
+          disabled={enabled === null}
+          onChange={(next) => {
+            setEnabled(next);
+            window.openstream.settings.setSoundCues(next).then((settings) => setEnabled(settings.soundCues));
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+const OVERLAY_POSITION_OPTIONS: { value: OverlayPosition; label: string }[] = [
+  { value: "bottom", label: "Bottom centre" },
+  { value: "bottom-left", label: "Bottom left" },
+  { value: "bottom-right", label: "Bottom right" },
+  { value: "top", label: "Top centre" },
+  { value: "top-left", label: "Top left" },
+  { value: "top-right", label: "Top right" },
+];
+
+function OverlayPositionSection() {
+  const [position, setPosition] = useState<OverlayPosition | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setPosition(settings.overlayPosition));
+  }, []);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Overlay position</h3>
+      <p className="setting-item__desc">Where the push-to-talk overlay sits while you’re speaking.</p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={position ?? "bottom"}
+          disabled={position === null}
+          onChange={(event) => {
+            const next = event.target.value as OverlayPosition;
+            setPosition(next);
+            window.openstream.settings
+              .setOverlayPosition(next)
+              .then((settings) => setPosition(settings.overlayPosition));
+          }}
+        >
+          {OVERLAY_POSITION_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -175,6 +248,10 @@ export default function Settings() {
         <CopyTranscriptSection />
 
         <PauseMediaSection />
+
+        <SoundCuesSection />
+
+        <OverlayPositionSection />
 
         <IdleUnloadSection />
 
