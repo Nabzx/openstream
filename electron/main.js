@@ -25,6 +25,7 @@ const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createIdleUnloader } = require("./idleUnloader");
+const { createMediaPause } = require("./mediaPause");
 const { setBreakSafeApplications, DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { createBundleIdReader } = require("./appBundleId");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
@@ -177,6 +178,10 @@ const vocabulary = createVocabularyCache();
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
 }
+
+// #265: pause Music / Spotify for the duration of a recording. Gated on the
+// setting at each call site; a no-op when the setting is off.
+const mediaPause = createMediaPause({ onDiagnostic: recordDictationDiagnostic });
 
 const dictationIntake = createDictationIntake({
   transcription,
@@ -664,15 +669,23 @@ const pushToTalkCoordinator = createPushToTalkCoordinator({
     if (!captureWin) return;
     captureWin.webContents.send("start-recording");
     armCancelShortcut();
+    // #265: fire-and-forget - the osascript round-trip must not delay the
+    // recording, and a slow pause just means the first fraction of a second
+    // still has music in it.
+    if (settingsStore && settingsStore.get().pauseMediaWhileRecording) {
+      void mediaPause.pauseForRecording();
+    }
     console.log("[dictation] recording - release the hotkey to stop, Escape to cancel");
   },
   stopCapture(timing) {
     disarmCancelShortcut();
+    void mediaPause.resumeAfterRecording();
     if (!captureWin) return;
     captureWin.webContents.send("stop-recording", timing);
   },
   cancelCapture() {
     disarmCancelShortcut();
+    void mediaPause.resumeAfterRecording();
     if (captureWin) captureWin.webContents.send("cancel-recording");
     console.log("[dictation] cancelled");
   },
