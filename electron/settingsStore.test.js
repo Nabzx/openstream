@@ -249,6 +249,22 @@ test("#265: pauseMediaWhileRecording defaults to false and round-trips", () => {
   assert.throws(() => store.setPauseMediaWhileRecording("on"), /must be a boolean/);
 });
 
+test("#256: soundCues defaults to false and round-trips", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().soundCues, false);
+  store.setSoundCues(true);
+  assert.equal(store.get().soundCues, true);
+  assert.throws(() => store.setSoundCues("on"), /must be a boolean/);
+});
+
+test("#256: overlayPosition defaults to bottom and rejects an unknown anchor", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().overlayPosition, "bottom");
+  store.setOverlayPosition("top-right");
+  assert.equal(store.get().overlayPosition, "top-right");
+  assert.throws(() => store.setOverlayPosition("middle"), /overlayPosition must be one of/);
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });

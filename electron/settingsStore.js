@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { STANDALONE_OPTION_KEY_CODE, isSupportedSingleKeyShortcut } = require("./hotkeyDefinitions");
+const { OVERLAY_POSITIONS, DEFAULT_OVERLAY_POSITION } = require("./overlayPosition");
 
 // Matches hotkeyHelper.js's standalone Option default and breakSafety.js's
 // own default allow-list. Existing settings are read as-is below so this
@@ -29,6 +30,11 @@ const DEFAULT_SETTINGS = {
   // #265: pause Music / Spotify while recording so the mic doesn't pick them
   // up. Off by default - the first use triggers a macOS Automation prompt.
   pauseMediaWhileRecording: false,
+  // #256: short sounds at the start of a recording and when text lands.
+  // Off by default.
+  soundCues: false,
+  // #256: which edge / corner the push-to-talk overlay sits at.
+  overlayPosition: DEFAULT_OVERLAY_POSITION,
 };
 
 // #257: a whole number of minutes, 0 (off) to a day. A day is already well
@@ -39,6 +45,12 @@ const MAX_IDLE_UNLOAD_MINUTES = 1440;
 function validateIdleUnloadMinutes(minutes) {
   if (typeof minutes !== "number" || !Number.isInteger(minutes) || minutes < 0 || minutes > MAX_IDLE_UNLOAD_MINUTES) {
     throw new Error(`idleUnloadMinutes must be a whole number of minutes between 0 and ${MAX_IDLE_UNLOAD_MINUTES}`);
+  }
+}
+
+function validateOverlayPosition(position) {
+  if (!OVERLAY_POSITIONS.includes(position)) {
+    throw new Error(`overlayPosition must be one of: ${OVERLAY_POSITIONS.join(", ")}`);
   }
 }
 
@@ -249,6 +261,18 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), pauseMediaWhileRecording: enabled });
   }
 
+  function setSoundCues(enabled) {
+    if (typeof enabled !== "boolean") {
+      throw new Error("soundCues must be a boolean");
+    }
+    return commit({ ...load(), soundCues: enabled });
+  }
+
+  function setOverlayPosition(position) {
+    validateOverlayPosition(position);
+    return commit({ ...load(), overlayPosition: position });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -280,6 +304,8 @@ function createSettingsStore({ filePath }) {
     setCopyTranscriptToClipboard,
     setIdleUnloadMinutes,
     setPauseMediaWhileRecording,
+    setSoundCues,
+    setOverlayPosition,
     setWindowBounds,
     onChange,
   };
