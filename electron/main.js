@@ -17,7 +17,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
-const { computeBottomCenteredPosition } = require("./overlayPosition");
+const { computeOverlayPosition } = require("./overlayPosition");
 const transcriptionHelper = require("./transcriptionHelper");
 const rewriteModelServer = require("./rewriteModelServer");
 const { ensureModels, modelsMissing } = require("./modelStore");
@@ -26,6 +26,7 @@ const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createIdleUnloader } = require("./idleUnloader");
 const { createMediaPause } = require("./mediaPause");
+const { createSoundCues } = require("./soundCues");
 const { setBreakSafeApplications, DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { createBundleIdReader } = require("./appBundleId");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
@@ -174,6 +175,9 @@ const breakPlacement = createBreakPlacementHttpAdapter({
   chatCompletionsUrl: rewriteModelServer.chatCompletionsUrl,
 });
 const vocabulary = createVocabularyCache();
+// #256: short sounds at the edges of a dictation. Each call is gated on the
+// setting at its call site and is a no-op otherwise.
+const soundCues = createSoundCues();
 
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
@@ -182,6 +186,11 @@ function recordDictationDiagnostic(name, value) {
 // #265: pause Music / Spotify for the duration of a recording. Gated on the
 // setting at each call site; a no-op when the setting is off.
 const mediaPause = createMediaPause({ onDiagnostic: recordDictationDiagnostic });
+
+// #256: true when the user has turned sound cues on.
+function soundCuesEnabled() {
+  return Boolean(settingsStore && settingsStore.get().soundCues);
+}
 
 const dictationIntake = createDictationIntake({
   transcription,
@@ -555,6 +564,7 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
     if (Number.isFinite(timing?.releasedAtMs)) {
       console.log(`[voice-edit] release-to-insertion: ${(performance.now() - timing.releasedAtMs).toFixed(1)}ms`);
     }
+    if (soundCuesEnabled()) soundCues.textDelivered();
     setUserVisibleState("idle");
   } else if (result.status === "copied") {
     console.log(`[voice-edit] copied ${result.text.length} characters to the clipboard`);
@@ -565,6 +575,7 @@ async function applyVoiceEdit(wavBuffer, selection, timing) {
     showVoiceEditMessage(result.message);
   } else if (result.status === "held") {
     console.log(`[voice-edit] held: ${result.reason}`);
+    if (soundCuesEnabled()) soundCues.dictationHeld();
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "unrecognised") {
     console.log(`[voice-edit] command not recognised: ${JSON.stringify(result.command)}`);
@@ -617,6 +628,7 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
     maybeCopyTranscript(result.text);
+    if (soundCuesEnabled()) soundCues.textDelivered();
     if (Number.isFinite(timing?.releasedAtMs)) {
       const latencyMs = performance.now() - timing.releasedAtMs;
       const budgetResult = latencyMs < 1000 ? "within" : "over";
@@ -634,6 +646,7 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.reason}`);
     maybeCopyTranscript(result.text);
+    if (soundCuesEnabled()) soundCues.dictationHeld();
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "failed") {
     console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
@@ -675,6 +688,7 @@ const pushToTalkCoordinator = createPushToTalkCoordinator({
     if (settingsStore && settingsStore.get().pauseMediaWhileRecording) {
       void mediaPause.pauseForRecording();
     }
+    if (soundCuesEnabled()) soundCues.recordingStarted();
     console.log("[dictation] recording - release the hotkey to stop, Escape to cancel");
   },
   stopCapture(timing) {
