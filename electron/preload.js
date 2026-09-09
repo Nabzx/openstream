@@ -63,6 +63,7 @@ contextBridge.exposeInMainWorld("openstream", {
     setVocabularyProjectPath: (projectPath) => ipcRenderer.invoke("settings:set-vocabulary-path", projectPath),
     setTermCorrections: (entries) => ipcRenderer.invoke("settings:set-term-corrections", entries),
     setCopyTranscript: (enabled) => ipcRenderer.invoke("settings:set-copy-transcript", enabled),
+    setIdleUnloadMinutes: (minutes) => ipcRenderer.invoke("settings:set-idle-unload-minutes", minutes),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

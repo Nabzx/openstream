@@ -52,6 +52,8 @@ function modelPill(state: ModelHealth): { tone: PillTone; label: string } {
       return { tone: "ok", label: "Ready" };
     case "failed":
       return { tone: "err", label: "Not running" };
+    case "asleep":
+      return { tone: "muted", label: "Asleep" };
     default:
       return { tone: "wait", label: "Starting…" };
   }
@@ -137,6 +139,8 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
 
   const modelFailed =
     health && (health.transcriptionModel === "failed" || health.rewriteModel === "failed");
+  const modelsAsleep =
+    health && health.transcriptionModel === "asleep" && health.rewriteModel === "asleep";
   const permissionsNeedAttention =
     health && (health.permissions.accessibility !== "granted" || health.permissions.inputMonitoring === "missing");
   const ready =
@@ -214,6 +218,13 @@ export default function Home({ navigate }: { navigate: (page: Page) => void }) {
               A model server keeps stopping — dictation won{"’"}t work until it{"’"}s back.
             </span>
             <StatusPill tone="err" label="Not running" />
+          </div>
+        ) : modelsAsleep ? (
+          <div className="row">
+            <span className="row-label">
+              Models asleep to save memory<small>The next dictation wakes them, after a short pause.</small>
+            </span>
+            <StatusPill tone="muted" label="Asleep" />
           </div>
         ) : ready ? (
           <button

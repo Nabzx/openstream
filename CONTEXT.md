@@ -59,7 +59,7 @@ A model server that is already loaded and waiting, so a request pays inference c
 _Avoid_: Warm, preloaded, cached
 
 **Idle release**:
-Shutting a model server down after a period without requests, so it holds no memory between bursts of use.
+Shutting a model server down after a configurable period without a dictation, so it holds no memory between bursts of use (#257). The next dictation reloads it and pays the one-time warm-up. Off by default - the resident design (ADR-0002) is the norm; this is opt-in for machines that mind the ~1 GB.
 _Avoid_: Eviction, unloading, timeout kill
 
 ### Cleanup

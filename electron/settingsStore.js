@@ -23,7 +23,21 @@ const DEFAULT_SETTINGS = {
   // that doesn't land is never a lost dictation. Off by default - it
   // clobbers whatever the user had copied.
   copyTranscriptToClipboard: false,
+  // #257: unload the model servers after this many minutes idle, reloading
+  // (with a one-time warm-up) on the next dictation. 0 = off, stay resident.
+  idleUnloadMinutes: 0,
 };
+
+// #257: a whole number of minutes, 0 (off) to a day. A day is already well
+// past "why is my first dictation slow" territory - the cap is just a guard
+// against a nonsense value from a hand-edited file.
+const MAX_IDLE_UNLOAD_MINUTES = 1440;
+
+function validateIdleUnloadMinutes(minutes) {
+  if (typeof minutes !== "number" || !Number.isInteger(minutes) || minutes < 0 || minutes > MAX_IDLE_UNLOAD_MINUTES) {
+    throw new Error(`idleUnloadMinutes must be a whole number of minutes between 0 and ${MAX_IDLE_UNLOAD_MINUTES}`);
+  }
+}
 
 const VALID_MODIFIERS = new Set(["cmd", "shift", "alt", "ctrl"]);
 
@@ -220,6 +234,11 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), copyTranscriptToClipboard: enabled });
   }
 
+  function setIdleUnloadMinutes(minutes) {
+    validateIdleUnloadMinutes(minutes);
+    return commit({ ...load(), idleUnloadMinutes: minutes });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -249,6 +268,7 @@ function createSettingsStore({ filePath }) {
     setVocabularyProjectPath,
     setTermCorrections,
     setCopyTranscriptToClipboard,
+    setIdleUnloadMinutes,
     setWindowBounds,
     onChange,
   };
@@ -263,4 +283,6 @@ module.exports = {
   validateTermCorrections,
   MAX_TERM_CORRECTIONS,
   MAX_TERM_CORRECTION_LENGTH,
+  validateIdleUnloadMinutes,
+  MAX_IDLE_UNLOAD_MINUTES,
 };

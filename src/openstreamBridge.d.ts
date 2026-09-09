@@ -8,13 +8,14 @@ export type StoredSettings = {
   vocabularyProjectPath: string | null;
   termCorrections: TermCorrection[];
   copyTranscriptToClipboard: boolean;
+  idleUnloadMinutes: number;
 };
 
 export type SetShortcutResult =
   | { ok: true; settings: StoredSettings }
   | { ok: false; kind: "unsupported" | "unavailable" | "internal-failure"; message: string };
 
-export type ModelHealth = "ready" | "starting" | "failed";
+export type ModelHealth = "ready" | "starting" | "failed" | "asleep";
 
 export type ModelRole = "transcription" | "rewrite";
 
@@ -83,6 +84,7 @@ declare global {
         ): Promise<{ settings: StoredSettings; status: VocabularyStatus }>;
         setTermCorrections(entries: TermCorrection[]): Promise<StoredSettings>;
         setCopyTranscript(enabled: boolean): Promise<StoredSettings>;
+        setIdleUnloadMinutes(minutes: number): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;

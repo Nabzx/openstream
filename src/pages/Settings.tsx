@@ -35,6 +35,59 @@ function CopyTranscriptSection() {
   );
 }
 
+const IDLE_UNLOAD_OPTIONS = [
+  { value: 0, label: "Never (stay loaded)" },
+  { value: 5, label: "After 5 minutes idle" },
+  { value: 10, label: "After 10 minutes idle" },
+  { value: 20, label: "After 20 minutes idle" },
+  { value: 30, label: "After 30 minutes idle" },
+  { value: 60, label: "After 1 hour idle" },
+];
+
+function IdleUnloadSection() {
+  const [minutes, setMinutes] = useState<number | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setMinutes(settings.idleUnloadMinutes));
+  }, []);
+
+  // A saved custom value that isn't one of the presets still needs a row.
+  const options =
+    minutes !== null && !IDLE_UNLOAD_OPTIONS.some((o) => o.value === minutes)
+      ? [...IDLE_UNLOAD_OPTIONS, { value: minutes, label: `After ${minutes} minutes idle` }]
+      : IDLE_UNLOAD_OPTIONS;
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Free memory when idle</h3>
+      <p className="setting-item__desc">
+        The speech models hold about a gigabyte of memory while they’re loaded. Unload them after a spell of not
+        dictating; the next dictation waits a few seconds for them to come back.
+      </p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={minutes ?? 0}
+          disabled={minutes === null}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            setMinutes(next);
+            window.openstream.settings
+              .setIdleUnloadMinutes(next)
+              .then((settings) => setMinutes(settings.idleUnloadMinutes));
+          }}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -89,6 +142,8 @@ export default function Settings() {
         </div>
 
         <CopyTranscriptSection />
+
+        <IdleUnloadSection />
 
         <StartupSection />
       </div>

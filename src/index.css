@@ -340,6 +340,21 @@ button { font: inherit; }
   box-shadow: 0 0 0 1px var(--acc);
 }
 
+/* A native <select> given .field: drop the platform chrome and draw our own
+   chevron so it reads on the dark panel like the other controls. */
+select.field {
+  flex: 0 1 auto;
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 30px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 15px) center, calc(100% - 11px) center;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+select.field option { color: initial; }
+
 .select {
   display: inline-flex;
   align-items: center;
