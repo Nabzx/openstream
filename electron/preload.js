@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld("openstream", {
     setCopyTranscript: (enabled) => ipcRenderer.invoke("settings:set-copy-transcript", enabled),
     setIdleUnloadMinutes: (minutes) => ipcRenderer.invoke("settings:set-idle-unload-minutes", minutes),
     setPauseMediaWhileRecording: (enabled) => ipcRenderer.invoke("settings:set-pause-media", enabled),
+    setSoundCues: (enabled) => ipcRenderer.invoke("settings:set-sound-cues", enabled),
+    setOverlayPosition: (position) => ipcRenderer.invoke("settings:set-overlay-position", position),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

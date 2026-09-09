@@ -1026,6 +1026,20 @@ ipcMain.handle("settings:set-pause-media", (event, enabled) => {
   return settingsStore.setPauseMediaWhileRecording(enabled);
 });
 
+ipcMain.handle("settings:set-sound-cues", (event, enabled) => {
+  // #256: validated in the store, same as the other toggles.
+  return settingsStore.setSoundCues(enabled);
+});
+
+ipcMain.handle("settings:set-overlay-position", (event, position) => {
+  // #256: the store validates against OVERLAY_POSITIONS.
+  const settings = settingsStore.setOverlayPosition(position);
+  // Move it now if it happens to be on screen, so the choice is visible
+  // without waiting for the next recording.
+  if (overlayWin && !overlayWin.isDestroyed() && overlayWin.isVisible()) positionOverlay();
+  return settings;
+});
+
 // #19: pick an app from disk instead of hunting down its bundle id by
 // hand. Returns { bundleId, name } for the renderer to add, or null if the
 // dialog was cancelled; a bundle with no readable identifier rejects.
