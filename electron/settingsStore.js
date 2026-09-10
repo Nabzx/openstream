@@ -3,6 +3,7 @@ const path = require("path");
 const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { STANDALONE_OPTION_KEY_CODE, isSupportedSingleKeyShortcut } = require("./hotkeyDefinitions");
 const { OVERLAY_POSITIONS, DEFAULT_OVERLAY_POSITION } = require("./overlayPosition");
+const { isSupportedLanguage } = require("./languages");
 
 // Matches hotkeyHelper.js's standalone Option default and breakSafety.js's
 // own default allow-list. Existing settings are read as-is below so this
@@ -35,6 +36,9 @@ const DEFAULT_SETTINGS = {
   soundCues: false,
   // #256: which edge / corner the push-to-talk overlay sits at.
   overlayPosition: DEFAULT_OVERLAY_POSITION,
+  // #252: transcription input language. "en" (unchanged behaviour), "auto"
+  // to let the model detect it, or a specific code from languages.js.
+  inputLanguage: "en",
 };
 
 // #257: a whole number of minutes, 0 (off) to a day. A day is already well
@@ -51,6 +55,12 @@ function validateIdleUnloadMinutes(minutes) {
 function validateOverlayPosition(position) {
   if (!OVERLAY_POSITIONS.includes(position)) {
     throw new Error(`overlayPosition must be one of: ${OVERLAY_POSITIONS.join(", ")}`);
+  }
+}
+
+function validateInputLanguage(language) {
+  if (typeof language !== "string" || !isSupportedLanguage(language)) {
+    throw new Error('inputLanguage must be "auto" or a supported language code');
   }
 }
 
@@ -273,6 +283,11 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), overlayPosition: position });
   }
 
+  function setInputLanguage(language) {
+    validateInputLanguage(language);
+    return commit({ ...load(), inputLanguage: language });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -306,6 +321,7 @@ function createSettingsStore({ filePath }) {
     setPauseMediaWhileRecording,
     setSoundCues,
     setOverlayPosition,
+    setInputLanguage,
     setWindowBounds,
     onChange,
   };
@@ -322,4 +338,5 @@ module.exports = {
   MAX_TERM_CORRECTION_LENGTH,
   validateIdleUnloadMinutes,
   MAX_IDLE_UNLOAD_MINUTES,
+  validateInputLanguage,
 };
