@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld("openstream", {
     setPauseMediaWhileRecording: (enabled) => ipcRenderer.invoke("settings:set-pause-media", enabled),
     setSoundCues: (enabled) => ipcRenderer.invoke("settings:set-sound-cues", enabled),
     setOverlayPosition: (position) => ipcRenderer.invoke("settings:set-overlay-position", position),
+    setInputLanguage: (language) => ipcRenderer.invoke("settings:set-input-language", language),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

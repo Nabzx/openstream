@@ -20,6 +20,8 @@ export type StoredSettings = {
   pauseMediaWhileRecording: boolean;
   soundCues: boolean;
   overlayPosition: OverlayPosition;
+  /** #252: "auto", "en", or another supported language code. */
+  inputLanguage: string;
 };
 
 export type SetShortcutResult =
@@ -99,6 +101,7 @@ declare global {
         setPauseMediaWhileRecording(enabled: boolean): Promise<StoredSettings>;
         setSoundCues(enabled: boolean): Promise<StoredSettings>;
         setOverlayPosition(position: OverlayPosition): Promise<StoredSettings>;
+        setInputLanguage(language: string): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;
