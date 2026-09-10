@@ -203,6 +203,8 @@ const dictationIntake = createDictationIntake({
   // #321: the user's term-correction table, read fresh from settings on every
   // dictation so an edit takes effect on the next utterance.
   corrections: { getEntries: () => (settingsStore ? settingsStore.get().termCorrections : []) },
+  // #252: the transcription input language, same fresh read.
+  language: { get: () => (settingsStore ? settingsStore.get().inputLanguage : "en") },
   onDiagnostic: recordDictationDiagnostic,
 });
 
@@ -1038,6 +1040,11 @@ ipcMain.handle("settings:set-overlay-position", (event, position) => {
   // without waiting for the next recording.
   if (overlayWin && !overlayWin.isDestroyed() && overlayWin.isVisible()) positionOverlay();
   return settings;
+});
+
+ipcMain.handle("settings:set-input-language", (event, language) => {
+  // #252: the store validates against the supported code list.
+  return settingsStore.setInputLanguage(language);
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by

@@ -28,7 +28,7 @@ export type CommandSection = {
 export const COMMAND_SECTIONS: CommandSection[] = [
   {
     title: "While dictating",
-    note: "Say these as part of a normal dictation.",
+    note: "Say these as part of a normal dictation. English only — a dictation in another language is passed through as spoken.",
     groups: [
       {
         title: "Line breaks & lists",

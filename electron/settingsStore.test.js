@@ -265,6 +265,17 @@ test("#256: overlayPosition defaults to bottom and rejects an unknown anchor", (
   assert.throws(() => store.setOverlayPosition("middle"), /overlayPosition must be one of/);
 });
 
+test("#252: inputLanguage defaults to en, accepts auto and codes, rejects junk", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().inputLanguage, "en");
+  store.setInputLanguage("auto");
+  assert.equal(store.get().inputLanguage, "auto");
+  store.setInputLanguage("fr");
+  assert.equal(store.get().inputLanguage, "fr");
+  assert.throws(() => store.setInputLanguage("xx"), /inputLanguage/);
+  assert.throws(() => store.setInputLanguage(""), /inputLanguage/);
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });

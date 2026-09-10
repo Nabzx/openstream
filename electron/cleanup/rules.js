@@ -549,6 +549,11 @@ function terminalPunct(text) {
  * @param {{heard: string, write: string}[]} [options.corrections] - #321
  *   user-maintained term corrections from Settings, applied after the
  *   built-in vocabulary.
+ * @param {boolean} [options.englishRules=true] - #252. When false (the
+ *   dictation is in another language), skip every English-specific rule -
+ *   spoken commands, fillers, capitalisation, terminal punctuation - and
+ *   just tidy whitespace, so the transcript is passed through rather than
+ *   mangled.
  */
 function cleanup(text, options = {}) {
   const oneLineBox = Boolean(options.oneLineBox);
@@ -561,6 +566,12 @@ function cleanup(text, options = {}) {
   // artifact, not something the speaker said, and must go before anything
   // else runs.
   text = text.replace(/\s*\n\s*/g, " ");
+
+  // #252: a non-English dictation gets whitespace tidy-up only. Everything
+  // below assumes English words and English punctuation conventions.
+  if (options.englishRules === false) {
+    return text.replace(/ {2,}/g, " ").trim();
+  }
 
   // Both #127 and #132 must run before collapseRepeats and stripFillers -
   // #132's spelled word with a doubled letter ("b o o k") would otherwise

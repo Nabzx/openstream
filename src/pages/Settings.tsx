@@ -89,6 +89,78 @@ function IdleUnloadSection() {
   );
 }
 
+// #252: mirrors electron/languages.js - keep the two in step. Sorted by
+// name; "auto" comes first.
+const LANGUAGE_OPTIONS: { value: string; label: string }[] = [
+  { value: "auto", label: "Detect automatically" },
+  { value: "bs", label: "Bosnian" },
+  { value: "bg", label: "Bulgarian" },
+  { value: "hr", label: "Croatian" },
+  { value: "cs", label: "Czech" },
+  { value: "da", label: "Danish" },
+  { value: "nl", label: "Dutch" },
+  { value: "en", label: "English" },
+  { value: "et", label: "Estonian" },
+  { value: "fi", label: "Finnish" },
+  { value: "fr", label: "French" },
+  { value: "de", label: "German" },
+  { value: "el", label: "Greek" },
+  { value: "hu", label: "Hungarian" },
+  { value: "it", label: "Italian" },
+  { value: "lv", label: "Latvian" },
+  { value: "lt", label: "Lithuanian" },
+  { value: "mt", label: "Maltese" },
+  { value: "pl", label: "Polish" },
+  { value: "pt", label: "Portuguese" },
+  { value: "ro", label: "Romanian" },
+  { value: "ru", label: "Russian" },
+  { value: "sr", label: "Serbian" },
+  { value: "sk", label: "Slovak" },
+  { value: "sl", label: "Slovenian" },
+  { value: "es", label: "Spanish" },
+  { value: "sv", label: "Swedish" },
+  { value: "uk", label: "Ukrainian" },
+  { value: "be", label: "Belarusian" },
+];
+
+function InputLanguageSection() {
+  const [language, setLanguage] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setLanguage(settings.inputLanguage));
+  }, []);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Dictation language</h3>
+      <p className="setting-item__desc">
+        The model handles 28 European languages. Picking one improves accuracy for its alphabet; the automatic
+        cleanup (spoken punctuation, filler removal) only runs for English.
+      </p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={language ?? "en"}
+          disabled={language === null}
+          onChange={(event) => {
+            const next = event.target.value;
+            setLanguage(next);
+            window.openstream.settings
+              .setInputLanguage(next)
+              .then((settings) => setLanguage(settings.inputLanguage));
+          }}
+        >
+          {LANGUAGE_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 function PauseMediaSection() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
@@ -235,6 +307,8 @@ export default function Settings() {
           </p>
           <BreakSafeAppsSettings />
         </div>
+
+        <InputLanguageSection />
 
         <div className="setting-item">
           <h3 className="setting-item__name">Names &amp; terms</h3>

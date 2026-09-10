@@ -139,6 +139,18 @@ test("#321: corrections can override a built-in vocabulary rule", () => {
   assert.equal(cleanup("i run macos", { corrections: [{ heard: "macOS", write: "Mac OS" }] }), "I run Mac OS.");
 });
 
+test("#252: englishRules:false skips every English rule, tidies whitespace only", () => {
+  // Spoken-command words, fillers, "i", terminal punctuation - all left alone.
+  assert.equal(
+    cleanup("il  faut un point period ici um", { englishRules: false }),
+    "il faut un point period ici um",
+  );
+  // The helper's hard line wraps still collapse (an STT artifact, not speech).
+  assert.equal(cleanup("erste zeile\nzweite zeile", { englishRules: false }), "erste zeile zweite zeile");
+  // englishRules omitted or true keeps today's behaviour.
+  assert.equal(cleanup("run the tests period", { englishRules: true }), "Run the tests.");
+});
+
 test("handles spoken self-correction by discarding the preceding clause", () => {
   const cases = [
     ["buy milk, scratch that, buy oat milk", "Buy oat milk."],

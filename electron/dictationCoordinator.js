@@ -1,5 +1,6 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
+const { usesEnglishCleanup } = require("./languages");
 
 // #375: a bare spoken "paste" is a command, not dictation. Strict
 // whole-utterance match - "paste the report" types literally, like any
@@ -50,6 +51,9 @@ function createDictationIntake(options) {
     // defaulting to none, same as vocabulary - callers/tests that don't wire
     // it get ordinary cleanup with only the built-in vocabulary.
     corrections = { getEntries: () => [] },
+    // #252: transcription input language. Optional; defaults to English, so
+    // callers/tests that don't wire it get today's behaviour.
+    language = { get: () => "en" },
     onDiagnostic = () => {},
     // #125: the spike found SmolLM2-1.7B over-triggers list detection (a list
     // flagged on 5 of 6 non-lists) and the live prompt is break-only for now,
@@ -70,6 +74,7 @@ function createDictationIntake(options) {
   assertAdapter("delivery", delivery, "deliver");
   assertAdapter("vocabulary", vocabulary, "getPrompt");
   assertAdapter("corrections", corrections, "getEntries");
+  assertAdapter("language", language, "get");
 
   let queue = Promise.resolve();
 
@@ -89,11 +94,17 @@ function createDictationIntake(options) {
       return { status: "empty" };
     }
 
+    // #252: the configured input language, both a hint for the transcriber
+    // and the switch for whether the English cleanup rules run.
+    const inputLanguage = language.get();
+    const englishCleanup = usesEnglishCleanup(inputLanguage);
+    emitDiagnostic("language.input", inputLanguage);
+
     let rawText;
     try {
       const vocabularyPrompt = vocabulary.getPrompt();
       emitDiagnostic("vocabulary.promptLength", vocabularyPrompt.length);
-      const transcript = await transcription.transcribe(wavBuffer, vocabularyPrompt);
+      const transcript = await transcription.transcribe(wavBuffer, vocabularyPrompt, inputLanguage);
       if (typeof transcript !== "string") {
         throw new Error("transcription adapter returned a non-string transcript");
       }
@@ -111,7 +122,8 @@ function createDictationIntake(options) {
     // paths), so a held transcript still gets the name spelled right.
     const correctionEntries = corrections.getEntries();
     emitDiagnostic("corrections.count", Array.isArray(correctionEntries) ? correctionEntries.length : 0);
-    const clean = (text, opts) => cleanup(text, { ...opts, corrections: correctionEntries });
+    const clean = (text, opts) =>
+      cleanup(text, { ...opts, corrections: correctionEntries, englishRules: englishCleanup });
 
     let focusContext;
     try {
@@ -255,7 +267,13 @@ function createDictationIntake(options) {
     const sentences = splitSentences(finishedText);
     const hasExplicitBreakCommand = /\bnew (?:line|paragraph)\b/i.test(rawText);
     const eligibleForBreakPlacement =
-      breakSafe && !focusContext.isOneLineField && !hasExplicitBreakCommand && sentences.length >= 3;
+      // #252: the rewrite model's break-placement prompt is English. Skip it
+      // for a non-English dictation rather than feed it text it can't parse.
+      englishCleanup &&
+      breakSafe &&
+      !focusContext.isOneLineField &&
+      !hasExplicitBreakCommand &&
+      sentences.length >= 3;
 
     if (eligibleForBreakPlacement) {
       try {
