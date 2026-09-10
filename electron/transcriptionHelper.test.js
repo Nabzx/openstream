@@ -76,6 +76,26 @@ test("transcribe sends the WAV as base64 and returns the trimmed text", async ()
 
   child.stdout.write('{"id":"1","status":"ok","text":"  Hello there.  ","ms":210}\n');
   assert.equal(await promise, "Hello there.");
+  assert.equal("lang" in requests[0], false, "no lang field when none is passed");
+  helper.stop();
+});
+
+test("#252: a language is forwarded as the lang field, and blank/undefined is omitted", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  helper.transcribe(wav, null, "fr");
+  await nextTurn();
+  assert.equal(requests[0].lang, "fr");
+  child.stdout.write('{"id":"1","status":"ok","text":"bonjour","ms":10}\n');
+
+  helper.transcribe(wav, null, "");
+  await nextTurn();
+  assert.equal("lang" in requests[1], false);
+  child.stdout.write('{"id":"2","status":"ok","text":"hi","ms":10}\n');
   helper.stop();
 });
 

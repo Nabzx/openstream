@@ -206,9 +206,14 @@ function createTranscriptionHelper({
   // biasing the way whisper did, so #16's vocabulary prompt does not apply
   // to this engine (FluidAudio exposes a separate vocabulary-boosting API
   // that a later pass can wire in).
-  async function transcribe(wavBuffer, _prompt) {
+  //
+  // #252: `language` is a script hint - "auto"/undefined lets the model
+  // detect the content, a code biases its token filter towards that script.
+  async function transcribe(wavBuffer, _prompt, language) {
     const buffer = Buffer.isBuffer(wavBuffer) ? wavBuffer : Buffer.from(wavBuffer);
-    const reply = await request("transcribe", { wav: buffer.toString("base64") });
+    const payload = { wav: buffer.toString("base64") };
+    if (typeof language === "string" && language) payload.lang = language;
+    const reply = await request("transcribe", payload);
     if (reply.status !== "ok" || typeof reply.text !== "string") {
       throw new Error(
         `transcription-helper transcription failed${reply.reason ? `: ${reply.reason}` : ""}`,
