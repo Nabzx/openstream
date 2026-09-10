@@ -101,10 +101,14 @@ while let line = readLine(strippingNewline: true) {
             continue
         }
 
-        // v3 auto-detects, but the app is English-first, so bias to English
-        // unless the request overrides it. An unknown code falls back rather
-        // than failing the dictation.
-        let language = (object["lang"] as? String).flatMap(Language.init(rawValue:)) ?? .english
+        // #252: `lang` is a script hint for v3's token filter, not a hard
+        // setting - the model auto-detects the content either way. "auto" or
+        // a missing/unknown code means no hint (pure auto-detect); a valid
+        // code biases the decoder towards that language's script.
+        let language: Language? = {
+            guard let code = object["lang"] as? String, code != "auto" else { return nil }
+            return Language(rawValue: code)
+        }()
 
         let scratch = FileManager.default.temporaryDirectory
             .appendingPathComponent("openstream-dictation-\(id).wav")
