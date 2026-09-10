@@ -20,6 +20,8 @@ function createIntake({
   vocabulary,
   // #321: undefined = no corrections adapter wired (the default no-op).
   corrections,
+  // #252: the transcription input language; undefined keeps the default "en".
+  language,
   onDiagnostic,
   listDetection,
   // #375: undefined = no clipboard adapter wired at all.
@@ -50,6 +52,7 @@ function createIntake({
     },
     vocabulary,
     ...(corrections !== undefined ? { corrections } : {}),
+    ...(language !== undefined ? { language: { get: () => language } } : {}),
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
     listDetection,
     clipboard: clipboardText !== undefined ? { readText: () => clipboardText } : null,
@@ -147,6 +150,46 @@ test("#321: with no corrections adapter, cleanup runs unchanged", async () => {
   const { result, delivered } = await deliveredText({ transcript: "hello nabeel" });
   assert.equal(result.status, "delivered");
   assert.deepEqual(delivered, ["Hello nabeel."]);
+});
+
+test("#252: the configured language is passed to the transcriber", async () => {
+  const seen = [];
+  const harness = createIntake({
+    language: "fr",
+    transcribe: async (_wav, _prompt, lang) => {
+      seen.push(lang);
+      return "bonjour tout le monde";
+    },
+  });
+  await harness.intake.complete(completedWav);
+  assert.deepEqual(seen, ["fr"]);
+});
+
+test("#252: a non-English dictation skips the English cleanup rules", async () => {
+  // "period" is a spoken-punctuation command in English cleanup; in French
+  // mode it must stay a literal word.
+  const { result, delivered } = await deliveredText({
+    language: "fr",
+    transcript: "il faut un point period ici",
+  });
+  assert.equal(result.status, "delivered");
+  assert.equal(delivered[0], "il faut un point period ici");
+});
+
+test("#252: auto and en both run the full English pass", async () => {
+  for (const language of ["auto", "en"]) {
+    const { delivered } = await deliveredText({ language, transcript: "run the tests period" });
+    assert.equal(delivered[0], "Run the tests.", language);
+  }
+});
+
+test("#252: a non-English dictation never calls the break-placement model", async () => {
+  const harness = createIntake({
+    language: "de",
+    transcript: "erster satz. zweiter satz. dritter satz. vierter satz.",
+  });
+  await harness.intake.complete(completedWav);
+  assert.equal(harness.breakCalls.length, 0);
 });
 
 test("a known unsafe application never receives spoken line breaks", async () => {
@@ -318,6 +361,7 @@ test("repairs malformed break indices without retrying and records format and re
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["language.input", "en"],
     ["vocabulary.promptLength", 0],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
@@ -376,6 +420,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
     text: "Here is my shopping list.\n\n- Buy milk.\n- Buy eggs.\n- Buy bread.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["language.input", "en"],
     ["vocabulary.promptLength", 0],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
@@ -403,6 +448,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
     text: "First sentence.\n\n- Second sentence.\n- Third sentence.\n- Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["language.input", "en"],
     ["vocabulary.promptLength", 0],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
@@ -430,6 +476,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["language.input", "en"],
     ["vocabulary.promptLength", 0],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
@@ -456,6 +503,7 @@ test("list detection is off by default: a valid range is parsed and reported but
     text: "Here is my shopping list. Buy milk. Buy eggs. Buy bread.",
   });
   assert.deepEqual(harness.diagnostics, [
+    ["language.input", "en"],
     ["vocabulary.promptLength", 0],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
