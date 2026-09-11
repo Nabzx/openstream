@@ -10,8 +10,8 @@ function fakeAdapters(overrides = {}) {
   return {
     calls,
     transcription: {
-      transcribe: async (buf) => {
-        calls.push(["transcribe", buf.byteLength]);
+      transcribe: async (buf, _prompt, language) => {
+        calls.push(["transcribe", buf.byteLength, language]);
         return overrides.transcript ?? "snake case";
       },
     },
@@ -43,12 +43,19 @@ const ctx = (selection, over = {}) => ({
 
 test.beforeEach(() => setBreakSafeApplications(DEFAULT_BREAK_SAFE_BUNDLE_IDS));
 
+test("#400: always asks for the English script hint, regardless of any dictation-language setting", async () => {
+  const a = fakeAdapters({ transcript: "snake case" });
+  await createVoiceEditIntake(a).complete(WAV, ctx("user profile name"));
+  const transcribeCall = a.calls.find((c) => c[0] === "transcribe");
+  assert.equal(transcribeCall[2], "en");
+});
+
 test("a recognised command transforms the selection and delivers it", async () => {
   const a = fakeAdapters({ transcript: "camel case" });
   const intake = createVoiceEditIntake(a);
   const result = await intake.complete(WAV, ctx("user profile name"));
   assert.deepEqual(result, { status: "delivered", commandId: "camel", text: "userProfileName" });
-  assert.deepEqual(a.calls[0], ["transcribe", 200]);
+  assert.deepEqual(a.calls[0], ["transcribe", 200, "en"]);
   assert.deepEqual(a.calls[1], ["diag", "voiceEdit.command", "camel"]);
   assert.deepEqual(a.calls[2], ["deliver", "userProfileName"]);
 });
