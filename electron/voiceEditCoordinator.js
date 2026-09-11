@@ -52,7 +52,11 @@ function createVoiceEditIntake(options) {
 
     let commandText;
     try {
-      const transcript = await transcription.transcribe(wavBuffer);
+      // #400: the command grammar (voiceEditCommands.js) is fixed English
+      // phrases regardless of what language the user dictates in, so this
+      // always asks for the English script hint - independent of the
+      // inputLanguage setting dictationCoordinator reads (#252).
+      const transcript = await transcription.transcribe(wavBuffer, undefined, "en");
       if (typeof transcript !== "string") {
         throw new Error("transcription adapter returned a non-string transcript");
       }
