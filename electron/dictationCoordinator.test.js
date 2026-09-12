@@ -192,6 +192,30 @@ test("#252: a non-English dictation never calls the break-placement model", asyn
   assert.equal(harness.breakCalls.length, 0);
 });
 
+test("#401: auto detects a non-Latin transcript and skips English cleanup", async () => {
+  const { result, delivered } = await deliveredText({
+    language: "auto",
+    // "period" would be a spoken-punctuation command under English cleanup.
+    transcript: "Привет, period, как дела",
+  });
+  assert.equal(result.status, "delivered");
+  assert.equal(delivered[0], "Привет, period, как дела");
+});
+
+test("#401: auto still runs full cleanup on a Latin-script transcript", async () => {
+  const { delivered } = await deliveredText({ language: "auto", transcript: "run the tests period" });
+  assert.equal(delivered[0], "Run the tests.");
+});
+
+test("#401: auto on a non-Latin transcript also skips break placement", async () => {
+  const harness = createIntake({
+    language: "auto",
+    transcript: "Первое предложение. Второе предложение. Третье предложение. Четвёртое.",
+  });
+  await harness.intake.complete(completedWav);
+  assert.equal(harness.breakCalls.length, 0);
+});
+
 test("a known unsafe application never receives spoken line breaks", async () => {
   const { result, delivered } = await deliveredText({
     bundleId: "com.apple.Terminal",
@@ -363,6 +387,7 @@ test("repairs malformed break indices without retrying and records format and re
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
     ["vocabulary.promptLength", 0],
+    ["language.englishCleanup", true],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
@@ -422,6 +447,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
     ["vocabulary.promptLength", 0],
+    ["language.englishCleanup", true],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
@@ -450,6 +476,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
     ["vocabulary.promptLength", 0],
+    ["language.englishCleanup", true],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
@@ -478,6 +505,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
     ["vocabulary.promptLength", 0],
+    ["language.englishCleanup", true],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
@@ -505,6 +533,7 @@ test("list detection is off by default: a valid range is parsed and reported but
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
     ["vocabulary.promptLength", 0],
+    ["language.englishCleanup", true],
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
