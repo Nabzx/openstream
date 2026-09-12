@@ -65,7 +65,7 @@ _Avoid_: Eviction, unloading, timeout kill
 ### Cleanup
 
 **Rules cleanup**:
-Deterministic, non-model text tidying applied to every English dictation. Costs under a millisecond. It does all cleanup except break placement, which it asks the rewrite model server to decide. It is English-specific (spoken punctuation, filler words, capitalisation), so a dictation in another language (#252) skips it and gets whitespace tidy-up only.
+Deterministic, non-model text tidying applied to every English dictation. Costs under a millisecond. It does all cleanup except break placement, which it asks the rewrite model server to decide. It is English-specific (spoken punctuation, filler words, capitalisation), so a dictation in another language (#252) skips it and gets whitespace tidy-up only. In "auto" mode that call is sharpened by the transcript's own script (#401) rather than guessed from the setting alone - there is no detected-language API to ask instead.
 _Avoid_: Post-processing, formatting pass
 
 **Term correction**:
