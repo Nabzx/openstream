@@ -51,4 +51,49 @@ function isSupportedLanguage(language) {
   return language === "auto" || SUPPORTED_LANGUAGE_CODES.has(language);
 }
 
-module.exports = { LANGUAGE_NAMES, SUPPORTED_LANGUAGE_CODES, isSupportedLanguage, usesEnglishCleanup };
+// #401: a rough script-counting check, the same idea as FluidAudio's own
+// Script grouping (native/transcription-helper's TokenLanguageFilter.swift)
+// - Latin, Cyrillic and Greek letter ranges don't overlap, so the highest
+// count wins unambiguously. Latin includes Latin Extended-B (Romanian's
+// ș/ț and friends), matching how that file treats them. Returns null when
+// the text has no lettered characters at all - nothing to tell, and
+// nothing for the English rules to mis-clean either.
+const SCRIPT_RANGES = {
+  latin: /[A-Za-zÀ-ɏ]/g,
+  cyrillic: /[Ѐ-ӿ]/g,
+  greek: /[Ͱ-Ͽ]/g,
+};
+
+function detectScript(text) {
+  const counts = Object.entries(SCRIPT_RANGES).map(([script, pattern]) => [
+    script,
+    (text.match(pattern) || []).length,
+  ]);
+  const total = counts.reduce((sum, [, count]) => sum + count, 0);
+  if (total === 0) return null;
+  return counts.reduce((best, entry) => (entry[1] > best[1] ? entry : best))[0];
+}
+
+// #401: usesEnglishCleanup(language) answers from the setting alone, decided
+// before a single word has been transcribed. In "auto" mode that is only
+// ever a guess - once the transcript exists, its actual script is a much
+// better signal than "auto is usually English": the TDT model we call has
+// no detected-language output to read instead (see the issue). A named
+// language is unaffected - the user already said what it is.
+function resolveEnglishCleanup(language, transcript) {
+  if (!usesEnglishCleanup(language)) return false;
+  if (language === "auto") {
+    const script = detectScript(transcript);
+    if (script && script !== "latin") return false;
+  }
+  return true;
+}
+
+module.exports = {
+  LANGUAGE_NAMES,
+  SUPPORTED_LANGUAGE_CODES,
+  isSupportedLanguage,
+  usesEnglishCleanup,
+  detectScript,
+  resolveEnglishCleanup,
+};

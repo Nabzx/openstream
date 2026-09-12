@@ -1,6 +1,6 @@
 const { cleanup } = require("./cleanup/rules");
 const { isBreakSafeApplication } = require("./breakSafety");
-const { usesEnglishCleanup } = require("./languages");
+const { resolveEnglishCleanup } = require("./languages");
 
 // #375: a bare spoken "paste" is a command, not dictation. Strict
 // whole-utterance match - "paste the report" types literally, like any
@@ -94,10 +94,8 @@ function createDictationIntake(options) {
       return { status: "empty" };
     }
 
-    // #252: the configured input language, both a hint for the transcriber
-    // and the switch for whether the English cleanup rules run.
+    // #252: the configured input language - a hint for the transcriber.
     const inputLanguage = language.get();
-    const englishCleanup = usesEnglishCleanup(inputLanguage);
     emitDiagnostic("language.input", inputLanguage);
 
     let rawText;
@@ -116,6 +114,13 @@ function createDictationIntake(options) {
     if (!rawText) {
       return { status: "no-speech" };
     }
+
+    // #401: whether the English cleanup rules run. For a named language this
+    // is decided by the setting alone; for "auto" the transcript's own
+    // script sharpens the call, since there's no detected-language API to
+    // read instead.
+    const englishCleanup = resolveEnglishCleanup(inputLanguage, rawText);
+    emitDiagnostic("language.englishCleanup", englishCleanup);
 
     // #321: read the user's correction table once for this dictation and fold
     // it into every cleanup() call below (the main path and both salvage
