@@ -10,6 +10,10 @@ A local-first voice dictation app for macOS. The user holds a key, speaks, and t
 One complete act of speaking and having the resulting text placed at the cursor. Begins when the user presses the push-to-talk key and ends when the text lands.
 _Avoid_: Utterance, recording, session
 
+**File transcription**:
+A second, distinct mode (#253): the user drops or picks an existing audio file and gets a transcript back, rather than speaking live at the cursor. Shares the transcription engine and its resident model with Dictation, but nothing else - no cursor, no cleanup rules, no break placement, no push-to-talk. One file transcribes at a time; a long one can transiently delay a concurrent Dictation, since both use the same resident model.
+_Avoid_: Batch transcription, offline transcription (accurate but not the term used here), import
+
 **Dictation latency budget**:
 The time from the end of speech to the text arriving at the cursor, which the product commits to keeping under one second. It ends where the user can see it end, so the cost of placing the text is inside the budget rather than outside it.
 _Avoid_: Response time, turnaround
