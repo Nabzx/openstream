@@ -27,10 +27,16 @@ const FAILURE_WINDOW_MS = 12000;
 // this long is a failure worth surfacing, not worth waiting on.
 const REQUEST_TIMEOUT_MS = 30000;
 
+// #253: a dropped file can be an hour-long meeting recording - a different
+// budget entirely from a live dictation. Generous rather than tuned: the
+// point is "don't time out a real job", not a tight ceiling.
+const FILE_REQUEST_TIMEOUT_MS = 30 * 60 * 1000;
+
 function createTranscriptionHelper({
   spawnProcess = spawn,
   restartDelayMs = RESTART_DELAY_MS,
   requestTimeoutMs = REQUEST_TIMEOUT_MS,
+  fileRequestTimeoutMs = FILE_REQUEST_TIMEOUT_MS,
   setRequestTimer = setTimeout,
   clearRequestTimer = clearTimeout,
   setRestartTimer = setTimeout,
@@ -186,7 +192,7 @@ function createTranscriptionHelper({
     return readyPromise;
   }
 
-  function request(cmd, payload = {}) {
+  function request(cmd, payload = {}, timeoutMs = requestTimeoutMs) {
     return new Promise((resolve, reject) => {
       if (!child) {
         reject(new Error("transcription-helper is not running"));
@@ -194,8 +200,8 @@ function createTranscriptionHelper({
       }
       const id = String(nextId++);
       const timer = setRequestTimer(() => {
-        settle(id, null, new Error(`transcription-helper ${cmd} request timed out after ${requestTimeoutMs}ms`));
-      }, requestTimeoutMs);
+        settle(id, null, new Error(`transcription-helper ${cmd} request timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
       pending.set(id, { resolve, reject, timer });
       child.stdin.write(`${JSON.stringify({ id, cmd, ...payload })}\n`);
     });
@@ -222,6 +228,21 @@ function createTranscriptionHelper({
     return reply.text.trim();
   }
 
+  // #253: dropped-file transcription. Reads straight from disk on the Swift
+  // side (see transcribeFile in main.swift) - no base64 round-trip, and a
+  // far longer timeout since the file could be long.
+  async function transcribeFile(filePath, language) {
+    const payload = { path: filePath };
+    if (typeof language === "string" && language) payload.lang = language;
+    const reply = await request("transcribeFile", payload, fileRequestTimeoutMs);
+    if (reply.status !== "ok" || typeof reply.text !== "string") {
+      throw new Error(
+        `transcription-helper file transcription failed${reply.reason ? `: ${reply.reason}` : ""}`,
+      );
+    }
+    return reply.text.trim();
+  }
+
   // #254: a user-driven restart of a failed helper - clear the crash-loop
   // count so it isn't still "failed" the moment it comes back.
   function restart() {
@@ -230,7 +251,7 @@ function createTranscriptionHelper({
     start();
   }
 
-  return { start, stop, restart, isReady, whenReady, status, onStatusChange, transcribe };
+  return { start, stop, restart, isReady, whenReady, status, onStatusChange, transcribe, transcribeFile };
 }
 
 module.exports = {
