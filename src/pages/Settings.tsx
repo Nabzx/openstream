@@ -134,8 +134,9 @@ function InputLanguageSection() {
     <div className="setting-item">
       <h3 className="setting-item__name">Dictation language</h3>
       <p className="setting-item__desc">
-        The model handles 28 European languages. Picking one improves accuracy for its alphabet; the automatic
-        cleanup (spoken punctuation, filler removal) only runs for English.
+        The model handles 28 European languages. Picking one improves accuracy for its alphabet. Automatic cleanup
+        (spoken punctuation, filler removal) runs for English and for Auto when it sounds like English; any other
+        language is left exactly as spoken.
       </p>
       <div className="setting-item__control">
         <select
