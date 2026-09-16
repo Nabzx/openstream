@@ -830,6 +830,60 @@ select.field option { color: initial; }
 .settings-advanced[open] > summary::before { content: "\2304\00a0\00a0"; }
 .settings-advanced .field { max-width: 240px; }
 
+/* --- file transcription page (#253) ------------------------------------- */
+
+.drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-7) var(--space-4);
+  border: 2px dashed var(--line-hi);
+  border-radius: var(--r);
+  background: var(--screen-2);
+  text-align: center;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+.drop-zone--active {
+  border-color: var(--acc);
+  background: var(--acc-tint);
+}
+.drop-zone__icon {
+  width: 28px;
+  height: 28px;
+  color: var(--faint);
+  margin-bottom: 2px;
+}
+.drop-zone--active .drop-zone__icon { color: var(--acc); }
+.drop-zone__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg-hi);
+}
+.drop-zone__desc {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.queue-row__name {
+  color: var(--fg-hi);
+  text-shadow: var(--shadow-text);
+}
+.queue-row__error {
+  display: block;
+  font-size: 11.5px;
+  color: var(--err);
+  margin-top: 1px;
+}
+.queue-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
 /* --- Reduce Transparency fallback --------------------------------------
    The clear glass depends on the vibrancy material and a desktop behind
    it. When the user turns on Reduce Transparency, macOS flattens the

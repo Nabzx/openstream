@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { coercePage, TAB_PAGES, type Page, type TabPage } from "./nav";
 import Home from "./pages/Home";
+import FileTranscription from "./pages/FileTranscription";
 import Commands from "./pages/Commands";
 import Settings from "./pages/Settings";
 import Permissions from "./pages/Permissions";
@@ -8,6 +9,7 @@ import Setup from "./pages/Setup";
 
 const TAB_LABELS: Record<TabPage, string> = {
   home: "Home",
+  files: "Files",
   commands: "Commands",
   settings: "Settings",
 };
@@ -41,6 +43,7 @@ export default function App() {
         </div>
       </header>
       {page === "settings" && <Settings />}
+      {page === "files" && <FileTranscription />}
       {page === "commands" && <Commands />}
       {page === "setup" && <Setup onDone={() => setPage("home")} />}
       {page === "permissions" && <Permissions onDone={() => setPage("home")} />}
