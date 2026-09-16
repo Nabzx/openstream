@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require("electron");
+const { contextBridge, ipcRenderer, webUtils } = require("electron");
 
 // Main asks the shell to switch pages (the App menu's "Settings…" item,
 // the tray). Returns an unsubscribe so the renderer can clean up.
@@ -30,6 +30,15 @@ function onHealthChanged(callback) {
   const listener = () => callback();
   ipcRenderer.on("health-changed", listener);
   return () => ipcRenderer.removeListener("health-changed", listener);
+}
+
+// #253: main pushes the full job list after every queue change - a drop, a
+// retry, a job finishing - so the renderer just re-renders from the array
+// rather than tracking a diff.
+function onFileTranscriptionQueue(callback) {
+  const listener = (_event, jobs) => callback(jobs);
+  ipcRenderer.on("file-transcription:queue", listener);
+  return () => ipcRenderer.removeListener("file-transcription:queue", listener);
 }
 
 // The renderer's only route to the main process, per contextIsolation - see
@@ -74,8 +83,28 @@ contextBridge.exposeInMainWorld("openstream", {
     getStatus: () => ipcRenderer.invoke("vocabulary:get-status"),
     chooseFolder: () => ipcRenderer.invoke("vocabulary:choose-folder"),
   },
+  // #253: drop-a-file transcription.
+  fileTranscription: {
+    add: (filePaths) => ipcRenderer.invoke("file-transcription:add", filePaths),
+    chooseFiles: () => ipcRenderer.invoke("file-transcription:choose-files"),
+    getQueue: () => ipcRenderer.invoke("file-transcription:get-queue"),
+    retry: (id) => ipcRenderer.invoke("file-transcription:retry", id),
+    remove: (id) => ipcRenderer.invoke("file-transcription:remove", id),
+    clearFinished: () => ipcRenderer.invoke("file-transcription:clear-finished"),
+    copy: (id) => ipcRenderer.invoke("file-transcription:copy", id),
+    save: (id) => ipcRenderer.invoke("file-transcription:save", id),
+  },
+  // #253: resolves a dropped File object to its real filesystem path.
+  // webUtils.getPathForFile supersedes the old (deprecated, removed)
+  // File.path augmentation - only callable from the preload/main context,
+  // which is why this exists as a bridge method rather than something the
+  // renderer reaches for directly.
+  files: {
+    getPathForFile: (file) => webUtils.getPathForFile(file),
+  },
   onNavigate,
   onDictationState,
   onSetupProgress,
   onHealthChanged,
+  onFileTranscriptionQueue,
 });

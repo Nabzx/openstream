@@ -68,6 +68,23 @@ export type VocabularyStatus = {
   scannedAt: Date | null;
 };
 
+// #253: one dropped/chosen file's place in the transcription queue.
+export type FileTranscriptionStatus = "queued" | "transcribing" | "done" | "failed";
+
+export type FileTranscriptionJob = {
+  id: string;
+  path: string;
+  name: string;
+  status: FileTranscriptionStatus;
+  text: string | null;
+  error: string | null;
+  queuedAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+};
+
+export type FileTranscriptionActionResult = { ok: true; path?: string } | { ok: false; reason: string };
+
 // Exposed by preload.js via contextBridge - see the comment there for what
 // this is expected to grow into.
 declare global {
@@ -108,10 +125,24 @@ declare global {
         getStatus(): Promise<VocabularyStatus>;
         chooseFolder(): Promise<string | null>;
       };
+      fileTranscription: {
+        add(filePaths: string[]): Promise<string[]>;
+        chooseFiles(): Promise<string[]>;
+        getQueue(): Promise<FileTranscriptionJob[]>;
+        retry(id: string): Promise<boolean>;
+        remove(id: string): Promise<boolean>;
+        clearFinished(): Promise<void>;
+        copy(id: string): Promise<FileTranscriptionActionResult>;
+        save(id: string): Promise<FileTranscriptionActionResult>;
+      };
+      files: {
+        getPathForFile(file: File): string;
+      };
       onNavigate(callback: (page: string) => void): () => void;
       onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
       onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
       onHealthChanged(callback: () => void): () => void;
+      onFileTranscriptionQueue(callback: (jobs: FileTranscriptionJob[]) => void): () => void;
     };
   }
 }
