@@ -18,6 +18,7 @@ const http = require("http");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeOverlayPosition } = require("./overlayPosition");
+const { LANGUAGE_NAMES } = require("./languages");
 const transcriptionHelper = require("./transcriptionHelper");
 const rewriteModelServer = require("./rewriteModelServer");
 const { ensureModels, modelsMissing } = require("./modelStore");
@@ -810,13 +811,29 @@ function setUserVisibleState(state, details) {
   }
 }
 
-function createTray() {
-  loadTrayIcons();
-  tray = new Tray(trayIcons.idle);
-  setTrayState("idle");
+// #403: a short curated list for the tray, not all 28 - this is a quick
+// switch for someone who changes language mid-session more often than
+// they'd open Settings for, not a replacement for the full picker there.
+const TRAY_QUICK_LANGUAGES = ["auto", "en", "es", "fr", "de"];
+
+function buildTrayMenuTemplate() {
+  const currentLanguage = settingsStore ? settingsStore.get().inputLanguage : "en";
+  const languageSubmenu = [
+    ...TRAY_QUICK_LANGUAGES.map((code) => ({
+      label: code === "auto" ? "Auto" : LANGUAGE_NAMES[code],
+      type: "radio",
+      checked: currentLanguage === code,
+      click: () => {
+        if (settingsStore) settingsStore.setInputLanguage(code);
+      },
+    })),
+    { type: "separator" },
+    { label: "More…", click: () => openWindowTo("settings") },
+  ];
 
   const menuTemplate = [
     { label: "Open Window", click: createWindow },
+    { label: "Dictation Language", submenu: languageSubmenu },
     { type: "separator" },
   ];
 
@@ -834,7 +851,24 @@ function createTray() {
   }
 
   menuTemplate.push({ label: "Quit OpenStream", click: () => app.quit() });
-  tray.setContextMenu(Menu.buildFromTemplate(menuTemplate));
+  return menuTemplate;
+}
+
+// Rebuilt (not just re-shown) on every settings change, not only a language
+// switch from the tray itself - the radio item has to track a change made
+// from the Settings window too, and rebuilding the whole menu is the only
+// way Electron offers to update it.
+function updateTrayMenu() {
+  if (!tray) return;
+  tray.setContextMenu(Menu.buildFromTemplate(buildTrayMenuTemplate()));
+}
+
+function createTray() {
+  loadTrayIcons();
+  tray = new Tray(trayIcons.idle);
+  setTrayState("idle");
+  updateTrayMenu();
+  if (settingsStore) settingsStore.onChange(updateTrayMenu);
 }
 
 function isCaptureSender(event) {
