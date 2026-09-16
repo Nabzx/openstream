@@ -51,6 +51,7 @@
       "output": "release",
       "buildResources": "assets"
     },
+    "electronLanguages": ["en", "en_gb"],
     "files": [
       "electron/**/*",
       "dist/**/*",
