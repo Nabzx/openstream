@@ -162,6 +162,78 @@ function InputLanguageSection() {
   );
 }
 
+type MicrophoneOption = { deviceId: string; label: string };
+
+function MicrophoneSection() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [devices, setDevices] = useState<MicrophoneOption[] | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setSelected(settings.microphoneDeviceId));
+  }, []);
+
+  useEffect(() => {
+    // #137: a device's label is blank until this window has an active or
+    // previously-granted mic permission - request just enough to unlock
+    // labels, then let the stream go immediately. The capture window keeps
+    // its own separate, resident stream; this one only exists for a moment.
+    navigator.mediaDevices
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        stream.getTracks().forEach((track) => track.stop());
+        return navigator.mediaDevices.enumerateDevices();
+      })
+      .then((infos) =>
+        setDevices(
+          infos
+            .filter((info) => info.kind === "audioinput")
+            .map((info, index) => ({ deviceId: info.deviceId, label: info.label || `Microphone ${index + 1}` })),
+        ),
+      )
+      .catch(() => setDevices([]));
+  }, []);
+
+  const knownSelection = selected && devices?.some((device) => device.deviceId === selected);
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Microphone</h3>
+      <p className="setting-item__desc">
+        Which input device to record from. Leave this on System default to always follow whatever macOS is set to.
+      </p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={selected ?? ""}
+          disabled={selected === null || devices === null}
+          onChange={(event) => {
+            const next = event.target.value || null;
+            setSelected(next);
+            window.openstream.settings
+              .setMicrophoneDeviceId(next)
+              .then((settings) => setSelected(settings.microphoneDeviceId));
+          }}
+        >
+          <option value="">System default</option>
+          {devices?.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label}
+            </option>
+          ))}
+          {/* The saved device is no longer in the list - unplugged, most
+              likely. Keeps the picker honest rather than silently showing
+              a blank selection; capture.js falls back to the system
+              default on its own until a different device is picked here. */}
+          {selected && devices !== null && !knownSelection && <option value={selected}>Not connected</option>}
+        </select>
+      </div>
+      {devices !== null && devices.length === 0 && (
+        <p className="hint">No other input devices found, or the app doesn’t have microphone access yet.</p>
+      )}
+    </div>
+  );
+}
+
 function PauseMediaSection() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
@@ -310,6 +382,8 @@ export default function Settings() {
         </div>
 
         <InputLanguageSection />
+
+        <MicrophoneSection />
 
         <div className="setting-item">
           <h3 className="setting-item__name">Names &amp; terms</h3>
