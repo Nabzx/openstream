@@ -37,6 +37,46 @@ BIN_DIR="$ROOT/resources/bin/llama"
 SERVER_BIN="$BIN_DIR/llama-server"
 RPC_LIBRARY="$BIN_DIR/$LLAMA_RPC_LIBRARY"
 
+# The release tarball ships every llama.cpp CLI (llama-cli, llama-bench,
+# llama-tts, ...) and the impl dylib behind each one - none of it reachable
+# from llama-server, which is the only binary OpenStream ever runs (see
+# electron/rewriteModelServer.js). Keep only llama-server plus what `otool
+# -L` says it (transitively) links against, verified by actually starting
+# it against the real model and hitting /health - see #272. ~2.5 MB freed
+# (the tarball's bulk is the shared ggml/llama dylibs, which llama-server
+# needs regardless - the CLI tools riding along with them are small).
+KEEP_FILES=(
+  llama-server LICENSE
+  libllama-server-impl.dylib
+  libllama-common.0.3.0.dylib libllama-common.0.dylib libllama-common.dylib
+  libmtmd.0.3.0.dylib libmtmd.0.dylib libmtmd.dylib
+  libllama.0.3.0.dylib libllama.0.dylib libllama.dylib
+  libggml.0.22.0.dylib libggml.0.dylib libggml.dylib
+  libggml-cpu.0.22.0.dylib libggml-cpu.0.dylib libggml-cpu.dylib
+  libggml-blas.0.22.0.dylib libggml-blas.0.dylib libggml-blas.dylib
+  libggml-metal.0.22.0.dylib libggml-metal.0.dylib libggml-metal.dylib
+  libggml-rpc.0.22.0.dylib libggml-rpc.0.dylib libggml-rpc.dylib
+  libggml-base.0.22.0.dylib libggml-base.0.dylib libggml-base.dylib
+)
+
+prune_bin_dir() {
+  [ -d "$BIN_DIR" ] || return 0
+  local f keep entry
+  for f in "$BIN_DIR"/*; do
+    entry="$(basename "$f")"
+    keep=0
+    for keep_entry in "${KEEP_FILES[@]}"; do
+      if [ "$entry" = "$keep_entry" ]; then
+        keep=1
+        break
+      fi
+    done
+    if [ "$keep" -eq 0 ]; then
+      rm -f "$f"
+    fi
+  done
+}
+
 sha256() {
   if command -v shasum >/dev/null 2>&1; then
     shasum -a 256 "$1" | awk '{print $1}'
@@ -78,6 +118,10 @@ else
   cp -R "$EXTRACTED_DIR/." "$BIN_DIR/"
   echo "    verified and installed: $SERVER_BIN"
 fi
+
+# Runs whether this was a fresh fetch or a skip - covers a bundle fetched
+# before this trim existed, not just a fresh one.
+prune_bin_dir
 
 echo "==> smollm2-1.7b-instruct-q4_k_m.gguf"
 mkdir -p "$MODEL_DIR"
