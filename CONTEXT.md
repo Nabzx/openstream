@@ -26,6 +26,10 @@ _Avoid_: HUD, popup, indicator
 The finished text from a completed recording that could not be placed at the cursor. It remains in the Push-to-talk overlay so the user can copy or dismiss it. It is not a Dictation because the text did not land.
 _Avoid_: Failed dictation, lost text
 
+**Recording history** (#136):
+A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, capped and FIFO-trimmed rather than curated.
+_Avoid_: Transcript log, clipboard history
+
 **Voice edit**:
 A transform of text the user has already selected, requested by speaking a Voice-edit command such as "snake case" or "bullet list". Distinct from dictation: the user selects text first and asks for the change explicitly. In v0.3 the transforms are deterministic and run with no model - a semantic rewrite ("make this shorter") is out of scope until a capable model fills the rewrite model server role. "Copy that" is the exception that proves the shape: same trigger, but it writes the selection to the clipboard and never touches the document (#374). "Paste over this" is the mirror image: the selection is replaced with the clipboard contents, which then flow through the same break-safe gate as any other edit (#378).
 _Avoid_: Cleanup, correction, LLM pass, rewrite

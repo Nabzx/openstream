@@ -59,6 +59,18 @@ export type SetupProgress =
   | { phase: "ready" }
   | { phase: "error"; message: string };
 
+// #136: one recorded dictation. delivered: false means it landed as a Held
+// result instead (reason explains why); bundleId is the frontmost app at
+// the time, or null if it couldn't be read.
+export type RecordingHistoryEntry = {
+  id: string;
+  text: string;
+  delivered: boolean;
+  bundleId: string | null;
+  reason: string | null;
+  at: number;
+};
+
 export type VocabularyStatus = {
   path: string | null;
   termCount: number;
@@ -108,10 +120,17 @@ declare global {
         getStatus(): Promise<VocabularyStatus>;
         chooseFolder(): Promise<string | null>;
       };
+      recordingHistory: {
+        get(): Promise<RecordingHistoryEntry[]>;
+        remove(id: string): Promise<RecordingHistoryEntry[]>;
+        clear(): Promise<RecordingHistoryEntry[]>;
+        copy(text: string): Promise<boolean>;
+      };
       onNavigate(callback: (page: string) => void): () => void;
       onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
       onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
       onHealthChanged(callback: () => void): () => void;
+      onRecordingHistory(callback: (entries: RecordingHistoryEntry[]) => void): () => void;
     };
   }
 }
