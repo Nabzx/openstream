@@ -425,6 +425,15 @@ function createApplicationMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+// #137: capture.js waits for this before it opens the microphone at all -
+// see its onSetDevice comment. Pushed once right after load (the renderer's
+// deterministic start signal), then again on every settings change so a
+// device picked mid-session takes effect without an app restart.
+function pushMicrophoneDevice() {
+  if (!captureWin || captureWin.isDestroyed()) return;
+  captureWin.webContents.send("set-device", settingsStore ? settingsStore.get().microphoneDeviceId : null);
+}
+
 function createCaptureWindow() {
   captureWin = new BrowserWindow({
     show: false,
@@ -435,7 +444,9 @@ function createCaptureWindow() {
     },
   });
   hardenWindow(captureWin.webContents);
+  captureWin.webContents.once("did-finish-load", pushMicrophoneDevice);
   captureWin.loadFile(path.join(__dirname, "capture", "captureWindow.html"));
+  if (settingsStore) settingsStore.onChange(pushMicrophoneDevice);
 }
 
 // The resting size for the recording/idle waveform - named so
@@ -1099,6 +1110,13 @@ ipcMain.handle("settings:set-overlay-position", (event, position) => {
 ipcMain.handle("settings:set-input-language", (event, language) => {
   // #252: the store validates against the supported code list.
   return settingsStore.setInputLanguage(language);
+});
+
+ipcMain.handle("settings:set-microphone-device", (event, deviceId) => {
+  // #137: the store validates; pushMicrophoneDevice (subscribed to
+  // settingsStore.onChange in createCaptureWindow) picks the change up and
+  // tells the capture window.
+  return settingsStore.setMicrophoneDeviceId(deviceId);
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by

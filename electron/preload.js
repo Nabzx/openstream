@@ -77,6 +77,7 @@ contextBridge.exposeInMainWorld("openstream", {
     setSoundCues: (enabled) => ipcRenderer.invoke("settings:set-sound-cues", enabled),
     setOverlayPosition: (position) => ipcRenderer.invoke("settings:set-overlay-position", position),
     setInputLanguage: (language) => ipcRenderer.invoke("settings:set-input-language", language),
+    setMicrophoneDeviceId: (deviceId) => ipcRenderer.invoke("settings:set-microphone-device", deviceId),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),
