@@ -32,6 +32,15 @@ function onHealthChanged(callback) {
   return () => ipcRenderer.removeListener("health-changed", listener);
 }
 
+// #136: main pushes the full history list whenever it changes (a new
+// dictation, a remove, a clear) - the History page re-renders from the
+// snapshot rather than diffing.
+function onRecordingHistory(callback) {
+  const listener = (_event, entries) => callback(entries);
+  ipcRenderer.on("recording-history:changed", listener);
+  return () => ipcRenderer.removeListener("recording-history:changed", listener);
+}
+
 // The renderer's only route to the main process, per contextIsolation - see
 // the settings window's webPreferences in main.js. First surface: settings
 // (#19). This will grow to cover the hotkey helper, the accessibility
@@ -74,8 +83,15 @@ contextBridge.exposeInMainWorld("openstream", {
     getStatus: () => ipcRenderer.invoke("vocabulary:get-status"),
     chooseFolder: () => ipcRenderer.invoke("vocabulary:choose-folder"),
   },
+  recordingHistory: {
+    get: () => ipcRenderer.invoke("recording-history:get"),
+    remove: (id) => ipcRenderer.invoke("recording-history:remove", id),
+    clear: () => ipcRenderer.invoke("recording-history:clear"),
+    copy: (text) => ipcRenderer.invoke("recording-history:copy", text),
+  },
   onNavigate,
   onDictationState,
   onSetupProgress,
   onHealthChanged,
+  onRecordingHistory,
 });

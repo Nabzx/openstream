@@ -25,6 +25,7 @@ const { ensureModels, modelsMissing } = require("./modelStore");
 const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
+const { createRecordingHistoryStore } = require("./recordingHistoryStore");
 const { createIdleUnloader } = require("./idleUnloader");
 const { createMediaPause } = require("./mediaPause");
 const { createSoundCues } = require("./soundCues");
@@ -151,6 +152,8 @@ let retryModelDownload = () => {};
 let settingsStore = null;
 // #257: set up once the settings store exists (in the startup block).
 let idleUnloader = null;
+// #136: set up once, in the startup block, same as settingsStore.
+let recordingHistoryStore = null;
 let pushToTalkShortcut = null;
 let shortcutCaptureSender = null;
 // Chromium does not reliably deliver a standalone Fn keydown. A one-shot
@@ -180,8 +183,17 @@ const vocabulary = createVocabularyCache();
 // setting at its call site and is a no-op otherwise.
 const soundCues = createSoundCues();
 
+// #136: the frontmost app for the dictation currently being processed, so a
+// history entry can say where the text was headed. Read via the
+// "context.bundleId" diagnostic rather than threaded through the coordinator's
+// return value, since the coordinator's job is delivery, not recall. Cleared
+// at the start of each dictation (see transcribeAndPrint) so a context-detect
+// failure never leaves a previous dictation's app on a new entry.
+let lastDictationBundleId = null;
+
 function recordDictationDiagnostic(name, value) {
   console.log(`[dictation] ${name}: ${JSON.stringify(value)}`);
+  if (name === "context.bundleId") lastDictationBundleId = value;
 }
 
 // #265: pause Music / Spotify for the duration of a recording. Gated on the
@@ -610,6 +622,7 @@ function maybeCopyTranscript(text) {
 }
 
 async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
+  lastDictationBundleId = null;
   let result;
   try {
     result = await dictationIntake.complete(wavBuffer, recordStartBundleId);
@@ -631,6 +644,7 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     console.log(`[dictation] ${result.text}`);
     console.log("[dictation] inserted through accessibility");
     maybeCopyTranscript(result.text);
+    recordingHistoryStore?.record({ text: result.text, delivered: true, bundleId: lastDictationBundleId });
     if (soundCuesEnabled()) soundCues.textDelivered();
     if (Number.isFinite(timing?.releasedAtMs)) {
       const latencyMs = performance.now() - timing.releasedAtMs;
@@ -649,6 +663,12 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.reason}`);
     maybeCopyTranscript(result.text);
+    recordingHistoryStore?.record({
+      text: result.text,
+      delivered: false,
+      bundleId: lastDictationBundleId,
+      reason: result.reason,
+    });
     if (soundCuesEnabled()) soundCues.dictationHeld();
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "failed") {
@@ -1122,6 +1142,28 @@ ipcMain.handle("vocabulary:choose-folder", async () => {
   return result.filePaths[0];
 });
 
+// #136: a lightweight recall log of recent dictations - see
+// recordingHistoryStore.js. The renderer gets the initial snapshot via
+// get(), then live updates via the "recording-history:changed" push
+// (wired in the startup block above, next to where the store is created).
+ipcMain.handle("recording-history:get", () => (recordingHistoryStore ? recordingHistoryStore.list() : []));
+
+ipcMain.handle("recording-history:remove", (event, id) => {
+  if (!recordingHistoryStore) return [];
+  return recordingHistoryStore.remove(id);
+});
+
+ipcMain.handle("recording-history:clear", () => {
+  if (!recordingHistoryStore) return [];
+  return recordingHistoryStore.clear();
+});
+
+ipcMain.handle("recording-history:copy", (event, text) => {
+  if (typeof text !== "string" || !text) return false;
+  clipboard.writeText(text);
+  return true;
+});
+
 // A second launch attempt hits this instead of silently doing nothing (or
 // worse, silently doing everything twice) - bring the settings window
 // forward so there's visible proof this instance is the one that's running.
@@ -1150,6 +1192,13 @@ app.whenReady().then(() => {
   const launchedAtLogin = process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin;
   // Regular Dock app (issue #209) - no app.dock.hide().
   settingsStore = createSettingsStore({ filePath: settingsPath });
+  // #136: same userData directory as settings, its own file.
+  recordingHistoryStore = createRecordingHistoryStore({
+    filePath: path.join(app.getPath("userData"), "recording-history.json"),
+  });
+  recordingHistoryStore.onChange((entries) => {
+    if (win && !win.isDestroyed()) win.webContents.send("recording-history:changed", entries);
+  });
   createApplicationMenu();
   pushToTalkShortcut = createPushToTalkShortcutController({
     settingsStore,
