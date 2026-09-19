@@ -77,6 +77,8 @@ contextBridge.exposeInMainWorld("openstream", {
     setSoundCues: (enabled) => ipcRenderer.invoke("settings:set-sound-cues", enabled),
     setOverlayPosition: (position) => ipcRenderer.invoke("settings:set-overlay-position", position),
     setInputLanguage: (language) => ipcRenderer.invoke("settings:set-input-language", language),
+    setHistoryRetentionDays: (days) => ipcRenderer.invoke("settings:set-history-retention-days", days),
+    setHistoryMaxEntries: (count) => ipcRenderer.invoke("settings:set-history-max-entries", count),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

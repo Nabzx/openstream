@@ -22,6 +22,9 @@ export type StoredSettings = {
   overlayPosition: OverlayPosition;
   /** #252: "auto", "en", or another supported language code. */
   inputLanguage: string;
+  /** #264: 0 means never expire by time - still bounded by historyMaxEntries. */
+  historyRetentionDays: number;
+  historyMaxEntries: number;
 };
 
 export type SetShortcutResult =
@@ -114,6 +117,8 @@ declare global {
         setSoundCues(enabled: boolean): Promise<StoredSettings>;
         setOverlayPosition(position: OverlayPosition): Promise<StoredSettings>;
         setInputLanguage(language: string): Promise<StoredSettings>;
+        setHistoryRetentionDays(days: number): Promise<StoredSettings>;
+        setHistoryMaxEntries(count: number): Promise<StoredSettings>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;
