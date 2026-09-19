@@ -1101,6 +1101,16 @@ ipcMain.handle("settings:set-input-language", (event, language) => {
   return settingsStore.setInputLanguage(language);
 });
 
+ipcMain.handle("settings:set-history-retention-days", (event, days) => {
+  // #264: the store validates; recordingHistoryStore reads this fresh on
+  // its next write or read, no extra wiring needed here.
+  return settingsStore.setHistoryRetentionDays(days);
+});
+
+ipcMain.handle("settings:set-history-max-entries", (event, count) => {
+  return settingsStore.setHistoryMaxEntries(count);
+});
+
 // #19: pick an app from disk instead of hunting down its bundle id by
 // hand. Returns { bundleId, name } for the renderer to add, or null if the
 // dialog was cancelled; a bundle with no readable identifier rejects.
@@ -1192,9 +1202,15 @@ app.whenReady().then(() => {
   const launchedAtLogin = process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin;
   // Regular Dock app (issue #209) - no app.dock.hide().
   settingsStore = createSettingsStore({ filePath: settingsPath });
-  // #136: same userData directory as settings, its own file.
+  // #136: same userData directory as settings, its own file. #264: the
+  // retention policy is read fresh from settings on every write/read, so a
+  // change in Settings takes effect immediately - see recordingHistoryStore.js.
   recordingHistoryStore = createRecordingHistoryStore({
     filePath: path.join(app.getPath("userData"), "recording-history.json"),
+    getRetentionPolicy: () => ({
+      maxEntries: settingsStore.get().historyMaxEntries,
+      retentionDays: settingsStore.get().historyRetentionDays,
+    }),
   });
   recordingHistoryStore.onChange((entries) => {
     if (win && !win.isDestroyed()) win.webContents.send("recording-history:changed", entries);
