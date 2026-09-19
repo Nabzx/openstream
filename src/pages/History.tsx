@@ -20,14 +20,30 @@ function formatRelativeTime(at: number, now: number): string {
   return new Date(at).toLocaleDateString();
 }
 
+function retentionSummary(retentionDays: number, maxEntries: number): string {
+  const countPart = `your last ${maxEntries}`;
+  if (retentionDays === 0) return `Kept forever, up to ${countPart} dictations`;
+  const timePart = retentionDays === 1 ? "1 day" : `${retentionDays} days`;
+  return `Kept for ${timePart}, up to ${countPart} - whichever comes first`;
+}
+
 export default function History() {
   const [entries, setEntries] = useState<RecordingHistoryEntry[] | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  // #264: only for the description below - the retention policy itself is
+  // enforced in the main process regardless of whether this text loaded.
+  const [retention, setRetention] = useState<{ days: number; max: number } | null>(null);
 
   useEffect(() => {
     window.openstream.recordingHistory.get().then(setEntries);
     return window.openstream.onRecordingHistory(setEntries);
+  }, []);
+
+  useEffect(() => {
+    window.openstream.settings
+      .get()
+      .then((settings) => setRetention({ days: settings.historyRetentionDays, max: settings.historyMaxEntries }));
   }, []);
 
   useEffect(() => {
@@ -57,9 +73,9 @@ export default function History() {
         <div>
           <h1>Recent dictations</h1>
           <p>
-            {/* MAX_ENTRIES in electron/recordingHistoryStore.js - keep in sync. */}
-            Your last 50 finished dictations, held locally on this Mac - not synced, not sent anywhere. A misheard
-            word or a mis-delivery is recoverable here without redictating.
+            {retention ? retentionSummary(retention.days, retention.max) : "Your recent dictations"}, held locally on
+            this Mac - not synced, not sent anywhere. A misheard word or a mis-delivery is recoverable here without
+            redictating. Change how long these stick around in Settings.
           </p>
         </div>
       </div>
