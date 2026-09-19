@@ -27,7 +27,7 @@ The finished text from a completed recording that could not be placed at the cur
 _Avoid_: Failed dictation, lost text
 
 **Recording history** (#136):
-A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, capped and FIFO-trimmed rather than curated.
+A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, bounded by a retention policy (#264) rather than curated - a configurable count cap and time window, both user-adjustable in Settings, whichever is hit first.
 _Avoid_: Transcript log, clipboard history
 
 **Voice edit**:
