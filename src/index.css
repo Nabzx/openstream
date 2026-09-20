@@ -818,6 +818,15 @@ select.field option { color: initial; }
 .correction-row button:hover { color: var(--err); }
 .correction-list .chip--empty { align-self: flex-start; }
 
+/* #136: a recorded dictation's text - clamped so one long paragraph
+   doesn't blow out the row; the full text still copies. */
+.history-row__text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .settings-advanced { margin-top: 12px; }
 .settings-advanced > summary {
   font-size: 12px;

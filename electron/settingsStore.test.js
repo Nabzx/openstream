@@ -276,6 +276,31 @@ test("#252: inputLanguage defaults to en, accepts auto and codes, rejects junk",
   assert.throws(() => store.setInputLanguage(""), /inputLanguage/);
 });
 
+test("#264: historyRetentionDays defaults to 30, accepts a whole number of days, rejects junk", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().historyRetentionDays, 30);
+  store.setHistoryRetentionDays(0);
+  assert.equal(store.get().historyRetentionDays, 0);
+  store.setHistoryRetentionDays(365);
+  assert.equal(store.get().historyRetentionDays, 365);
+  assert.throws(() => store.setHistoryRetentionDays(366), /historyRetentionDays/);
+  assert.throws(() => store.setHistoryRetentionDays(-1), /historyRetentionDays/);
+  assert.throws(() => store.setHistoryRetentionDays(1.5), /historyRetentionDays/);
+  assert.throws(() => store.setHistoryRetentionDays("30"), /historyRetentionDays/);
+});
+
+test("#264: historyMaxEntries defaults to 50, accepts a whole number, rejects junk", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().historyMaxEntries, 50);
+  store.setHistoryMaxEntries(1);
+  assert.equal(store.get().historyMaxEntries, 1);
+  store.setHistoryMaxEntries(1000);
+  assert.equal(store.get().historyMaxEntries, 1000);
+  assert.throws(() => store.setHistoryMaxEntries(0), /historyMaxEntries/);
+  assert.throws(() => store.setHistoryMaxEntries(1001), /historyMaxEntries/);
+  assert.throws(() => store.setHistoryMaxEntries(2.5), /historyMaxEntries/);
+});
+
 test("setVocabularyProjectPath persists a trimmed path and get() reflects it afterwards", () => {
   const filePath = tempFilePath();
   const store = createSettingsStore({ filePath });
@@ -285,6 +310,25 @@ test("setVocabularyProjectPath persists a trimmed path and get() reflects it aft
 
   const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
   assert.equal(onDisk.vocabularyProjectPath, "/Users/me/code/myapp");
+});
+
+test("#259: postProcessScriptPath defaults to null, accepts and trims a path, rejects junk", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  assert.equal(store.get().postProcessScriptPath, null);
+
+  store.setPostProcessScriptPath("  /Users/me/scripts/hook.sh  ");
+  assert.equal(store.get().postProcessScriptPath, "/Users/me/scripts/hook.sh");
+
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.equal(onDisk.postProcessScriptPath, "/Users/me/scripts/hook.sh");
+
+  store.setPostProcessScriptPath(null);
+  assert.equal(store.get().postProcessScriptPath, null);
+
+  assert.throws(() => store.setPostProcessScriptPath(""), /postProcessScriptPath/);
+  assert.throws(() => store.setPostProcessScriptPath("   "), /postProcessScriptPath/);
+  assert.throws(() => store.setPostProcessScriptPath(42), /postProcessScriptPath/);
 });
 
 test("setVocabularyProjectPath(null) clears a previously-set path", () => {

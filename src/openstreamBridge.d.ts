@@ -22,6 +22,11 @@ export type StoredSettings = {
   overlayPosition: OverlayPosition;
   /** #252: "auto", "en", or another supported language code. */
   inputLanguage: string;
+  /** #264: 0 means never expire by time - still bounded by historyMaxEntries. */
+  historyRetentionDays: number;
+  historyMaxEntries: number;
+  /** #259: a script the finished text is piped through before delivery, or null (off). */
+  postProcessScriptPath: string | null;
 };
 
 export type SetShortcutResult =
@@ -58,6 +63,18 @@ export type SetupProgress =
   | { phase: "check" | "download" | "done"; role: string; file: string; bytes: number; received?: number; total?: number }
   | { phase: "ready" }
   | { phase: "error"; message: string };
+
+// #136: one recorded dictation. delivered: false means it landed as a Held
+// result instead (reason explains why); bundleId is the frontmost app at
+// the time, or null if it couldn't be read.
+export type RecordingHistoryEntry = {
+  id: string;
+  text: string;
+  delivered: boolean;
+  bundleId: string | null;
+  reason: string | null;
+  at: number;
+};
 
 export type VocabularyStatus = {
   path: string | null;
@@ -119,6 +136,10 @@ declare global {
         setSoundCues(enabled: boolean): Promise<StoredSettings>;
         setOverlayPosition(position: OverlayPosition): Promise<StoredSettings>;
         setInputLanguage(language: string): Promise<StoredSettings>;
+        setHistoryRetentionDays(days: number): Promise<StoredSettings>;
+        setHistoryMaxEntries(count: number): Promise<StoredSettings>;
+        setPostProcessScript(scriptPath: string | null): Promise<StoredSettings>;
+        pickPostProcessScript(): Promise<StoredSettings | null>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;
@@ -138,11 +159,18 @@ declare global {
       files: {
         getPathForFile(file: File): string;
       };
+      recordingHistory: {
+        get(): Promise<RecordingHistoryEntry[]>;
+        remove(id: string): Promise<RecordingHistoryEntry[]>;
+        clear(): Promise<RecordingHistoryEntry[]>;
+        copy(text: string): Promise<boolean>;
+      };
       onNavigate(callback: (page: string) => void): () => void;
       onDictationState(callback: (state: "idle" | "recording" | "transcribing") => void): () => void;
       onSetupProgress(callback: (progress: SetupProgress) => void): () => void;
       onHealthChanged(callback: () => void): () => void;
       onFileTranscriptionQueue(callback: (jobs: FileTranscriptionJob[]) => void): () => void;
+      onRecordingHistory(callback: (entries: RecordingHistoryEntry[]) => void): () => void;
     };
   }
 }

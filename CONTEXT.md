@@ -30,6 +30,10 @@ _Avoid_: HUD, popup, indicator
 The finished text from a completed recording that could not be placed at the cursor. It remains in the Push-to-talk overlay so the user can copy or dismiss it. It is not a Dictation because the text did not land.
 _Avoid_: Failed dictation, lost text
 
+**Recording history** (#136):
+A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, bounded by a retention policy (#264) rather than curated - a configurable count cap and time window, both user-adjustable in Settings, whichever is hit first.
+_Avoid_: Transcript log, clipboard history
+
 **Voice edit**:
 A transform of text the user has already selected, requested by speaking a Voice-edit command such as "snake case" or "bullet list". Distinct from dictation: the user selects text first and asks for the change explicitly. In v0.3 the transforms are deterministic and run with no model - a semantic rewrite ("make this shorter") is out of scope until a capable model fills the rewrite model server role. "Copy that" is the exception that proves the shape: same trigger, but it writes the selection to the clipboard and never touches the document (#374). "Paste over this" is the mirror image: the selection is replaced with the clipboard contents, which then flow through the same break-safe gate as any other edit (#378).
 _Avoid_: Cleanup, correction, LLM pass, rewrite
@@ -87,3 +91,7 @@ _Avoid_: Allow-listed app, multi-line app, safe app
 **Break placement**:
 The choice of where paragraph breaks belong in one dictation. The rewrite model server decides it, and answers with sentence numbers rather than with text.
 _Avoid_: Paragraph inference, auto-formatting, LLM cleanup
+
+**Post-processing hook** (#259):
+An optional, user-supplied script the finished text is piped through (stdin in, stdout out) as the very last step before delivery - after rules cleanup and break placement, not instead of them. Unlike those, it is off by default, arbitrary (the script can do anything, including call out to a local model), and never blocks delivery: a failure, a timeout, or a missing script falls back to the text as it stood before the hook ran. Distinct from Voice edit, which transforms text the user already selected on request, not a dictation in flight.
+_Avoid_: Post-processing plugin, middleware, filter

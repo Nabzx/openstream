@@ -4,6 +4,7 @@ const { DEFAULT_BREAK_SAFE_BUNDLE_IDS } = require("./breakSafety");
 const { STANDALONE_OPTION_KEY_CODE, isSupportedSingleKeyShortcut } = require("./hotkeyDefinitions");
 const { OVERLAY_POSITIONS, DEFAULT_OVERLAY_POSITION } = require("./overlayPosition");
 const { isSupportedLanguage } = require("./languages");
+const { MAX_ENTRIES: DEFAULT_HISTORY_MAX_ENTRIES, DEFAULT_RETENTION_DAYS } = require("./recordingHistoryStore");
 
 // Matches hotkeyHelper.js's standalone Option default and breakSafety.js's
 // own default allow-list. Existing settings are read as-is below so this
@@ -39,6 +40,14 @@ const DEFAULT_SETTINGS = {
   // #252: transcription input language. "en" (unchanged behaviour), "auto"
   // to let the model detect it, or a specific code from languages.js.
   inputLanguage: "en",
+  // #264: recording-history retention. 0 days means "never expire by time" -
+  // still bounded by historyMaxEntries.
+  historyRetentionDays: DEFAULT_RETENTION_DAYS,
+  historyMaxEntries: DEFAULT_HISTORY_MAX_ENTRIES,
+  // #259: null means no post-processing hook configured - the feature is
+  // opt-in, off by default. A path to an executable script the cleaned,
+  // finished text is piped through (stdin) before delivery.
+  postProcessScriptPath: null,
 };
 
 // #257: a whole number of minutes, 0 (off) to a day. A day is already well
@@ -61,6 +70,27 @@ function validateOverlayPosition(position) {
 function validateInputLanguage(language) {
   if (typeof language !== "string" || !isSupportedLanguage(language)) {
     throw new Error('inputLanguage must be "auto" or a supported language code');
+  }
+}
+
+// #264: a year is already well past "why does this app still remember what
+// I said months ago" territory - the cap is a guard against a nonsense
+// hand-edited value, same reasoning as MAX_IDLE_UNLOAD_MINUTES.
+const MAX_HISTORY_RETENTION_DAYS = 365;
+// #264: matches recordingHistoryStore.js's own sanity floor - a cap of 0
+// would mean every dictation is purged the instant it's recorded, which
+// defeats the point of history rather than limiting it.
+const MAX_HISTORY_MAX_ENTRIES = 1000;
+
+function validateHistoryRetentionDays(days) {
+  if (!Number.isInteger(days) || days < 0 || days > MAX_HISTORY_RETENTION_DAYS) {
+    throw new Error(`historyRetentionDays must be a whole number of days between 0 and ${MAX_HISTORY_RETENTION_DAYS}`);
+  }
+}
+
+function validateHistoryMaxEntries(count) {
+  if (!Number.isInteger(count) || count < 1 || count > MAX_HISTORY_MAX_ENTRIES) {
+    throw new Error(`historyMaxEntries must be a whole number between 1 and ${MAX_HISTORY_MAX_ENTRIES}`);
   }
 }
 
@@ -97,6 +127,18 @@ function validateVocabularyProjectPath(projectPath) {
   if (projectPath === null) return;
   if (typeof projectPath !== "string" || projectPath.trim().length === 0) {
     throw new Error("vocabularyProjectPath must be null or a non-empty string");
+  }
+}
+
+// #259: not checked against the filesystem here - a moved or deleted script
+// is a runtime concern for postProcessHook.js (falls back to the un-hooked
+// text, logged), not a settings-validation one. Keeps this consistent
+// whether the path came from a live file picker or a hand-edited settings
+// file.
+function validatePostProcessScriptPath(scriptPath) {
+  if (scriptPath === null) return;
+  if (typeof scriptPath !== "string" || scriptPath.trim().length === 0) {
+    throw new Error("postProcessScriptPath must be null or a non-empty string");
   }
 }
 
@@ -247,6 +289,11 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() });
   }
 
+  function setPostProcessScriptPath(scriptPath) {
+    validatePostProcessScriptPath(scriptPath);
+    return commit({ ...load(), postProcessScriptPath: scriptPath === null ? null : scriptPath.trim() });
+  }
+
   function setTermCorrections(entries) {
     validateTermCorrections(entries);
     return commit({ ...load(), termCorrections: normaliseTermCorrections(entries) });
@@ -288,6 +335,16 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), inputLanguage: language });
   }
 
+  function setHistoryRetentionDays(days) {
+    validateHistoryRetentionDays(days);
+    return commit({ ...load(), historyRetentionDays: days });
+  }
+
+  function setHistoryMaxEntries(count) {
+    validateHistoryMaxEntries(count);
+    return commit({ ...load(), historyMaxEntries: count });
+  }
+
   function setWindowBounds(bounds) {
     validateWindowBounds(bounds);
     // Only the four geometry keys are kept - a caller passing a whole
@@ -315,6 +372,7 @@ function createSettingsStore({ filePath }) {
     setHotkey,
     setBreakSafeApps,
     setVocabularyProjectPath,
+    setPostProcessScriptPath,
     setTermCorrections,
     setCopyTranscriptToClipboard,
     setIdleUnloadMinutes,
@@ -322,6 +380,8 @@ function createSettingsStore({ filePath }) {
     setSoundCues,
     setOverlayPosition,
     setInputLanguage,
+    setHistoryRetentionDays,
+    setHistoryMaxEntries,
     setWindowBounds,
     onChange,
   };
@@ -339,4 +399,8 @@ module.exports = {
   validateIdleUnloadMinutes,
   MAX_IDLE_UNLOAD_MINUTES,
   validateInputLanguage,
+  validateHistoryRetentionDays,
+  validateHistoryMaxEntries,
+  MAX_HISTORY_RETENTION_DAYS,
+  MAX_HISTORY_MAX_ENTRIES,
 };
