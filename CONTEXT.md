@@ -87,3 +87,7 @@ _Avoid_: Allow-listed app, multi-line app, safe app
 **Break placement**:
 The choice of where paragraph breaks belong in one dictation. The rewrite model server decides it, and answers with sentence numbers rather than with text.
 _Avoid_: Paragraph inference, auto-formatting, LLM cleanup
+
+**Post-processing hook** (#259):
+An optional, user-supplied script the finished text is piped through (stdin in, stdout out) as the very last step before delivery - after rules cleanup and break placement, not instead of them. Unlike those, it is off by default, arbitrary (the script can do anything, including call out to a local model), and never blocks delivery: a failure, a timeout, or a missing script falls back to the text as it stood before the hook ran. Distinct from Voice edit, which transforms text the user already selected on request, not a dictation in flight.
+_Avoid_: Post-processing plugin, middleware, filter

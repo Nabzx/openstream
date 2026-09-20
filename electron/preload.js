@@ -79,6 +79,8 @@ contextBridge.exposeInMainWorld("openstream", {
     setInputLanguage: (language) => ipcRenderer.invoke("settings:set-input-language", language),
     setHistoryRetentionDays: (days) => ipcRenderer.invoke("settings:set-history-retention-days", days),
     setHistoryMaxEntries: (count) => ipcRenderer.invoke("settings:set-history-max-entries", count),
+    setPostProcessScript: (scriptPath) => ipcRenderer.invoke("settings:set-post-process-script", scriptPath),
+    pickPostProcessScript: () => ipcRenderer.invoke("settings:pick-post-process-script"),
   },
   vocabulary: {
     rescan: () => ipcRenderer.invoke("vocabulary:rescan"),

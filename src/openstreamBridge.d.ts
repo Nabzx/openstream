@@ -25,6 +25,8 @@ export type StoredSettings = {
   /** #264: 0 means never expire by time - still bounded by historyMaxEntries. */
   historyRetentionDays: number;
   historyMaxEntries: number;
+  /** #259: a script the finished text is piped through before delivery, or null (off). */
+  postProcessScriptPath: string | null;
 };
 
 export type SetShortcutResult =
@@ -119,6 +121,8 @@ declare global {
         setInputLanguage(language: string): Promise<StoredSettings>;
         setHistoryRetentionDays(days: number): Promise<StoredSettings>;
         setHistoryMaxEntries(count: number): Promise<StoredSettings>;
+        setPostProcessScript(scriptPath: string | null): Promise<StoredSettings>;
+        pickPostProcessScript(): Promise<StoredSettings | null>;
       };
       vocabulary: {
         rescan(): Promise<VocabularyStatus>;

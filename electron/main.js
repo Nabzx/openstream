@@ -26,6 +26,7 @@ const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createRecordingHistoryStore } = require("./recordingHistoryStore");
+const { createPostProcessHook } = require("./postProcessHook");
 const { createIdleUnloader } = require("./idleUnloader");
 const { createMediaPause } = require("./mediaPause");
 const { createSoundCues } = require("./soundCues");
@@ -205,6 +206,13 @@ function soundCuesEnabled() {
   return Boolean(settingsStore && settingsStore.get().soundCues);
 }
 
+// #259: reads the configured script path fresh on every dictation, same
+// reasoning as corrections/language below - a change in Settings applies
+// to the very next utterance, no restart needed.
+const postProcessHook = createPostProcessHook({
+  getScriptPath: () => (settingsStore ? settingsStore.get().postProcessScriptPath : null),
+});
+
 const dictationIntake = createDictationIntake({
   transcription,
   // #375: a spoken "paste" reads from here.
@@ -218,6 +226,7 @@ const dictationIntake = createDictationIntake({
   corrections: { getEntries: () => (settingsStore ? settingsStore.get().termCorrections : []) },
   // #252: the transcription input language, same fresh read.
   language: { get: () => (settingsStore ? settingsStore.get().inputLanguage : "en") },
+  postProcess: postProcessHook,
   onDiagnostic: recordDictationDiagnostic,
 });
 
@@ -1109,6 +1118,22 @@ ipcMain.handle("settings:set-history-retention-days", (event, days) => {
 
 ipcMain.handle("settings:set-history-max-entries", (event, count) => {
   return settingsStore.setHistoryMaxEntries(count);
+});
+
+// #259: clears the hook when passed null; picking a new script goes through
+// settings:pick-post-process-script instead, which sets it in one round trip.
+ipcMain.handle("settings:set-post-process-script", (event, scriptPath) => {
+  return settingsStore.setPostProcessScriptPath(scriptPath);
+});
+
+ipcMain.handle("settings:pick-post-process-script", async () => {
+  if (!win) return null;
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile"],
+    message: "Choose a script to run the finished text through before it's delivered",
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return settingsStore.setPostProcessScriptPath(result.filePaths[0]);
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by

@@ -312,6 +312,25 @@ test("setVocabularyProjectPath persists a trimmed path and get() reflects it aft
   assert.equal(onDisk.vocabularyProjectPath, "/Users/me/code/myapp");
 });
 
+test("#259: postProcessScriptPath defaults to null, accepts and trims a path, rejects junk", () => {
+  const filePath = tempFilePath();
+  const store = createSettingsStore({ filePath });
+  assert.equal(store.get().postProcessScriptPath, null);
+
+  store.setPostProcessScriptPath("  /Users/me/scripts/hook.sh  ");
+  assert.equal(store.get().postProcessScriptPath, "/Users/me/scripts/hook.sh");
+
+  const onDisk = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  assert.equal(onDisk.postProcessScriptPath, "/Users/me/scripts/hook.sh");
+
+  store.setPostProcessScriptPath(null);
+  assert.equal(store.get().postProcessScriptPath, null);
+
+  assert.throws(() => store.setPostProcessScriptPath(""), /postProcessScriptPath/);
+  assert.throws(() => store.setPostProcessScriptPath("   "), /postProcessScriptPath/);
+  assert.throws(() => store.setPostProcessScriptPath(42), /postProcessScriptPath/);
+});
+
 test("setVocabularyProjectPath(null) clears a previously-set path", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   store.setVocabularyProjectPath("/Users/me/code/myapp");

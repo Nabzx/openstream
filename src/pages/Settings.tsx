@@ -363,6 +363,57 @@ function HistoryMaxEntriesSection() {
   );
 }
 
+function PostProcessSection() {
+  const [scriptPath, setScriptPath] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => {
+      setScriptPath(settings.postProcessScriptPath);
+      setLoaded(true);
+    });
+  }, []);
+
+  function pick() {
+    window.openstream.settings.pickPostProcessScript().then((settings) => {
+      if (!settings) return; // the picker was cancelled
+      setScriptPath(settings.postProcessScriptPath);
+    });
+  }
+
+  function clear() {
+    window.openstream.settings
+      .setPostProcessScript(null)
+      .then((settings) => setScriptPath(settings.postProcessScriptPath));
+  }
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Post-processing hook</h3>
+      <p className="setting-item__desc">
+        Pipe the finished text through your own script (stdin in, stdout out) before it's delivered - a
+        spellchecker, a personal glossary, a call out to a local model, anything you can script. It runs with full
+        access to whatever the script itself can do, so only point this at something you trust. If it fails, times
+        out, or goes missing, the text is delivered exactly as it would be without it.
+      </p>
+      <div className="setting-item__control">
+        {scriptPath ? (
+          <span className="chip">
+            <span className="mono">{scriptPath}</span>
+            <button type="button" onClick={clear} disabled={!loaded} aria-label="Remove the post-processing hook">
+              ×
+            </button>
+          </span>
+        ) : (
+          <button type="button" className="btn" onClick={pick} disabled={!loaded}>
+            Choose script…
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -431,6 +482,8 @@ export default function Settings() {
         <HistoryRetentionDaysSection />
 
         <HistoryMaxEntriesSection />
+
+        <PostProcessSection />
 
         <StartupSection />
       </div>
