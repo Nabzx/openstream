@@ -26,6 +26,9 @@ function createIntake({
   listDetection,
   // #375: undefined = no clipboard adapter wired at all.
   clipboardText,
+  // #259: undefined = no post-processing hook adapter wired (the default
+  // no-op passthrough).
+  postProcess,
 } = {}) {
   const diagnostics = [];
   const delivered = [];
@@ -56,6 +59,7 @@ function createIntake({
     onDiagnostic: onDiagnostic || ((name, value) => diagnostics.push([name, value])),
     listDetection,
     clipboard: clipboardText !== undefined ? { readText: () => clipboardText } : null,
+    ...(postProcess !== undefined ? { postProcess } : {}),
   });
 
   return { intake, diagnostics, delivered, breakCalls };
@@ -397,6 +401,7 @@ test("repairs malformed break indices without retrying and records format and re
     ["paragraphBreaks.repairUsed", true],
     ["listBoundaries.formatValid", true],
     ["listBoundaries.repairUsed", false],
+    ["postProcess.applied", false],
   ]);
 });
 
@@ -457,6 +462,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
     ["listBoundaries.repairUsed", false],
+    ["postProcess.applied", false],
   ]);
 });
 
@@ -486,6 +492,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
     ["listBoundaries.repairUsed", true],
+    ["postProcess.applied", false],
   ]);
 });
 
@@ -515,6 +522,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", false],
     ["listBoundaries.repairUsed", false],
+    ["postProcess.applied", false],
   ]);
 });
 
@@ -543,6 +551,7 @@ test("list detection is off by default: a valid range is parsed and reported but
     ["paragraphBreaks.repairUsed", false],
     ["listBoundaries.formatValid", true],
     ["listBoundaries.repairUsed", false],
+    ["postProcess.applied", false],
   ]);
 });
 
@@ -803,6 +812,88 @@ test("held delivery preserves the complete finished text without retrying delive
     reason: "unverified target",
   });
   assert.deepEqual(delivered, ["Hello world."]);
+});
+
+test("#259: with no post-process hook configured, text is delivered unchanged", async () => {
+  const harness = createIntake({ transcript: "hello world" });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.deepEqual(harness.delivered, ["Hello world."]);
+});
+
+test("#259: a post-process hook's output is what gets delivered", async () => {
+  const harness = createIntake({
+    transcript: "hello world",
+    postProcess: { run: async (text) => text.toUpperCase() },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "delivered", text: "HELLO WORLD." });
+  assert.deepEqual(harness.delivered, ["HELLO WORLD."]);
+  assert.ok(harness.diagnostics.some(([name, value]) => name === "postProcess.applied" && value === true));
+});
+
+test("#259: a hook that throws falls back to the un-hooked text, delivery still proceeds", async () => {
+  const harness = createIntake({
+    transcript: "hello world",
+    postProcess: {
+      run: async () => {
+        throw new Error("script exited with code 1");
+      },
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.deepEqual(harness.delivered, ["Hello world."]);
+  assert.ok(
+    harness.diagnostics.some(([name, value]) => name === "postProcess.failure" && value === "script exited with code 1"),
+  );
+});
+
+test("#259: a hook returning a non-string is treated as a failure, falls back", async () => {
+  const harness = createIntake({
+    transcript: "hello world",
+    postProcess: { run: async () => 42 },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.ok(harness.diagnostics.some(([name]) => name === "postProcess.failure"));
+});
+
+test("#259: a hook that deliberately empties the text results in no-speech, not an empty delivery", async () => {
+  const harness = createIntake({
+    transcript: "hello world",
+    postProcess: { run: async () => "" },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "no-speech" });
+  assert.deepEqual(harness.delivered, []);
+});
+
+test("#259: a held delivery carries the hook's output, not the pre-hook text", async () => {
+  const delivered = [];
+  const harness = createIntake({
+    transcript: "hello world",
+    postProcess: { run: async (text) => text.toUpperCase() },
+    deliver: async (text) => {
+      delivered.push(text);
+      return { kind: "held", reason: "unverified target" };
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "held", text: "HELLO WORLD.", reason: "unverified target" });
+  assert.deepEqual(delivered, ["HELLO WORLD."]);
 });
 
 test("completed recordings are processed and delivered in FIFO order", async () => {
