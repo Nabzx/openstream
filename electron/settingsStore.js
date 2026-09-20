@@ -44,6 +44,10 @@ const DEFAULT_SETTINGS = {
   // still bounded by historyMaxEntries.
   historyRetentionDays: DEFAULT_RETENTION_DAYS,
   historyMaxEntries: DEFAULT_HISTORY_MAX_ENTRIES,
+  // #259: null means no post-processing hook configured - the feature is
+  // opt-in, off by default. A path to an executable script the cleaned,
+  // finished text is piped through (stdin) before delivery.
+  postProcessScriptPath: null,
 };
 
 // #257: a whole number of minutes, 0 (off) to a day. A day is already well
@@ -123,6 +127,18 @@ function validateVocabularyProjectPath(projectPath) {
   if (projectPath === null) return;
   if (typeof projectPath !== "string" || projectPath.trim().length === 0) {
     throw new Error("vocabularyProjectPath must be null or a non-empty string");
+  }
+}
+
+// #259: not checked against the filesystem here - a moved or deleted script
+// is a runtime concern for postProcessHook.js (falls back to the un-hooked
+// text, logged), not a settings-validation one. Keeps this consistent
+// whether the path came from a live file picker or a hand-edited settings
+// file.
+function validatePostProcessScriptPath(scriptPath) {
+  if (scriptPath === null) return;
+  if (typeof scriptPath !== "string" || scriptPath.trim().length === 0) {
+    throw new Error("postProcessScriptPath must be null or a non-empty string");
   }
 }
 
@@ -273,6 +289,11 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), vocabularyProjectPath: projectPath === null ? null : projectPath.trim() });
   }
 
+  function setPostProcessScriptPath(scriptPath) {
+    validatePostProcessScriptPath(scriptPath);
+    return commit({ ...load(), postProcessScriptPath: scriptPath === null ? null : scriptPath.trim() });
+  }
+
   function setTermCorrections(entries) {
     validateTermCorrections(entries);
     return commit({ ...load(), termCorrections: normaliseTermCorrections(entries) });
@@ -351,6 +372,7 @@ function createSettingsStore({ filePath }) {
     setHotkey,
     setBreakSafeApps,
     setVocabularyProjectPath,
+    setPostProcessScriptPath,
     setTermCorrections,
     setCopyTranscriptToClipboard,
     setIdleUnloadMinutes,
