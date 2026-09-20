@@ -35,6 +35,7 @@ const { createBundleIdReader } = require("./appBundleId");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
 const { createVoiceEditIntake } = require("./voiceEditCoordinator");
+const { createFileTranscriptionQueue } = require("./fileTranscriptionQueue");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
@@ -243,6 +244,18 @@ const voiceEditIntake = createVoiceEditIntake({
     readText: () => clipboard.readText(),
   },
   onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
+});
+
+// #253: drop-a-file transcription, a second entry point onto the same
+// resident transcription-helper. See fileTranscriptionQueue.js for why a
+// long file job can transiently delay a concurrent live dictation - a
+// known tradeoff, not something worked around here.
+const fileTranscriptionQueue = createFileTranscriptionQueue({
+  transcription,
+  language: { get: () => (settingsStore ? settingsStore.get().inputLanguage : "en") },
+  onChange: (jobs) => {
+    if (win && !win.isDestroyed()) win.webContents.send("file-transcription:queue", jobs);
+  },
 });
 
 // A selection longer than this is almost never a deliberate edit target,
@@ -1134,6 +1147,53 @@ ipcMain.handle("settings:pick-post-process-script", async () => {
   });
   if (result.canceled || result.filePaths.length === 0) return null;
   return settingsStore.setPostProcessScriptPath(result.filePaths[0]);
+});
+
+// #253: drop-a-file transcription. addFiles is idempotent-safe to call with
+// whatever the renderer resolved from a drop or the file picker below - a
+// non-string/empty entry is silently skipped by the queue, not an error.
+ipcMain.handle("file-transcription:add", (event, filePaths) => {
+  return fileTranscriptionQueue.addFiles(Array.isArray(filePaths) ? filePaths : []);
+});
+
+ipcMain.handle("file-transcription:choose-files", async () => {
+  if (!win) return [];
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      { name: "Audio", extensions: ["wav", "aiff", "aif", "caf", "m4a", "mp4", "mp3", "aac", "flac"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+  if (result.canceled) return [];
+  return fileTranscriptionQueue.addFiles(result.filePaths);
+});
+
+ipcMain.handle("file-transcription:get-queue", () => fileTranscriptionQueue.getJobs());
+ipcMain.handle("file-transcription:retry", (event, id) => fileTranscriptionQueue.retry(id));
+ipcMain.handle("file-transcription:remove", (event, id) => fileTranscriptionQueue.remove(id));
+ipcMain.handle("file-transcription:clear-finished", () => fileTranscriptionQueue.clearFinished());
+
+ipcMain.handle("file-transcription:copy", (event, id) => {
+  const job = fileTranscriptionQueue.getJobs().find((candidate) => candidate.id === id);
+  if (!job || typeof job.text !== "string") return { ok: false, reason: "no transcript to copy" };
+  clipboard.writeText(job.text);
+  return { ok: true };
+});
+
+// #253: "save alongside the file" - same directory, same name, .txt
+// extension. An explicit user action (they clicked Save), so a repeat
+// click overwriting its own earlier save is expected, not guarded against.
+ipcMain.handle("file-transcription:save", (event, id) => {
+  const job = fileTranscriptionQueue.getJobs().find((candidate) => candidate.id === id);
+  if (!job || typeof job.text !== "string") return { ok: false, reason: "no transcript to save" };
+  const outPath = path.join(path.dirname(job.path), `${path.basename(job.path, path.extname(job.path))}.txt`);
+  try {
+    fs.writeFileSync(outPath, job.text, "utf8");
+    return { ok: true, path: outPath };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+  }
 });
 
 // #19: pick an app from disk instead of hunting down its bundle id by
