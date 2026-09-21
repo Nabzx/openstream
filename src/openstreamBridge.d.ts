@@ -60,6 +60,25 @@ export type AppHealth = {
   rewriteModel: ModelHealth;
 };
 
+// #138: one main-process crash - an uncaught exception or an unhandled
+// promise rejection. Local only, never sent anywhere.
+export type CrashLogEntry = {
+  type: "uncaughtException" | "unhandledRejection";
+  message: string;
+  stack: string | null;
+  at: number;
+};
+
+export type Diagnostics = {
+  appVersion: string;
+  platform: string;
+  arch: string;
+  osRelease: string;
+  electronVersion: string;
+  nodeVersion: string;
+  crashLog: CrashLogEntry[];
+};
+
 // #249: first-run model download.
 export type SetupProgress =
   | { phase: "check" | "download" | "done"; role: string; file: string; bytes: number; received?: number; total?: number }
@@ -118,6 +137,9 @@ declare global {
         getSetupProgress(): Promise<SetupProgress | null>;
         retryModelDownload(): Promise<void>;
         restartModel(role: ModelRole): Promise<{ ok: boolean }>;
+        getDiagnostics(): Promise<Diagnostics>;
+        copyDiagnostics(text: string): Promise<boolean>;
+        clearCrashLog(): Promise<CrashLogEntry[]>;
       };
       settings: {
         get(): Promise<StoredSettings>;
