@@ -64,6 +64,9 @@ contextBridge.exposeInMainWorld("openstream", {
     getSetupProgress: () => ipcRenderer.invoke("app:get-setup-progress"),
     retryModelDownload: () => ipcRenderer.invoke("app:retry-model-download"),
     restartModel: (role) => ipcRenderer.invoke("app:restart-model", role),
+    getDiagnostics: () => ipcRenderer.invoke("app:get-diagnostics"),
+    copyDiagnostics: (text) => ipcRenderer.invoke("app:copy-diagnostics", text),
+    clearCrashLog: () => ipcRenderer.invoke("app:clear-crash-log"),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),

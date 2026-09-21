@@ -15,6 +15,7 @@ const {
 } = require("electron");
 const fs = require("fs");
 const http = require("http");
+const os = require("os");
 const path = require("path");
 const { performance } = require("node:perf_hooks");
 const { computeOverlayPosition } = require("./overlayPosition");
@@ -27,6 +28,7 @@ const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createRecordingHistoryStore } = require("./recordingHistoryStore");
 const { createPostProcessHook } = require("./postProcessHook");
+const { createCrashLogStore } = require("./crashLogStore");
 const { createIdleUnloader } = require("./idleUnloader");
 const { createMediaPause } = require("./mediaPause");
 const { createSoundCues } = require("./soundCues");
@@ -75,9 +77,29 @@ for (const signal of ["SIGTERM", "SIGINT", "SIGHUP"]) {
     app.quit();
   });
 }
+// #138: the same two handlers above already catch everything worth
+// recording - a local, capped log (never sent anywhere) so a crash is
+// diagnosable from a bug report instead of just a scrollback that's long
+// gone. Lazily constructed on first crash rather than at module load, so
+// app.getPath("userData") is never called before it's needed.
+let crashLogStore = null;
+function getCrashLogStore() {
+  if (!crashLogStore) {
+    crashLogStore = createCrashLogStore({
+      filePath: path.join(app.getPath("userData"), "crash-log.json"),
+    });
+  }
+  return crashLogStore;
+}
+
 process.on("uncaughtException", (error) => {
   const stack = error && error.stack ? error.stack : String(error);
   console.error(`[main] uncaught exception${quitting ? " during shutdown" : ""}:\n${stack}`);
+  try {
+    getCrashLogStore().record({ type: "uncaughtException", message: error && error.message, stack });
+  } catch (logError) {
+    console.error(`[main] failed to write the crash log: ${logError}`);
+  }
   if (!quitting) {
     dialog.showErrorBox("OpenStream hit an unexpected error", stack);
   }
@@ -85,6 +107,15 @@ process.on("uncaughtException", (error) => {
 process.on("unhandledRejection", (reason) => {
   const stack = reason && reason.stack ? reason.stack : String(reason);
   console.error(`[main] unhandled promise rejection${quitting ? " during shutdown" : ""}:\n${stack}`);
+  try {
+    getCrashLogStore().record({
+      type: "unhandledRejection",
+      message: reason && reason.message ? reason.message : String(reason),
+      stack,
+    });
+  } catch (logError) {
+    console.error(`[main] failed to write the crash log: ${logError}`);
+  }
 });
 
 const isDev = process.env.NODE_ENV === "development";
@@ -1036,6 +1067,27 @@ ipcMain.handle("app:get-health", async () => {
     rewriteModel: asleep ? "asleep" : modelHealth(rewrite, rewriteModelServer.status()),
   };
 });
+
+// #138: raw data for the Settings "Copy diagnostics" action - formatting
+// into pasteable text happens in the renderer (DiagnosticsSection.tsx),
+// same split as History's own retentionSummary().
+ipcMain.handle("app:get-diagnostics", () => ({
+  appVersion: app.getVersion(),
+  platform: process.platform,
+  arch: process.arch,
+  osRelease: os.release(),
+  electronVersion: process.versions.electron,
+  nodeVersion: process.versions.node,
+  crashLog: getCrashLogStore().list(),
+}));
+
+ipcMain.handle("app:copy-diagnostics", (event, text) => {
+  if (typeof text !== "string" || !text) return false;
+  clipboard.writeText(text);
+  return true;
+});
+
+ipcMain.handle("app:clear-crash-log", () => getCrashLogStore().clear());
 
 ipcMain.handle("app:restart-model", (event, role) => {
   // #254: the "Restart" affordance on the Home System panel.
