@@ -114,6 +114,64 @@ test("transcribe rejects on an error reply, carrying the reason", async () => {
   helper.stop();
 });
 
+test("#253: transcribeFile sends a path field, not wav, and returns the trimmed text", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  const promise = helper.transcribeFile("/Users/me/Desktop/meeting.m4a", "en");
+  await nextTurn();
+
+  assert.equal(requests[0].cmd, "transcribeFile");
+  assert.equal(requests[0].path, "/Users/me/Desktop/meeting.m4a");
+  assert.equal(requests[0].lang, "en");
+  assert.equal("wav" in requests[0], false);
+
+  child.stdout.write('{"id":"1","status":"ok","text":"  a long transcript.  ","ms":48213}\n');
+  assert.equal(await promise, "a long transcript.");
+  helper.stop();
+});
+
+test("#253: transcribeFile omits lang when none is passed, and rejects on an error reply", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  const promise = helper.transcribeFile("/tmp/clip.wav");
+  await nextTurn();
+  assert.equal("lang" in requests[0], false);
+
+  child.stdout.write('{"id":"1","status":"error","reason":"no file at /tmp/clip.wav"}\n');
+  await assert.rejects(promise, /no file at \/tmp\/clip\.wav/);
+  helper.stop();
+});
+
+test("#253: transcribeFile uses the longer file timeout, not the live-dictation one", async () => {
+  const child = fakeProcess();
+  readRequests(child);
+  // A short live-dictation timeout and a slightly longer file timeout, both
+  // tiny so the test doesn't actually wait real minutes.
+  const helper = createTranscriptionHelper({
+    spawnProcess: () => child,
+    requestTimeoutMs: 5,
+    fileRequestTimeoutMs: 20,
+  });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  const promise = helper.transcribeFile("/tmp/long.wav");
+  // Still pending past the live-dictation timeout...
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  // ...but resolves fine within the file timeout.
+  child.stdout.write('{"id":"1","status":"ok","text":"done","ms":15}\n');
+  assert.equal(await promise, "done");
+  helper.stop();
+});
+
 test("a request in flight rejects if the helper exits, and the ready gate resets", async () => {
   const child = fakeProcess();
   readRequests(child);

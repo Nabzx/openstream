@@ -66,6 +66,10 @@ function createDictationIntake(options) {
     // "paste" command. Callers/tests that don't wire it get no paste
     // command, everything else unchanged.
     clipboard = null,
+    // #259: an optional user-supplied post-processing hook, the last
+    // transform before delivery. Defaults to a no-op passthrough so
+    // callers/tests that don't wire it see today's behaviour.
+    postProcess = { run: async (text) => text },
   } = options;
 
   assertAdapter("transcription", transcription, "transcribe");
@@ -75,6 +79,7 @@ function createDictationIntake(options) {
   assertAdapter("vocabulary", vocabulary, "getPrompt");
   assertAdapter("corrections", corrections, "getEntries");
   assertAdapter("language", language, "get");
+  assertAdapter("postProcess", postProcess, "run");
 
   let queue = Promise.resolve();
 
@@ -306,6 +311,28 @@ function createDictationIntake(options) {
       } catch (error) {
         emitDiagnostic("paragraphBreaks.failure", errorMessage(error));
       }
+    }
+
+    // #259: the last transform before delivery, and optional - most callers
+    // have no hook configured and postProcess.run() is a no-op passthrough.
+    // A failure or timeout never blocks delivery: it falls back to the text
+    // as it stood before the hook ran, logged but not surfaced to the user.
+    try {
+      const hooked = await postProcess.run(finishedText);
+      if (typeof hooked !== "string") {
+        throw new Error("post-process hook adapter returned a non-string result");
+      }
+      emitDiagnostic("postProcess.applied", hooked !== finishedText);
+      finishedText = hooked;
+    } catch (error) {
+      emitDiagnostic("postProcess.failure", errorMessage(error));
+    }
+
+    // A hook can deliberately return empty text (a redaction filter that
+    // decides there's nothing left to say) - treat that the same as the
+    // no-speech check earlier, rather than delivering nothing.
+    if (!finishedText) {
+      return { status: "no-speech" };
     }
 
     try {

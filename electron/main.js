@@ -26,6 +26,7 @@ const hotkeyHelper = require("./hotkeyHelper");
 const accessibilityHelper = require("./accessibilityHelper");
 const { createSettingsStore } = require("./settingsStore");
 const { createRecordingHistoryStore } = require("./recordingHistoryStore");
+const { createPostProcessHook } = require("./postProcessHook");
 const { createIdleUnloader } = require("./idleUnloader");
 const { createMediaPause } = require("./mediaPause");
 const { createSoundCues } = require("./soundCues");
@@ -34,6 +35,7 @@ const { createBundleIdReader } = require("./appBundleId");
 const { createBreakPlacementHttpAdapter } = require("./breakPlacementHttpAdapter");
 const { createDictationIntake } = require("./dictationCoordinator");
 const { createVoiceEditIntake } = require("./voiceEditCoordinator");
+const { createFileTranscriptionQueue } = require("./fileTranscriptionQueue");
 const { createVocabularyCache } = require("./vocabularyCache");
 const { createHeldResultController } = require("./heldResultController");
 const { createPushToTalkCoordinator } = require("./pushToTalkCoordinator");
@@ -205,6 +207,13 @@ function soundCuesEnabled() {
   return Boolean(settingsStore && settingsStore.get().soundCues);
 }
 
+// #259: reads the configured script path fresh on every dictation, same
+// reasoning as corrections/language below - a change in Settings applies
+// to the very next utterance, no restart needed.
+const postProcessHook = createPostProcessHook({
+  getScriptPath: () => (settingsStore ? settingsStore.get().postProcessScriptPath : null),
+});
+
 const dictationIntake = createDictationIntake({
   transcription,
   // #375: a spoken "paste" reads from here.
@@ -218,6 +227,7 @@ const dictationIntake = createDictationIntake({
   corrections: { getEntries: () => (settingsStore ? settingsStore.get().termCorrections : []) },
   // #252: the transcription input language, same fresh read.
   language: { get: () => (settingsStore ? settingsStore.get().inputLanguage : "en") },
+  postProcess: postProcessHook,
   onDiagnostic: recordDictationDiagnostic,
 });
 
@@ -234,6 +244,18 @@ const voiceEditIntake = createVoiceEditIntake({
     readText: () => clipboard.readText(),
   },
   onDiagnostic: (name, value) => console.log(`[voice-edit] ${name}: ${JSON.stringify(value)}`),
+});
+
+// #253: drop-a-file transcription, a second entry point onto the same
+// resident transcription-helper. See fileTranscriptionQueue.js for why a
+// long file job can transiently delay a concurrent live dictation - a
+// known tradeoff, not something worked around here.
+const fileTranscriptionQueue = createFileTranscriptionQueue({
+  transcription,
+  language: { get: () => (settingsStore ? settingsStore.get().inputLanguage : "en") },
+  onChange: (jobs) => {
+    if (win && !win.isDestroyed()) win.webContents.send("file-transcription:queue", jobs);
+  },
 });
 
 // A selection longer than this is almost never a deliberate edit target,
@@ -1119,6 +1141,79 @@ ipcMain.handle("settings:set-microphone-device", (event, deviceId) => {
   return settingsStore.setMicrophoneDeviceId(deviceId);
 });
 
+ipcMain.handle("settings:set-history-retention-days", (event, days) => {
+  // #264: the store validates; recordingHistoryStore reads this fresh on
+  // its next write or read, no extra wiring needed here.
+  return settingsStore.setHistoryRetentionDays(days);
+});
+
+ipcMain.handle("settings:set-history-max-entries", (event, count) => {
+  return settingsStore.setHistoryMaxEntries(count);
+});
+
+// #259: clears the hook when passed null; picking a new script goes through
+// settings:pick-post-process-script instead, which sets it in one round trip.
+ipcMain.handle("settings:set-post-process-script", (event, scriptPath) => {
+  return settingsStore.setPostProcessScriptPath(scriptPath);
+});
+
+ipcMain.handle("settings:pick-post-process-script", async () => {
+  if (!win) return null;
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile"],
+    message: "Choose a script to run the finished text through before it's delivered",
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return settingsStore.setPostProcessScriptPath(result.filePaths[0]);
+});
+
+// #253: drop-a-file transcription. addFiles is idempotent-safe to call with
+// whatever the renderer resolved from a drop or the file picker below - a
+// non-string/empty entry is silently skipped by the queue, not an error.
+ipcMain.handle("file-transcription:add", (event, filePaths) => {
+  return fileTranscriptionQueue.addFiles(Array.isArray(filePaths) ? filePaths : []);
+});
+
+ipcMain.handle("file-transcription:choose-files", async () => {
+  if (!win) return [];
+  const result = await dialog.showOpenDialog(win, {
+    properties: ["openFile", "multiSelections"],
+    filters: [
+      { name: "Audio", extensions: ["wav", "aiff", "aif", "caf", "m4a", "mp4", "mp3", "aac", "flac"] },
+      { name: "All Files", extensions: ["*"] },
+    ],
+  });
+  if (result.canceled) return [];
+  return fileTranscriptionQueue.addFiles(result.filePaths);
+});
+
+ipcMain.handle("file-transcription:get-queue", () => fileTranscriptionQueue.getJobs());
+ipcMain.handle("file-transcription:retry", (event, id) => fileTranscriptionQueue.retry(id));
+ipcMain.handle("file-transcription:remove", (event, id) => fileTranscriptionQueue.remove(id));
+ipcMain.handle("file-transcription:clear-finished", () => fileTranscriptionQueue.clearFinished());
+
+ipcMain.handle("file-transcription:copy", (event, id) => {
+  const job = fileTranscriptionQueue.getJobs().find((candidate) => candidate.id === id);
+  if (!job || typeof job.text !== "string") return { ok: false, reason: "no transcript to copy" };
+  clipboard.writeText(job.text);
+  return { ok: true };
+});
+
+// #253: "save alongside the file" - same directory, same name, .txt
+// extension. An explicit user action (they clicked Save), so a repeat
+// click overwriting its own earlier save is expected, not guarded against.
+ipcMain.handle("file-transcription:save", (event, id) => {
+  const job = fileTranscriptionQueue.getJobs().find((candidate) => candidate.id === id);
+  if (!job || typeof job.text !== "string") return { ok: false, reason: "no transcript to save" };
+  const outPath = path.join(path.dirname(job.path), `${path.basename(job.path, path.extname(job.path))}.txt`);
+  try {
+    fs.writeFileSync(outPath, job.text, "utf8");
+    return { ok: true, path: outPath };
+  } catch (error) {
+    return { ok: false, reason: error instanceof Error ? error.message : String(error) };
+  }
+});
+
 // #19: pick an app from disk instead of hunting down its bundle id by
 // hand. Returns { bundleId, name } for the renderer to add, or null if the
 // dialog was cancelled; a bundle with no readable identifier rejects.
@@ -1210,9 +1305,15 @@ app.whenReady().then(() => {
   const launchedAtLogin = process.platform === "darwin" && app.getLoginItemSettings().wasOpenedAtLogin;
   // Regular Dock app (issue #209) - no app.dock.hide().
   settingsStore = createSettingsStore({ filePath: settingsPath });
-  // #136: same userData directory as settings, its own file.
+  // #136: same userData directory as settings, its own file. #264: the
+  // retention policy is read fresh from settings on every write/read, so a
+  // change in Settings takes effect immediately - see recordingHistoryStore.js.
   recordingHistoryStore = createRecordingHistoryStore({
     filePath: path.join(app.getPath("userData"), "recording-history.json"),
+    getRetentionPolicy: () => ({
+      maxEntries: settingsStore.get().historyMaxEntries,
+      retentionDays: settingsStore.get().historyRetentionDays,
+    }),
   });
   recordingHistoryStore.onChange((entries) => {
     if (win && !win.isDestroyed()) win.webContents.send("recording-history:changed", entries);

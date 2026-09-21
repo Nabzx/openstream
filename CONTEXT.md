@@ -10,6 +10,10 @@ A local-first voice dictation app for macOS. The user holds a key, speaks, and t
 One complete act of speaking and having the resulting text placed at the cursor. Begins when the user presses the push-to-talk key and ends when the text lands.
 _Avoid_: Utterance, recording, session
 
+**File transcription**:
+A second, distinct mode (#253): the user drops or picks an existing audio file and gets a transcript back, rather than speaking live at the cursor. Shares the transcription engine and its resident model with Dictation, but nothing else - no cursor, no cleanup rules, no break placement, no push-to-talk. One file transcribes at a time; a long one can transiently delay a concurrent Dictation, since both use the same resident model.
+_Avoid_: Batch transcription, offline transcription (accurate but not the term used here), import
+
 **Dictation latency budget**:
 The time from the end of speech to the text arriving at the cursor, which the product commits to keeping under one second. It ends where the user can see it end, so the cost of placing the text is inside the budget rather than outside it.
 _Avoid_: Response time, turnaround
@@ -27,7 +31,7 @@ The finished text from a completed recording that could not be placed at the cur
 _Avoid_: Failed dictation, lost text
 
 **Recording history** (#136):
-A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, capped and FIFO-trimmed rather than curated.
+A local, persistent log of recent dictations - delivered and held alike - kept so a mis-delivery or a misheard word is recoverable without redictating. Distinct from a Held result: a Held result is one live entry in the overlay that disappears on copy or dismiss; history is a running log a delivered dictation joins too, bounded by a retention policy (#264) rather than curated - a configurable count cap and time window, both user-adjustable in Settings, whichever is hit first.
 _Avoid_: Transcript log, clipboard history
 
 **Voice edit**:
@@ -87,3 +91,7 @@ _Avoid_: Allow-listed app, multi-line app, safe app
 **Break placement**:
 The choice of where paragraph breaks belong in one dictation. The rewrite model server decides it, and answers with sentence numbers rather than with text.
 _Avoid_: Paragraph inference, auto-formatting, LLM cleanup
+
+**Post-processing hook** (#259):
+An optional, user-supplied script the finished text is piped through (stdin in, stdout out) as the very last step before delivery - after rules cleanup and break placement, not instead of them. Unlike those, it is off by default, arbitrary (the script can do anything, including call out to a local model), and never blocks delivery: a failure, a timeout, or a missing script falls back to the text as it stood before the hook ran. Distinct from Voice edit, which transforms text the user already selected on request, not a dictation in flight.
+_Avoid_: Post-processing plugin, middleware, filter

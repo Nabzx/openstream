@@ -337,6 +337,155 @@ function OverlayPositionSection() {
   );
 }
 
+// #264: mirrors electron/recordingHistoryStore.js's DEFAULT_RETENTION_DAYS.
+const HISTORY_RETENTION_OPTIONS = [
+  { value: 0, label: "Forever" },
+  { value: 7, label: "7 days" },
+  { value: 30, label: "30 days" },
+  { value: 90, label: "90 days" },
+  { value: 365, label: "1 year" },
+];
+
+function HistoryRetentionDaysSection() {
+  const [days, setDays] = useState<number | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setDays(settings.historyRetentionDays));
+  }, []);
+
+  // A saved custom value that isn't one of the presets still needs a row.
+  const options =
+    days !== null && !HISTORY_RETENTION_OPTIONS.some((o) => o.value === days)
+      ? [...HISTORY_RETENTION_OPTIONS, { value: days, label: `${days} days` }]
+      : HISTORY_RETENTION_OPTIONS;
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Keep recording history for</h3>
+      <p className="setting-item__desc">
+        How long a dictation stays in the History tab before it's deleted automatically. Only the text is ever
+        kept - your audio is never saved past the dictation itself.
+      </p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={days ?? 30}
+          disabled={days === null}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            setDays(next);
+            window.openstream.settings
+              .setHistoryRetentionDays(next)
+              .then((settings) => setDays(settings.historyRetentionDays));
+          }}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+// #264: mirrors electron/recordingHistoryStore.js's MAX_ENTRIES.
+const HISTORY_MAX_ENTRIES_OPTIONS = [10, 25, 50, 100, 250];
+
+function HistoryMaxEntriesSection() {
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => setCount(settings.historyMaxEntries));
+  }, []);
+
+  const options = count !== null && !HISTORY_MAX_ENTRIES_OPTIONS.includes(count)
+    ? [...HISTORY_MAX_ENTRIES_OPTIONS, count].sort((a, b) => a - b)
+    : HISTORY_MAX_ENTRIES_OPTIONS;
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Recording history size</h3>
+      <p className="setting-item__desc">
+        The most dictations to keep at once, oldest dropped first once you're over. Independent of how long
+        they're kept - whichever limit is hit first applies.
+      </p>
+      <div className="setting-item__control">
+        <select
+          className="field"
+          value={count ?? 50}
+          disabled={count === null}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            setCount(next);
+            window.openstream.settings
+              .setHistoryMaxEntries(next)
+              .then((settings) => setCount(settings.historyMaxEntries));
+          }}
+        >
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function PostProcessSection() {
+  const [scriptPath, setScriptPath] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    window.openstream.settings.get().then((settings) => {
+      setScriptPath(settings.postProcessScriptPath);
+      setLoaded(true);
+    });
+  }, []);
+
+  function pick() {
+    window.openstream.settings.pickPostProcessScript().then((settings) => {
+      if (!settings) return; // the picker was cancelled
+      setScriptPath(settings.postProcessScriptPath);
+    });
+  }
+
+  function clear() {
+    window.openstream.settings
+      .setPostProcessScript(null)
+      .then((settings) => setScriptPath(settings.postProcessScriptPath));
+  }
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Post-processing hook</h3>
+      <p className="setting-item__desc">
+        Pipe the finished text through your own script (stdin in, stdout out) before it's delivered - a
+        spellchecker, a personal glossary, a call out to a local model, anything you can script. It runs with full
+        access to whatever the script itself can do, so only point this at something you trust. If it fails, times
+        out, or goes missing, the text is delivered exactly as it would be without it.
+      </p>
+      <div className="setting-item__control">
+        {scriptPath ? (
+          <span className="chip">
+            <span className="mono">{scriptPath}</span>
+            <button type="button" onClick={clear} disabled={!loaded} aria-label="Remove the post-processing hook">
+              ×
+            </button>
+          </span>
+        ) : (
+          <button type="button" className="btn" onClick={pick} disabled={!loaded}>
+            Choose script…
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -403,6 +552,12 @@ export default function Settings() {
         <OverlayPositionSection />
 
         <IdleUnloadSection />
+
+        <HistoryRetentionDaysSection />
+
+        <HistoryMaxEntriesSection />
+
+        <PostProcessSection />
 
         <StartupSection />
       </div>

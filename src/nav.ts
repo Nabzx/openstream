@@ -4,11 +4,11 @@
 
 // "permissions" and "setup" are reachable views but not toolbar tabs - the
 // app navigates to them when a grant is missing / a model is downloading.
-export type Page = "home" | "history" | "commands" | "settings" | "permissions" | "setup";
+export type Page = "home" | "history" | "files" | "commands" | "settings" | "permissions" | "setup";
 
-export const PAGES = ["home", "history", "commands", "settings", "permissions", "setup"] as const;
+export const PAGES = ["home", "history", "files", "commands", "settings", "permissions", "setup"] as const;
 
-export const TAB_PAGES = ["home", "history", "commands", "settings"] as const;
+export const TAB_PAGES = ["home", "history", "files", "commands", "settings"] as const;
 export type TabPage = (typeof TAB_PAGES)[number];
 
 export const DEFAULT_PAGE: Page = "home";

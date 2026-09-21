@@ -80,3 +80,7 @@ export const CommandsIcon = svg(
 export const CheckIcon = svg(<path d="M5 13l4 4L19 7" />, 3);
 
 export const ChevronDownIcon = svg(<path d="M6 9l6 6 6-6" />, 2.5);
+
+export const FileIcon = svg(
+  <path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z M14 3v5h5" />
+);
