@@ -3,7 +3,7 @@ import HotkeySettings from "../HotkeySettings";
 import BreakSafeAppsSettings from "../BreakSafeAppsSettings";
 import TermCorrectionsSettings from "../TermCorrectionsSettings";
 import Toggle from "../components/Toggle";
-import type { OverlayPosition } from "../openstreamBridge";
+import type { Diagnostics, OverlayPosition } from "../openstreamBridge";
 
 function CopyTranscriptSection() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
@@ -486,6 +486,77 @@ function PostProcessSection() {
   );
 }
 
+// #138: local-only crash log, no telemetry service - see crashLogStore.js.
+function formatDiagnosticsText(diagnostics: Diagnostics): string {
+  const lines = [
+    `OpenStream ${diagnostics.appVersion}`,
+    `${diagnostics.platform} ${diagnostics.arch}, ${diagnostics.osRelease}`,
+    `Electron ${diagnostics.electronVersion}, Node ${diagnostics.nodeVersion}`,
+    "",
+  ];
+  if (diagnostics.crashLog.length === 0) {
+    lines.push("No crashes recorded.");
+  } else {
+    const count = diagnostics.crashLog.length;
+    lines.push(`${count} crash${count === 1 ? "" : "es"} recorded (most recent first):`);
+    for (const entry of diagnostics.crashLog) {
+      lines.push("", `[${new Date(entry.at).toISOString()}] ${entry.type}: ${entry.message}`);
+      if (entry.stack) lines.push(entry.stack);
+    }
+  }
+  return lines.join("\n");
+}
+
+function DiagnosticsSection() {
+  const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    window.openstream.app.getDiagnostics().then(setDiagnostics);
+  }, []);
+
+  function copy() {
+    if (!diagnostics) return;
+    window.openstream.app.copyDiagnostics(formatDiagnosticsText(diagnostics)).then((ok) => {
+      if (!ok) return;
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }
+
+  function clear() {
+    window.openstream.app.clearCrashLog().then((crashLog) => {
+      setDiagnostics((current) => (current ? { ...current, crashLog } : current));
+    });
+  }
+
+  const crashCount = diagnostics?.crashLog.length ?? 0;
+
+  return (
+    <div className="setting-item">
+      <h3 className="setting-item__name">Diagnostics</h3>
+      <p className="setting-item__desc">
+        {diagnostics === null
+          ? "Loading…"
+          : crashCount === 0
+            ? "No crashes recorded."
+            : `${crashCount} crash${crashCount === 1 ? "" : "es"} recorded.`}{" "}
+        Held locally - nothing is ever sent anywhere. Copy this into a bug report if OpenStream misbehaves.
+      </p>
+      <div className="row-actions">
+        <button type="button" className="btn" onClick={copy} disabled={diagnostics === null}>
+          {copied ? "Copied" : "Copy diagnostics"}
+        </button>
+        {crashCount > 0 && (
+          <button type="button" className="btn btn--ghost" onClick={clear}>
+            Clear crash log
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function StartupSection() {
   const [openAtLogin, setOpenAtLogin] = useState<boolean | null>(null);
 
@@ -560,6 +631,8 @@ export default function Settings() {
         <PostProcessSection />
 
         <StartupSection />
+
+        <DiagnosticsSection />
       </div>
     </main>
   );
