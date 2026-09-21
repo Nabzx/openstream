@@ -40,6 +40,9 @@ const DEFAULT_SETTINGS = {
   // #252: transcription input language. "en" (unchanged behaviour), "auto"
   // to let the model detect it, or a specific code from languages.js.
   inputLanguage: "en",
+  // #137: a specific input device's id (from the renderer's
+  // enumerateDevices()), or null for the OS default - unchanged behaviour.
+  microphoneDeviceId: null,
   // #264: recording-history retention. 0 days means "never expire by time" -
   // still bounded by historyMaxEntries.
   historyRetentionDays: DEFAULT_RETENTION_DAYS,
@@ -70,6 +73,16 @@ function validateOverlayPosition(position) {
 function validateInputLanguage(language) {
   if (typeof language !== "string" || !isSupportedLanguage(language)) {
     throw new Error('inputLanguage must be "auto" or a supported language code');
+  }
+}
+
+// #137: a device id is an opaque string from the browser's MediaDeviceInfo,
+// not something this process can otherwise validate - there's no device
+// list to check it against outside a renderer with mic permission. Accept
+// null (system default) or any non-empty string.
+function validateMicrophoneDeviceId(deviceId) {
+  if (deviceId !== null && (typeof deviceId !== "string" || deviceId.trim().length === 0)) {
+    throw new Error("microphoneDeviceId must be null or a non-empty string");
   }
 }
 
@@ -335,6 +348,11 @@ function createSettingsStore({ filePath }) {
     return commit({ ...load(), inputLanguage: language });
   }
 
+  function setMicrophoneDeviceId(deviceId) {
+    validateMicrophoneDeviceId(deviceId);
+    return commit({ ...load(), microphoneDeviceId: deviceId });
+  }
+
   function setHistoryRetentionDays(days) {
     validateHistoryRetentionDays(days);
     return commit({ ...load(), historyRetentionDays: days });
@@ -380,6 +398,7 @@ function createSettingsStore({ filePath }) {
     setSoundCues,
     setOverlayPosition,
     setInputLanguage,
+    setMicrophoneDeviceId,
     setHistoryRetentionDays,
     setHistoryMaxEntries,
     setWindowBounds,
@@ -399,6 +418,7 @@ module.exports = {
   validateIdleUnloadMinutes,
   MAX_IDLE_UNLOAD_MINUTES,
   validateInputLanguage,
+  validateMicrophoneDeviceId,
   validateHistoryRetentionDays,
   validateHistoryMaxEntries,
   MAX_HISTORY_RETENTION_DAYS,

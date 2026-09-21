@@ -276,6 +276,17 @@ test("#252: inputLanguage defaults to en, accepts auto and codes, rejects junk",
   assert.throws(() => store.setInputLanguage(""), /inputLanguage/);
 });
 
+test("#137: microphoneDeviceId defaults to null, accepts a device id, rejects junk", () => {
+  const store = createSettingsStore({ filePath: tempFilePath() });
+  assert.equal(store.get().microphoneDeviceId, null);
+  store.setMicrophoneDeviceId("abc123");
+  assert.equal(store.get().microphoneDeviceId, "abc123");
+  store.setMicrophoneDeviceId(null);
+  assert.equal(store.get().microphoneDeviceId, null);
+  assert.throws(() => store.setMicrophoneDeviceId(""), /microphoneDeviceId/);
+  assert.throws(() => store.setMicrophoneDeviceId(42), /microphoneDeviceId/);
+});
+
 test("#264: historyRetentionDays defaults to 30, accepts a whole number of days, rejects junk", () => {
   const store = createSettingsStore({ filePath: tempFilePath() });
   assert.equal(store.get().historyRetentionDays, 30);

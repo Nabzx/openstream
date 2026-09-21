@@ -7,6 +7,9 @@ contextBridge.exposeInMainWorld("capture", {
   onStart: (callback) => ipcRenderer.on("start-recording", callback),
   onStop: (callback) => ipcRenderer.on("stop-recording", (_event, timing) => callback(timing)),
   onCancel: (callback) => ipcRenderer.on("cancel-recording", callback),
+  // #137: the configured input device id (or null for the system default) -
+  // pushed once at startup and again on every settings change.
+  onSetDevice: (callback) => ipcRenderer.on("set-device", (_event, deviceId) => callback(deviceId)),
   sendReady: () => ipcRenderer.send("capture-ready"),
   sendRecording: (wavBuffer, timing) => ipcRenderer.send("recording-complete", wavBuffer, timing),
   sendSoundLevel: (level) => ipcRenderer.send("sound-level", level),

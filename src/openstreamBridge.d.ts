@@ -22,6 +22,8 @@ export type StoredSettings = {
   overlayPosition: OverlayPosition;
   /** #252: "auto", "en", or another supported language code. */
   inputLanguage: string;
+  /** #137: a MediaDeviceInfo.deviceId, or null for the system default. */
+  microphoneDeviceId: string | null;
   /** #264: 0 means never expire by time - still bounded by historyMaxEntries. */
   historyRetentionDays: number;
   historyMaxEntries: number;
@@ -136,6 +138,7 @@ declare global {
         setSoundCues(enabled: boolean): Promise<StoredSettings>;
         setOverlayPosition(position: OverlayPosition): Promise<StoredSettings>;
         setInputLanguage(language: string): Promise<StoredSettings>;
+        setMicrophoneDeviceId(deviceId: string | null): Promise<StoredSettings>;
         setHistoryRetentionDays(days: number): Promise<StoredSettings>;
         setHistoryMaxEntries(count: number): Promise<StoredSettings>;
         setPostProcessScript(scriptPath: string | null): Promise<StoredSettings>;
