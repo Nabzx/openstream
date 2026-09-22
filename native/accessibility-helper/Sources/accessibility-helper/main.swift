@@ -95,6 +95,10 @@ while let line = readLine(strippingNewline: true) {
             // #181: false when the focused element never became AX-ready and
             // isOneLineField is the safe default rather than the real role.
             "axReady": context.axReady,
+            // #433: true only for a role-confirmed AXSecureTextField (a
+            // password field) - never guessed when the element isn't
+            // AX-ready, same caution as isOneLineField's default.
+            "isSecure": context.isSecure,
         ])
     case "insert", "inject":
         guard let text = obj["text"] as? String, !text.isEmpty else {
