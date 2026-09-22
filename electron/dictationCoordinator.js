@@ -151,6 +151,11 @@ function createDictationIntake(options) {
       // the app context detection actually landed on.
       emitDiagnostic("context.bundleId", focusContext.bundleId);
       emitDiagnostic("context.axReady", focusContext.axReady !== false);
+      // #433: only true for a role-confirmed AXSecureTextField (a password
+      // field). Threaded onto every delivered/held result below so main.js
+      // can skip recording it to history - dictating or pasting into a
+      // password field should never end up in a plaintext log.
+      emitDiagnostic("context.isSecure", focusContext.isSecure === true);
 
       // #355: record start to playback end is one continuous window. Any
       // keystroke or paste can be destructive in the wrong app - a TUI's
@@ -172,6 +177,7 @@ function createDictationIntake(options) {
           status: "held",
           text: salvaged,
           reason: `the frontmost app changed while you were dictating (was ${recordStartBundleId}, now ${focusContext.bundleId})`,
+          isSecure: focusContext.isSecure === true,
         };
       }
     } catch (error) {
@@ -189,6 +195,11 @@ function createDictationIntake(options) {
         status: "held",
         text: salvaged,
         reason: `couldn't read the focused field: ${errorMessage(error)}`,
+        // The context read itself is what failed - there's no role to have
+        // confirmed secure, so this can't claim isSecure true either way.
+        // Unknown defaults to false, same call the Swift side makes when an
+        // element never resolves.
+        isSecure: false,
       };
     }
 
@@ -218,6 +229,7 @@ function createDictationIntake(options) {
           status: "held",
           text: clipboardText,
           reason: `won't paste multi-line text into ${focusContext.bundleId} — a line break there could run a command`,
+          isSecure: focusContext.isSecure === true,
         };
       }
       try {
@@ -231,13 +243,14 @@ function createDictationIntake(options) {
             text: clipboardText,
             reason:
               typeof deliveryResult.reason === "string" ? deliveryResult.reason : "the paste could not be placed",
+            isSecure: focusContext.isSecure === true,
           };
         }
         throw new Error("delivery adapter returned an invalid result");
       } catch (error) {
         const reason = errorMessage(error);
         emitDiagnostic("paste.deliveryFailure", reason);
-        return { status: "held", text: clipboardText, reason };
+        return { status: "held", text: clipboardText, reason, isSecure: focusContext.isSecure === true };
       }
     }
 
@@ -341,20 +354,21 @@ function createDictationIntake(options) {
       // time mid-injection) has a fresh baseline rather than none at all.
       const deliveryResult = await delivery.deliver(finishedText, focusContext.bundleId);
       if (deliveryResult?.kind === "inserted") {
-        return { status: "delivered", text: finishedText };
+        return { status: "delivered", text: finishedText, isSecure: focusContext.isSecure === true };
       }
       if (deliveryResult?.kind === "held") {
         return {
           status: "held",
           text: finishedText,
           reason: typeof deliveryResult.reason === "string" ? deliveryResult.reason : "delivery could not proceed",
+          isSecure: focusContext.isSecure === true,
         };
       }
       throw new Error("delivery adapter returned an invalid result");
     } catch (error) {
       const reason = errorMessage(error);
       emitDiagnostic("delivery.failure", reason);
-      return { status: "held", text: finishedText, reason };
+      return { status: "held", text: finishedText, reason, isSecure: focusContext.isSecure === true };
     }
   }
 

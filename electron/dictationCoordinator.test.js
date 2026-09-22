@@ -11,6 +11,9 @@ function wavWithMarker(marker) {
 function createIntake({
   bundleId = "com.apple.TextEdit",
   isOneLineField = false,
+  // #433: only meaningful when getFocusContext isn't overridden separately -
+  // folds into the default fake's returned context.
+  isSecure = false,
   transcript = "hello world",
   breakReply = "none",
   transcribe,
@@ -39,7 +42,7 @@ function createIntake({
       transcribe: transcribe || (async () => transcript),
     },
     contextDetection: {
-      getFocusContext: getFocusContext || (async () => ({ bundleId, isOneLineField })),
+      getFocusContext: getFocusContext || (async () => ({ bundleId, isOneLineField, isSecure })),
     },
     breakPlacement: {
       placeParagraphBreaks: placeParagraphBreaks || (async (sentences) => {
@@ -88,7 +91,7 @@ test("completed recording is transcribed, cleaned, and delivered once", async ()
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "delivered", text: "GitHub\nJavaScript." });
+  assert.deepEqual(result, { status: "delivered", text: "GitHub\nJavaScript.", isSecure: false });
   assert.deepEqual(transcriptionCalls, [completedWav]);
   assert.equal(contextCalls.length, 1);
   assert.deepEqual(harness.delivered, ["GitHub\nJavaScript."]);
@@ -226,7 +229,7 @@ test("a known unsafe application never receives spoken line breaks", async () =>
     transcript: "first line new line second line",
   });
 
-  assert.deepEqual(result, { status: "delivered", text: "First line second line." });
+  assert.deepEqual(result, { status: "delivered", text: "First line second line.", isSecure: false });
   assert.deepEqual(delivered, ["First line second line."]);
 });
 
@@ -236,7 +239,7 @@ test("an unlisted application fails closed for spoken line breaks", async () => 
     transcript: "first line new paragraph second line",
   });
 
-  assert.deepEqual(result, { status: "delivered", text: "First line second line." });
+  assert.deepEqual(result, { status: "delivered", text: "First line second line.", isSecure: false });
   assert.deepEqual(delivered, ["First line second line."]);
 });
 
@@ -246,7 +249,7 @@ test("a one-line field removes line breaks and its final full stop in a break-sa
     transcript: "first line new line second line period",
   });
 
-  assert.deepEqual(result, { status: "delivered", text: "First line second line" });
+  assert.deepEqual(result, { status: "delivered", text: "First line second line", isSecure: false });
   assert.deepEqual(delivered, ["First line second line"]);
 });
 
@@ -327,6 +330,7 @@ test("eligible long dictation sends cleaned sentences once and applies returned 
   assert.deepEqual(result, {
     status: "delivered",
     text: "First topic. Still first topic.\n\nSecond topic. More on the second topic.",
+    isSecure: false,
   });
   assert.deepEqual(harness.delivered, [
     "First topic. Still first topic.\n\nSecond topic. More on the second topic.",
@@ -368,6 +372,7 @@ test("short, break-unsafe, one-line, and explicit-break dictations skip break pl
   assert.deepEqual(explicitResult, {
     status: "delivered",
     text: "First sentence\n\nSecond sentence. Third sentence. Fourth sentence.",
+    isSecure: false,
   });
 });
 
@@ -387,6 +392,7 @@ test("repairs malformed break indices without retrying and records format and re
   assert.deepEqual(result, {
     status: "delivered",
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
+    isSecure: false,
   });
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
@@ -395,6 +401,7 @@ test("repairs malformed break indices without retrying and records format and re
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
+    ["context.isSecure", false],
     ["context.breakSafe", true],
     ["context.oneLineField", false],
     ["paragraphBreaks.formatValid", false],
@@ -414,6 +421,7 @@ test("a break reply with no usable indices falls back to one paragraph", async (
   assert.deepEqual(result, {
     status: "delivered",
     text: "First sentence. Second sentence. Third sentence.",
+    isSecure: false,
   });
   assert.deepEqual(delivered, ["First sentence. Second sentence. Third sentence."]);
 });
@@ -432,6 +440,7 @@ test("break-placement failure falls back to one paragraph without retrying", asy
   assert.deepEqual(result, {
     status: "delivered",
     text: "First sentence. Second sentence. Third sentence.",
+    isSecure: false,
   });
   assert.deepEqual(delivered, ["First sentence. Second sentence. Third sentence."]);
 });
@@ -448,6 +457,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
   assert.deepEqual(result, {
     status: "delivered",
     text: "Here is my shopping list.\n\n- Buy milk.\n- Buy eggs.\n- Buy bread.",
+    isSecure: false,
   });
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
@@ -456,6 +466,7 @@ test("a flagged spoken list renders as bullets set off from the surrounding pros
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
+    ["context.isSecure", false],
     ["context.breakSafe", true],
     ["context.oneLineField", false],
     ["paragraphBreaks.formatValid", true],
@@ -478,6 +489,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
   assert.deepEqual(result, {
     status: "delivered",
     text: "First sentence.\n\n- Second sentence.\n- Third sentence.\n- Fourth sentence.",
+    isSecure: false,
   });
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
@@ -486,6 +498,7 @@ test("an out-of-range list range is clamped into the text and recorded as repair
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
+    ["context.isSecure", false],
     ["context.breakSafe", true],
     ["context.oneLineField", false],
     ["paragraphBreaks.formatValid", true],
@@ -508,6 +521,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
   assert.deepEqual(result, {
     status: "delivered",
     text: "First sentence. Second sentence.\n\nThird sentence. Fourth sentence.",
+    isSecure: false,
   });
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
@@ -516,6 +530,7 @@ test("a malformed LIST line fails closed to prose without dropping paragraph bre
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
+    ["context.isSecure", false],
     ["context.breakSafe", true],
     ["context.oneLineField", false],
     ["paragraphBreaks.formatValid", true],
@@ -537,6 +552,7 @@ test("list detection is off by default: a valid range is parsed and reported but
   assert.deepEqual(result, {
     status: "delivered",
     text: "Here is my shopping list. Buy milk. Buy eggs. Buy bread.",
+    isSecure: false,
   });
   assert.deepEqual(harness.diagnostics, [
     ["language.input", "en"],
@@ -545,6 +561,7 @@ test("list detection is off by default: a valid range is parsed and reported but
     ["corrections.count", 0],
     ["context.bundleId", "com.apple.TextEdit"],
     ["context.axReady", true],
+    ["context.isSecure", false],
     ["context.breakSafe", true],
     ["context.oneLineField", false],
     ["paragraphBreaks.formatValid", true],
@@ -791,6 +808,7 @@ test("delivery failure holds the complete finished text without retrying deliver
     status: "held",
     text: "Hello world.",
     reason: "accessibility helper timed out",
+    isSecure: false,
   });
   assert.equal(deliveryCalls, 1);
 });
@@ -810,6 +828,7 @@ test("held delivery preserves the complete finished text without retrying delive
     status: "held",
     text: "Hello world.",
     reason: "unverified target",
+    isSecure: false,
   });
   assert.deepEqual(delivered, ["Hello world."]);
 });
@@ -819,7 +838,7 @@ test("#259: with no post-process hook configured, text is delivered unchanged", 
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.deepEqual(result, { status: "delivered", text: "Hello world.", isSecure: false });
   assert.deepEqual(harness.delivered, ["Hello world."]);
 });
 
@@ -831,7 +850,7 @@ test("#259: a post-process hook's output is what gets delivered", async () => {
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "delivered", text: "HELLO WORLD." });
+  assert.deepEqual(result, { status: "delivered", text: "HELLO WORLD.", isSecure: false });
   assert.deepEqual(harness.delivered, ["HELLO WORLD."]);
   assert.ok(harness.diagnostics.some(([name, value]) => name === "postProcess.applied" && value === true));
 });
@@ -848,7 +867,7 @@ test("#259: a hook that throws falls back to the un-hooked text, delivery still 
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.deepEqual(result, { status: "delivered", text: "Hello world.", isSecure: false });
   assert.deepEqual(harness.delivered, ["Hello world."]);
   assert.ok(
     harness.diagnostics.some(([name, value]) => name === "postProcess.failure" && value === "script exited with code 1"),
@@ -863,7 +882,7 @@ test("#259: a hook returning a non-string is treated as a failure, falls back", 
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "delivered", text: "Hello world." });
+  assert.deepEqual(result, { status: "delivered", text: "Hello world.", isSecure: false });
   assert.ok(harness.diagnostics.some(([name]) => name === "postProcess.failure"));
 });
 
@@ -892,8 +911,72 @@ test("#259: a held delivery carries the hook's output, not the pre-hook text", a
 
   const result = await harness.intake.complete(completedWav);
 
-  assert.deepEqual(result, { status: "held", text: "HELLO WORLD.", reason: "unverified target" });
+  assert.deepEqual(result, { status: "held", text: "HELLO WORLD.", reason: "unverified target", isSecure: false });
   assert.deepEqual(delivered, ["HELLO WORLD."]);
+});
+
+test("#433: a delivered dictation into a secure field carries isSecure: true", async () => {
+  const harness = createIntake({ isSecure: true });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "delivered", text: "Hello world.", isSecure: true });
+  assert.ok(harness.diagnostics.some(([name, value]) => name === "context.isSecure" && value === true));
+});
+
+test("#433: a held dictation into a secure field still carries isSecure: true", async () => {
+  const harness = createIntake({
+    isSecure: true,
+    deliver: async () => ({ kind: "held", reason: "unverified target" }),
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, {
+    status: "held",
+    text: "Hello world.",
+    reason: "unverified target",
+    isSecure: true,
+  });
+});
+
+test("#433: a paste into a secure field carries isSecure: true", async () => {
+  const harness = createIntake({
+    isSecure: true,
+    transcript: "paste",
+    clipboardText: "a single-line secret",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.deepEqual(result, { status: "pasted", text: "a single-line secret" });
+});
+
+test("#433: a held multi-line paste into a secure field still carries isSecure: true", async () => {
+  const harness = createIntake({
+    isSecure: true,
+    bundleId: "com.apple.Terminal",
+    transcript: "paste",
+    clipboardText: "line one\nline two",
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.equal(result.status, "held");
+  assert.equal(result.isSecure, true);
+});
+
+test("#433: a context-read failure defaults isSecure to false, not true or undefined", async () => {
+  const harness = createIntake({
+    getFocusContext: async () => {
+      throw new Error("accessibility helper unavailable");
+    },
+  });
+
+  const result = await harness.intake.complete(completedWav);
+
+  assert.equal(result.status, "held");
+  assert.equal(result.isSecure, false);
 });
 
 test("completed recordings are processed and delivered in FIFO order", async () => {
@@ -926,8 +1009,8 @@ test("completed recordings are processed and delivered in FIFO order", async () 
   const results = await Promise.all([first, second]);
 
   assert.deepEqual(results, [
-    { status: "delivered", text: "First result." },
-    { status: "delivered", text: "Second result." },
+    { status: "delivered", text: "First result.", isSecure: false },
+    { status: "delivered", text: "Second result.", isSecure: false },
   ]);
   assert.deepEqual(order, [
     "transcribe:a",
@@ -958,6 +1041,6 @@ test("a failed recording does not stop later queued recordings", async () => {
   assert.deepEqual(transcribeCalls, ["a", "b"]);
   assert.deepEqual(results, [
     { status: "failed", stage: "transcription", reason: "first server failure" },
-    { status: "delivered", text: "Second result." },
+    { status: "delivered", text: "Second result.", isSecure: false },
   ]);
 });
