@@ -43,12 +43,11 @@ change.
 7. **Clear finished.** With a mix of done/failed/queued jobs, **Clear
    finished** should drop the done and failed rows and leave anything
    still queued or transcribing.
-8. **Concurrency with live dictation - the known tradeoff.** Drop a longish
-   file, and while it's transcribing, hold push-to-talk and dictate
-   normally. Confirm what actually happens: does the live dictation wait
-   behind the file job (expected, per the #253 PR), or does something worse
-   happen (a crash, a lost dictation, the overlay hanging)? This is the one
-   behaviour the PR flagged as accepted-but-unverified.
+8. **Concurrency with live dictation.** Drop a longish file, and while it's
+   transcribing, hold push-to-talk and dictate normally. Since #421, the
+   live dictation should fail fast with "A file's still transcribing — try
+   again in a moment" (not a silent hang, not a generic timeout, not a
+   crash) - then work normally once the file finishes.
 9. **No persistence across restart.** Quit and relaunch with jobs still in
    the queue - it should come back empty. This is deliberate for v1 (no
    backing store yet - see #253's PR for the "ties into #136" follow-up),
