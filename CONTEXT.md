@@ -81,7 +81,7 @@ A user-supplied "heard this, write that" pair (#321), applied during rules clean
 _Avoid_: vocabulary biasing (that acts during transcription, not after), autocorrect, dictionary
 
 **Context detection**:
-Resolving the frontmost application and the focused field via the macOS Accessibility API. It is the input to break-safe determination, not the decision itself: it reports the bundle id and the AX role, and what is done with them is defined separately.
+Resolving the frontmost application and the focused field via the macOS Accessibility API. It is the input to break-safe determination, not the decision itself: it reports the bundle id and the AX role, and what is done with them is defined separately. Since #433 it also reports whether the role is a secure field (a password field) - a dictation into one still delivers normally, but is never written to Recording history, copied to the clipboard, or logged, the same "report, don't decide" split as everything else context detection surfaces.
 _Avoid_: App detection, focus detection, context
 
 **Break-safe application**:
