@@ -55,8 +55,53 @@ test("accessibility helper correlates context and insertion replies received out
   child.stdout.write('{"id":"2","status":"delivered","method":"wrote into the field","verified":true}\n');
   child.stdout.write('{"id":"1","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n');
 
-  assert.deepEqual(await contextPromise, { bundleId: "com.apple.TextEdit", isOneLineField: false, axReady: true });
+  assert.deepEqual(await contextPromise, {
+    bundleId: "com.apple.TextEdit",
+    isOneLineField: false,
+    axReady: true,
+    isSecure: false,
+  });
   assert.deepEqual(await insertionPromise, { kind: "inserted" });
+  helper.stop();
+});
+
+// #433: a role-confirmed AXSecureTextField parses to isSecure: true, so the
+// coordinator can skip recording it to history.
+test("accessibility helper reports isSecure true for a password field", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createAccessibilityHelper({ spawnProcess: () => child });
+  helper.start();
+
+  const contextPromise = helper.getFocusContext();
+  await nextTurn();
+  child.stdout.write(
+    `{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.SecurityAgent","isOneLineField":true,"axReady":true,"isSecure":true}\n`,
+  );
+
+  assert.deepEqual(await contextPromise, {
+    bundleId: "com.apple.SecurityAgent",
+    isOneLineField: true,
+    axReady: true,
+    isSecure: true,
+  });
+  helper.stop();
+});
+
+// A helper built before #433 never sends isSecure at all - that must parse
+// to false (the unchanged, pre-#433 behaviour), not throw or go undefined.
+test("accessibility helper defaults isSecure to false when a reply omits it", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createAccessibilityHelper({ spawnProcess: () => child });
+  helper.start();
+
+  const contextPromise = helper.getFocusContext();
+  await nextTurn();
+  child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n`);
+
+  const context = await contextPromise;
+  assert.equal(context.isSecure, false);
   helper.stop();
 });
 
@@ -180,7 +225,12 @@ test("accessibility helper ignores logs and non-contract output on stdout", asyn
   child.stdout.write('{"id":7,"status":"ok"}\n');
   child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":true}\n`);
 
-  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: true, axReady: true });
+  assert.deepEqual(await context, {
+    bundleId: "com.apple.TextEdit",
+    isOneLineField: true,
+    axReady: true,
+    isSecure: false,
+  });
   helper.stop();
 });
 
@@ -199,7 +249,12 @@ test("accessibility helper keeps diagnostics on stderr and replies on stdout", a
   child.stderr.write("Accessibility access is missing\n");
   child.stdout.write(`{"id":"${requests[0].id}","status":"ok","bundleId":"com.apple.TextEdit","isOneLineField":false}\n`);
 
-  assert.deepEqual(await context, { bundleId: "com.apple.TextEdit", isOneLineField: false, axReady: true });
+  assert.deepEqual(await context, {
+    bundleId: "com.apple.TextEdit",
+    isOneLineField: false,
+    axReady: true,
+    isSecure: false,
+  });
   assert.equal(stderrChunks.join(""), "[accessibility-helper] Accessibility access is missing\n");
   helper.stop();
 });
