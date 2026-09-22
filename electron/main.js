@@ -739,8 +739,16 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     console.error(`[dictation] ${result.stage} failed: ${result.reason}`);
     // #254: don't drop to idle in silence - a failed transcription looks
     // exactly like a dead hotkey otherwise. Say which stage broke.
+    // #421: the one transcription failure with a genuinely different,
+    // actionable cause - a file transcription tying up the resident model -
+    // gets its own message rather than the generic one.
+    const busyWithFile = typeof result.reason === "string" && result.reason.includes("busy transcribing a file");
     showVoiceEditMessage(
-      result.stage === "transcription" ? "Couldn’t transcribe that" : "That didn’t go through",
+      busyWithFile
+        ? "A file’s still transcribing — try again in a moment"
+        : result.stage === "transcription"
+          ? "Couldn’t transcribe that"
+          : "That didn’t go through",
     );
   } else if (result.status === "no-speech") {
     console.log("[dictation] (no speech detected)");

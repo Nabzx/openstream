@@ -172,6 +172,72 @@ test("#253: transcribeFile uses the longer file timeout, not the live-dictation 
   helper.stop();
 });
 
+// #421: a "transcribe" request made while a "transcribeFile" is still in
+// flight used to be written to stdin anyway, race its own 30s timer against
+// a file job that could take up to 30 minutes, and - whichever fired first
+// - end up silently dropping either the timeout rejection's real cause or
+// Swift's eventual real reply. It should now fail immediately, distinctly,
+// and never reach the wire at all.
+test("#421: transcribe fails fast, without hitting the wire, while a file is transcribing", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  const filePromise = helper.transcribeFile("/tmp/meeting.m4a");
+  await nextTurn();
+  assert.equal(requests.length, 1, "only the file request has gone out so far");
+
+  await assert.rejects(helper.transcribe(wav), /busy transcribing a file/);
+  await nextTurn();
+  assert.equal(requests.length, 1, "the live request was never written to stdin");
+
+  child.stdout.write('{"id":"1","status":"ok","text":"the meeting notes","ms":48213}\n');
+  assert.equal(await filePromise, "the meeting notes");
+  helper.stop();
+});
+
+test("#421: transcribe works normally again once the file job settles", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  const filePromise = helper.transcribeFile("/tmp/meeting.m4a");
+  await nextTurn();
+  child.stdout.write('{"id":"1","status":"ok","text":"notes","ms":100}\n');
+  await filePromise;
+
+  const promise = helper.transcribe(wav);
+  await nextTurn();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].cmd, "transcribe");
+  child.stdout.write('{"id":"2","status":"ok","text":"hello","ms":10}\n');
+  assert.equal(await promise, "hello");
+  helper.stop();
+});
+
+test("#421: a file job that itself times out also clears the busy flag", async () => {
+  const child = fakeProcess();
+  const requests = readRequests(child);
+  const helper = createTranscriptionHelper({ spawnProcess: () => child, fileRequestTimeoutMs: 5 });
+  helper.start();
+  child.stdout.write('{"event":"ready"}\n');
+
+  await assert.rejects(helper.transcribeFile("/tmp/meeting.m4a"), /timed out/);
+
+  // A live dictation right after should reach the wire normally, not get
+  // rejected as "busy" by a stale flag the timeout left set.
+  helper.transcribe(wav);
+  await nextTurn();
+  assert.equal(requests.length, 2);
+  assert.equal(requests[1].cmd, "transcribe");
+  child.stdout.write('{"id":"2","status":"ok","text":"hello","ms":10}\n');
+  helper.stop();
+});
+
 test("a request in flight rejects if the helper exits, and the ready gate resets", async () => {
   const child = fakeProcess();
   readRequests(child);

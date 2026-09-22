@@ -152,7 +152,9 @@ export default function FileTranscription() {
       {message && <p className="hint">{message}</p>}
 
       <p className="hint">
-        One file transcribes at a time. A long file can briefly delay a live dictation started while it's running.
+        One file transcribes at a time, and dictation shares the same engine - hold push-to-talk while a file is
+        transcribing and you'll see "A file's still transcribing" instead of your words landing. Wait for the file to
+        finish and try again.
       </p>
     </main>
   );
