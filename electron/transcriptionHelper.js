@@ -51,6 +51,12 @@ function createTranscriptionHelper({
   let restartTimer = null;
   let nextId = 1;
   const pending = new Map();
+  // #421: transcription-helper is a blocking read-one/reply-one loop on the
+  // Swift side - it can never run a live dictation and a file
+  // transcription at once. Tracked here, not just left to Swift's own
+  // ordering, so a "transcribe" arriving while this is set can fail fast
+  // instead of being written to stdin and left to spuriously time out.
+  let activeFileRequestId = null;
 
   // #254: crash-loop tracking, so the app can show the model as failed
   // rather than silently retrying forever.
@@ -107,6 +113,7 @@ function createTranscriptionHelper({
     if (!entry) return;
     clearRequestTimer(entry.timer);
     pending.delete(id);
+    if (id === activeFileRequestId) activeFileRequestId = null;
     if (error) entry.reject(error);
     else entry.resolve(message);
   }
@@ -198,7 +205,19 @@ function createTranscriptionHelper({
         reject(new Error("transcription-helper is not running"));
         return;
       }
+      // #421: a file job's own budget is up to 30 minutes - queueing a live
+      // dictation behind one would mean silently blowing the sub-1-second
+      // dictation latency budget (CONTEXT.md) for as long as the file job
+      // takes, and its own 30s timer fired anyway while still queued,
+      // dropping Swift's real reply once it eventually arrived. Failing
+      // fast and clearly respects the latency budget better than a long
+      // silent wait; the caller decides what "try again" looks like.
+      if (cmd === "transcribe" && activeFileRequestId !== null) {
+        reject(new Error("transcription-helper is busy transcribing a file - try dictating again in a moment"));
+        return;
+      }
       const id = String(nextId++);
+      if (cmd === "transcribeFile") activeFileRequestId = id;
       const timer = setRequestTimer(() => {
         settle(id, null, new Error(`transcription-helper ${cmd} request timed out after ${timeoutMs}ms`));
       }, timeoutMs);
