@@ -30,3 +30,8 @@ jobs:
 
       - run: npm ci
       - run: npm run build
+      # #425: this used to be the whole check - typecheck and a renderer
+      # build, but never the ~35 electron test files or the src/ vitest
+      # suite. A PR could break dictationCoordinator.test.js and still
+      # merge on a green check, because the check never looked.
+      - run: npm test
