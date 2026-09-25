@@ -40,3 +40,16 @@ export function captureHotkeyFromEvent(event: CapturedKeyEvent): CaptureResult {
 
   return { ok: true, hotkey: { keyCode, modifiers: [] } };
 }
+
+// #435: neither Escape nor Tab is a candidate hotkey - captureHotkeyFromEvent
+// already says so via UNSUPPORTED_KEY - but before this, "unsupported" just
+// meant "keep waiting for a real one", with no way out. A keyboard-only user
+// who opened capture mode had no way out of it at all: Tab doesn't move
+// focus (the component preventDefaults every keydown while recording) and
+// Escape doesn't cancel - a WCAG "no keyboard trap" violation, not a
+// hypothetical one. The two keys need to close capture mode instead, a
+// different question from which key makes a valid hotkey, so it's checked
+// separately rather than folded into captureHotkeyFromEvent's result shape.
+export function isCaptureCancelKey(event: Pick<CapturedKeyEvent, "code">): boolean {
+  return event.code === "Escape" || event.code === "Tab";
+}
