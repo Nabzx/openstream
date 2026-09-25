@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { captureHotkeyFromEvent, type StoredHotkey } from "./hotkey/captureHotkey";
+import { captureHotkeyFromEvent, isCaptureCancelKey, type StoredHotkey } from "./hotkey/captureHotkey";
 import { formatHotkey } from "./hotkey/keycodeMap";
 
-export const SHORTCUT_CAPTURE_PROMPT = "Press Option, Command, Control, Fn, Caps Lock, or F1–F19…";
+export const SHORTCUT_CAPTURE_PROMPT = "Press Option, Command, Control, Fn, Caps Lock, or F1–F19… (Esc to cancel)";
 export const SHORTCUT_GUIDANCE =
   "F1–F12 require the top row to be in function-key mode. F13–F19 depend on keyboard support. Choose one standalone key: Option, Command, Control, Fn, or Caps Lock. OpenStream cannot reliably detect whether macOS or another app also uses a key. Fn and Caps Lock may not produce a usable event on every keyboard.";
 
@@ -48,7 +48,25 @@ export default function HotkeySettings() {
         .finally(() => setShortcutChangePending(false));
     }
 
+    // #435: the only way out of capture mode besides successfully picking a
+    // hotkey - Escape, Tab, or the whole app losing focus (see the blur
+    // listener below). Leaves the shortcut untouched, unlike applyShortcut.
+    function cancelCapture() {
+      if (!captureOpen) return;
+      captureOpen = false;
+      stopNativeCapture();
+      setError(null);
+      setRecording(false);
+    }
+
     function onKeyDown(event: KeyboardEvent) {
+      if (isCaptureCancelKey(event)) {
+        // Tab keeps its normal job - moving focus - Escape has no default
+        // action worth preserving here.
+        if (event.code !== "Tab") event.preventDefault();
+        cancelCapture();
+        return;
+      }
       event.preventDefault();
       const result = captureHotkeyFromEvent(event);
       if (!result.ok) {
@@ -62,11 +80,17 @@ export default function HotkeySettings() {
     // than a reliable DOM keydown, so the main process captures it separately.
     const unsubscribe = window.openstream.settings.onShortcutCaptured(applyShortcut);
     window.addEventListener("keydown", onKeyDown, true);
+    // #435: Cmd-Tabbing away (or any other way the window loses focus)
+    // while capturing shouldn't leave capture mode armed for when it comes
+    // back - the key that was about to be pressed was almost certainly
+    // meant for whatever the user switched to.
+    window.addEventListener("blur", cancelCapture);
     void window.openstream.settings.startShortcutCapture().catch(() => {});
 
     return () => {
       captureOpen = false;
       window.removeEventListener("keydown", onKeyDown, true);
+      window.removeEventListener("blur", cancelCapture);
       unsubscribe();
       stopNativeCapture();
     };

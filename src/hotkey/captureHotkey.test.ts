@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { captureHotkeyFromEvent, type CapturedKeyEvent } from "./captureHotkey";
+import { captureHotkeyFromEvent, isCaptureCancelKey, type CapturedKeyEvent } from "./captureHotkey";
 import {
   STANDALONE_CAPS_LOCK_KEY_CODE,
   STANDALONE_COMMAND_KEY_CODE,
@@ -78,5 +78,31 @@ describe("captureHotkeyFromEvent", () => {
     { code: "CapsLock", shiftKey: true },
   ])("rejects %s when another modifier is held", (event) => {
     expect(captureHotkeyFromEvent(keyEvent(event))).toEqual({ ok: false, reason: "Unsupported key" });
+  });
+});
+
+// #435: without this, a keyboard-only user who opens capture mode has no
+// way out of it - Escape and Tab were both just "Unsupported key" like any
+// other rejected candidate, and the component preventDefaults every
+// keydown while recording, so Tab's own default (moving focus) never ran
+// either. A real keyboard trap, not a hypothetical one.
+describe("isCaptureCancelKey", () => {
+  it.each(["Escape", "Tab"])("treats %s as a cancel, not a candidate hotkey", (code) => {
+    expect(isCaptureCancelKey({ code })).toBe(true);
+  });
+
+  it.each([
+    "AltLeft",
+    "MetaLeft",
+    "ControlLeft",
+    "Fn",
+    "CapsLock",
+    "F1",
+    "KeyD",
+    "ArrowUp",
+    "ShiftLeft",
+    "Space",
+  ])("does not treat %s as a cancel", (code) => {
+    expect(isCaptureCancelKey({ code })).toBe(false);
   });
 });
