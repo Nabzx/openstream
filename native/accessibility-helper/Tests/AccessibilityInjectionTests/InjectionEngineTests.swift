@@ -295,7 +295,8 @@ struct InjectionEngineTests {
         // first read misses, but the tree comes good a beat later. Before
         // #227 this dropped straight to blind-paste-or-hold.
         let target = FakeAccessibilityTarget(
-            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true)
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 10, selectedTextSettable: true),
+            valueToReadBack: "hello"
         )
         let (engine, time, paster, _) = makeEngine(focusTarget: target, missesBeforeSuccess: 2)
 
@@ -379,7 +380,8 @@ struct InjectionEngineTests {
     @Test func settleGuardPassesOnceTheTargetStabilizes() {
         let time = SimulatedTime()
         let target = FakeAccessibilityTarget(
-            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 5, selectedTextSettable: true)
+            fieldInfo: FieldInfo(role: "AXTextField", valueChars: 5, selectedTextSettable: true),
+            valueToReadBack: "hello"
         )
         let paster = FakePaster(result: PasteResult(delivered: true, verified: false, note: ""))
         let typer = FakeTyper()
