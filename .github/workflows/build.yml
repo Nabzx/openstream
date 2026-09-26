@@ -35,3 +35,11 @@ jobs:
       # suite. A PR could break dictationCoordinator.test.js and still
       # merge on a green check, because the check never looked.
       - run: npm test
+      # #440: hotkey-helper and accessibility-helper both have real Swift
+      # test suites, wired as .testTarget in their Package.swift, that no
+      # CI workflow or npm script ever invoked - a native-side regression
+      # could merge on a green check the same way #425's electron tests
+      # could. transcription-helper has no test target yet (needs FluidAudio
+      # mocked out first) and isn't built here either - still open.
+      - run: swift test --package-path native/hotkey-helper
+      - run: swift test --package-path native/accessibility-helper
