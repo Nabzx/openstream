@@ -360,9 +360,21 @@ public final class RealClipboardPaster: ClipboardPasting {
     // the user copies something else while our text is still sitting in
     // the clipboard, changeCount will have moved past what we set, and we
     // leave their copy alone rather than clobbering it.
+    //
+    // #432: saved as the raw data for every type on every item, not just
+    // the plain-string coercion - a copied image or a Finder file reference
+    // has no `.string` representation, so reading only that used to come
+    // back nil and the restore silently dropped the user's real clipboard
+    // content instead of putting it back.
     public func paste(text: String, verifyAgainst: AccessibilityTarget?) -> PasteResult {
         let pasteboard = NSPasteboard.general
-        let saved = pasteboard.string(forType: .string)
+        let savedItems: [[NSPasteboard.PasteboardType: Data]] = (pasteboard.pasteboardItems ?? []).map { item in
+            var data: [NSPasteboard.PasteboardType: Data] = [:]
+            for type in item.types {
+                data[type] = item.data(forType: type)
+            }
+            return data
+        }
 
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
@@ -373,7 +385,16 @@ public final class RealClipboardPaster: ClipboardPasting {
 
         if pasteboard.changeCount == ourChangeCount {
             pasteboard.clearContents()
-            if let saved = saved { pasteboard.setString(saved, forType: .string) }
+            if !savedItems.isEmpty {
+                let restoredItems = savedItems.map { data -> NSPasteboardItem in
+                    let item = NSPasteboardItem()
+                    for (type, value) in data {
+                        item.setData(value, forType: type)
+                    }
+                    return item
+                }
+                pasteboard.writeObjects(restoredItems)
+            }
         } else {
             log("skipped the clipboard restore - the user copied something else while it was borrowed")
         }
