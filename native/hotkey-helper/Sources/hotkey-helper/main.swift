@@ -141,5 +141,24 @@ let runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, createdTa
 CFRunLoopAddSource(CFRunLoopGetCurrent(), runLoopSource, .commonModes)
 CGEvent.tapEnable(tap: createdTap, enable: true)
 
+// #443: accessibility-helper and transcription-helper both sit in a
+// readLine() command loop, so a SIGKILL'd parent closes their stdin pipe
+// and they exit on their own - no signal needed. This helper never reads
+// stdin at all (CFRunLoopRun() below never returns on its own), so a hard
+// kill of the Electron parent (Force Quit, `kill -9`, a native crash) used
+// to leave it running forever, still holding the Input Monitoring tap -
+// and a relaunch would then race a second tap against it on every
+// keystroke. Reparenting is the portable signal an orphan gets: once the
+// original parent is gone, getppid() changes (typically to launchd), so
+// polling it is enough to notice without needing a pipe of our own.
+let originalParentPid = getppid()
+let watchdog = Timer(timeInterval: 2.0, repeats: true) { _ in
+    if getppid() != originalParentPid {
+        eprint("hotkey-helper: parent process \(originalParentPid) is gone - exiting rather than holding the tap orphaned")
+        exit(0)
+    }
+}
+CFRunLoopAddTimer(CFRunLoopGetCurrent(), watchdog, .commonModes)
+
 emit("ready")
 CFRunLoopRun()
