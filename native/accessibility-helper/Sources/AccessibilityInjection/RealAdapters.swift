@@ -291,7 +291,7 @@ public final class RealFocusResolver: FocusResolving {
     // from the tracker, isOneLineField defaulted to true (deny line breaks,
     // the safe direction for an unknown target) - rather than a hard nil
     // that would fail the whole dictation. See #181.
-    public func focusContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, axReady: Bool)? {
+    public func focusContext(deadlineMs: Double, budgetMs: Double) -> (bundleId: String, isOneLineField: Bool, axReady: Bool, isSecure: Bool)? {
         guard let frontApp = frontmostApp(deadlineMs: deadlineMs, budgetMs: budgetMs) else {
             log("focusContext: no frontmost app from AX or the tracker")
             return nil
@@ -302,11 +302,17 @@ public final class RealFocusResolver: FocusResolving {
         }
         guard let focused = resolveFocusedElementWithin(budgetMs: budgetMs, deadlineMs: deadlineMs) else {
             log("focusContext: \(bundleId) focused element not AX-ready within \(budgetMs)ms - unknown-field context")
-            return (bundleId, true, false)
+            // #433: an unresolvable element can't be confirmed secure either
+            // way - false (not secure) is the same "don't know, assume the
+            // common case" call isOneLineField's true already makes here.
+            return (bundleId, true, false, false)
         }
 
         let role = focused.fieldInfo.role
-        return (bundleId, role == "AXTextField" || role == "AXComboBox", true)
+        // #433: AXSecureTextField is macOS's own role for a password field -
+        // checked here, at the one place both ordinary dictation and its
+        // history recording branch off the same focus read.
+        return (bundleId, role == "AXTextField" || role == "AXComboBox", true, role == "AXSecureTextField")
     }
 
     // Voice editing (#17): the focused field's current selection, plus the

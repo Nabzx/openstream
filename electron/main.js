@@ -705,10 +705,18 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
   console.log(summary.join(" "));
 
   if (result.status === "delivered") {
-    console.log(`[dictation] ${result.text}`);
+    // #433: a dictation into a role-confirmed AXSecureTextField (a password
+    // field) never gets its words logged, copied, or written to the
+    // recording-history file - only the fact that it happened. Delivery
+    // itself is unaffected; this is purely about what gets persisted.
+    if (result.isSecure) {
+      console.log("[dictation] delivered into a secure field - not logged, not copied, not recorded to history");
+    } else {
+      console.log(`[dictation] ${result.text}`);
+      maybeCopyTranscript(result.text);
+      recordingHistoryStore?.record({ text: result.text, delivered: true, bundleId: lastDictationBundleId });
+    }
     console.log("[dictation] inserted through accessibility");
-    maybeCopyTranscript(result.text);
-    recordingHistoryStore?.record({ text: result.text, delivered: true, bundleId: lastDictationBundleId });
     if (soundCuesEnabled()) soundCues.textDelivered();
     if (Number.isFinite(timing?.releasedAtMs)) {
       const latencyMs = performance.now() - timing.releasedAtMs;
@@ -726,13 +734,19 @@ async function transcribeAndPrint(wavBuffer, timing, recordStartBundleId) {
     showVoiceEditMessage(result.message);
   } else if (result.status === "held") {
     console.log(`[dictation] injection held: ${result.reason}`);
-    maybeCopyTranscript(result.text);
-    recordingHistoryStore?.record({
-      text: result.text,
-      delivered: false,
-      bundleId: lastDictationBundleId,
-      reason: result.reason,
-    });
+    // #433: same secure-field carve-out as the delivered branch above - the
+    // overlay still shows the held text so the user can recover it manually
+    // (that's the whole point of a Held result), but it's not additionally
+    // copied to the clipboard or written to the history file.
+    if (!result.isSecure) {
+      maybeCopyTranscript(result.text);
+      recordingHistoryStore?.record({
+        text: result.text,
+        delivered: false,
+        bundleId: lastDictationBundleId,
+        reason: result.reason,
+      });
+    }
     if (soundCuesEnabled()) soundCues.dictationHeld();
     setUserVisibleState("held", { text: result.text, reason: result.reason });
   } else if (result.status === "failed") {

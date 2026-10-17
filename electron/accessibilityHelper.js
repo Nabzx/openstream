@@ -127,6 +127,11 @@ function createAccessibilityHelper({
       bundleId: reply.bundleId,
       isOneLineField: reply.isOneLineField,
       axReady: reply.axReady !== false,
+      // #433: only true when the helper positively identified an
+      // AXSecureTextField - a helper built before this field existed
+      // (reply.isSecure undefined) parses to false, the same unchanged
+      // behaviour a stale binary already gets for everything else here.
+      isSecure: reply.isSecure === true,
     };
   }
 
